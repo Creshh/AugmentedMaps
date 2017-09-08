@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="de.tu_chemnitz.tomkr.augmentedmaps.testframework.groundtruth.GTActivity"
+    tools:layout_editor_absoluteX="8dp"
+    tools:layout_editor_absoluteY="8dp">
+
+    <Button
+        android:id="@+id/captureBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Capture"
+        tools:layout_editor_absoluteX="484dp"
+        tools:layout_editor_absoluteY="243dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignEnd="@+id/gtCaptureView"
+        android:layout_marginBottom="12dp" />
+
+    <SurfaceView
+        android:id="@+id/gtCaptureView"
+        android:layout_width="576dp"
+        android:layout_height="0dp"
+        tools:layout_editor_absoluteX="8dp"
+        tools:layout_editor_absoluteY="8dp" />
+
+    <TextView
+        android:id="@+id/pos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/gtCaptureView"
+        android:layout_below="@+id/gtCaptureView"
+        android:text="Position" />
+
+    <TextView
+        android:id="@+id/orientation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/pos"
+        android:layout_below="@+id/pos"
+        android:text="Orientation" />
+</RelativeLayout>
