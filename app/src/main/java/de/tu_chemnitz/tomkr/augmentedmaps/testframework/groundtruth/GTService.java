@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageHelpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.testframework.InputTypeGT;
 
@@ -28,7 +27,7 @@ public class GTService {
     public static void addSample(InputTypeGT sample){
         StringBuilder sb = new StringBuilder();
         String imgKey = String.valueOf(sample.getImg().getTimestamp());
-        ImageHelpers.writeImage(imgKey, sample.getImg());
+        //ImageHelpers.writeImage(imgKey, sample.getImg());
         sb.append("img").append(VALUE_DELIM).append(imgKey).append(FIELD_DELIM);
         sb.append("lat").append(VALUE_DELIM).append(sample.getLoc().getLat()).append(FIELD_DELIM);
         sb.append("lon").append(VALUE_DELIM).append(sample.getLoc().getLon()).append(FIELD_DELIM);
@@ -71,7 +70,7 @@ public class GTService {
             String value = token.split(VALUE_DELIM)[1];
             switch (key){
                 case "img":
-                    sample.setImg(ImageHelpers.readImage(value));
+                    //sample.setImg(ImageHelpers.readImage(value));
                     break;
                 case "lat":
                     sample.getLoc().setLat(parseFloat(value));

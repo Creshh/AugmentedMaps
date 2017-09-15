@@ -1,18 +1,24 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 
-
 import android.media.Image;
+import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Tom Kretzschmar on 15.09.2017.
  *
  */
+
+
 public class ImageSaver implements Runnable {
 
     /**
@@ -24,9 +30,10 @@ public class ImageSaver implements Runnable {
      */
     private final File mFile;
 
-    public ImageSaver(Image image, File file) {
+    public ImageSaver(Image image, File dir, String filename) {
         mImage = image;
-        mFile = file;
+//        mFile = new File(dir, filename);
+        mFile = getOutputMediaFile();
     }
 
     @Override
@@ -50,6 +57,22 @@ public class ImageSaver implements Runnable {
                 }
             }
         }
+    }
+
+    private static File getOutputMediaFile() {
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "AugmentedMaps");
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d("MyCameraApp", "failed to create directory");
+                return null;
+            }
+        }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.GERMAN).format(new Date());
+        File mediaFile;
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + "image_" + timeStamp + ".jpg");
+        Log.d("ImageSaver", mediaFile.getAbsolutePath());
+        return mediaFile;
     }
 
 }
