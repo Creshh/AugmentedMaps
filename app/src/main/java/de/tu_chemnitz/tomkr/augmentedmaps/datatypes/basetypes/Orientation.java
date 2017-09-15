@@ -46,4 +46,13 @@ public class Orientation {
     public void setZ(float z) {
         this.z = z;
     }
+
+    @Override
+    public String toString() {
+        return "Orientation{" +
+                "x=" + String.format("%.2f", x) +
+                ", y=" + String.format("%.2f", y) +
+                ", z=" + String.format("%.2f", z) +
+                '}';
+    }
 }

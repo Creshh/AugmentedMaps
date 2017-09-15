@@ -4,7 +4,10 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -28,6 +31,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,16 +44,30 @@ import java.util.Date;
 import java.util.List;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
+import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
+import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 
-public class GTActivity extends AppCompatActivity {
+import static android.R.attr.id;
+import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
+
+public class GTActivity extends AppCompatActivity implements OrientationListener{
 
     private Size previewsize;
     private Size jpegSizes[] = null;
+
+
+    private TextView orientationView;
 
     private TextureView textureView;
     private CameraDevice cameraDevice;
     private CaptureRequest.Builder previewBuilder;
     private CameraCaptureSession previewSession;
+    private CameraManager manager;
+
+    private static final int WIDTH = 1920;
+    private static final int HEIGHT = 1080;
+
     Button getpicture;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -61,12 +79,15 @@ public class GTActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    private OrientationService orientationService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gt);
-        textureView = (TextureView) findViewById(R.id.preview);
+        textureView = (TextureView) findViewById(preview);
         textureView.setSurfaceTextureListener(surfaceTextureListener);
+        orientationView = (TextView) findViewById(R.id.orientation);
 
         getpicture = (Button) findViewById(R.id.captureBtn);
         getpicture.setOnClickListener(new View.OnClickListener() {
@@ -75,7 +96,41 @@ public class GTActivity extends AppCompatActivity {
                 getPicture();
             }
         });
+
+        orientationService = new OrientationService(this);
+        orientationService.registerListener(this);
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(textureView != null){
+            try {
+                setupCamera();
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+            transformImage(textureView.getWidth(), textureView.getHeight());
+        } else {
+            // setTextureListener
+        }
+        
+        orientationService.start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(cameraDevice!=null)
+        {
+            cameraDevice.close();
+            Log.d("CAMERA", "CLOSE CAMERA############");
+
+        }
+        orientationService.stop();
+    }
+ 
 
     void getPicture() {
         if (cameraDevice == null) {
@@ -100,8 +155,8 @@ public class GTActivity extends AppCompatActivity {
             capturebuilder.addTarget(reader.getSurface());
             capturebuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
-            int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            capturebuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+//            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+//            capturebuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
 
             ImageReader.OnImageAvailableListener imageAvailableListener = new ImageReader.OnImageAvailableListener() {
                 @Override
@@ -180,33 +235,68 @@ public class GTActivity extends AppCompatActivity {
         }
     }
 
-    public void openCamera() {
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        try {
-            String camerId = manager.getCameraIdList()[0];
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(camerId);
-            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            previewsize = map.getOutputSizes(SurfaceTexture.class)[0];
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+    private String selectRearCamera(CameraManager manager) throws CameraAccessException {
+        for(String id : manager.getCameraIdList()){
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(id);
+            if(characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK){
+                return id;
             }
-            manager.openCamera(camerId, stateCallback, null);
-        }catch (Exception e)
-        {
-
         }
+        return null;
+    }
+
+    private Size selectOutputSize(CameraManager manager, String cameraId) throws CameraAccessException {
+        StreamConfigurationMap map = manager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size targetSize = null;
+        for(Size s : map.getOutputSizes(SurfaceTexture.class)){
+            if(s.getHeight() == HEIGHT){
+                if(s.getWidth() == WIDTH){
+                    return s;
+                } else {
+                    targetSize = s;
+                }
+            }
+            Log.d("SIZES", s.toString());
+        }
+        return targetSize;
+    }
+
+    public String setupCamera() throws CameraAccessException {
+
+        manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        String cameraId = selectRearCamera(manager);
+        previewsize = selectOutputSize(manager, cameraId);
+        return cameraId;
+    }
+
+    private void openCamera(String cameraId) throws CameraAccessException {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling ActivityCompat#requestPermissions here to request the missing permissions, and then overriding public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) to handle the case where the user grants the permission. See the documentation for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
+        if(cameraId != null && previewsize != null){
+
+            manager.openCamera(cameraId, stateCallback, null);
+        } else {
+            Log.e("CAMERA", "No Camera or Size found");
+        }
+
     }
     private TextureView.SurfaceTextureListener surfaceTextureListener=new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            openCamera();
+            // setup Camera
+            try {
+                String id = setupCamera();
+                transformImage(width, height);
+                Log.d("SURFACEAVAILABLE", "W" + width + "|H" + height);
+
+                openCamera(id);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+
         }
 
         @Override
@@ -233,27 +323,18 @@ public class GTActivity extends AppCompatActivity {
 
         @Override
         public void onDisconnected(CameraDevice camera) {
-
+            Log.e("CAMERA", "CAMERA DEVICE DISCONNECTED #########");
         }
 
         @Override
         public void onError(CameraDevice camera, int error) {
-
+            Log.e("CAMERA", "CAMERA DEVICE ERROR #########");
         }
     };
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if(cameraDevice!=null)
-        {
-            cameraDevice.close();
 
-        }
-    }
 
-    void  startCamera()
-    {
+    void  startCamera(){
         if(cameraDevice==null||!textureView.isAvailable()|| previewsize==null)
         {
             return;
@@ -294,6 +375,7 @@ public class GTActivity extends AppCompatActivity {
 
         }
     }
+
     void getChangedPreview()
     {
         if(cameraDevice==null)
@@ -331,5 +413,33 @@ public class GTActivity extends AppCompatActivity {
                 + "IMG_" + timeStamp + ".jpg");
 
         return mediaFile;
+    }
+
+    private void transformImage(int width, int height){
+        Log.d("SURFACEAVAILABLE", "W" + width + "|H" + height);
+        if(previewsize == null || textureView == null)
+            return;
+        Matrix matrix = new Matrix();
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        RectF textureRectF = new RectF(0,0,width,height);
+        RectF previewRectF = new RectF(0,0,previewsize.getHeight(), previewsize.getWidth());
+        float centerX = textureRectF.centerX();
+        float centerY = textureRectF.centerY();
+        if(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270){
+            previewRectF.offset(centerX - previewRectF.centerX(), centerY - previewRectF.centerY());
+            matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL);
+            float scale = Math.max((float)width / previewsize.getWidth(), (float)height / previewsize.getHeight());
+            matrix.postScale(scale, scale, centerX, centerY);
+            matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+        }
+        textureView.setTransform(matrix);
+    }
+
+    @Override
+    public void onOrientationChange(Orientation values) {
+
+
+        Log.d("ORIENTATION", "X" + values.toString());
+        orientationView.setText(values.toString());
     }
 }

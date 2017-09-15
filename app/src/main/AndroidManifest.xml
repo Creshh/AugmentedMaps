@@ -14,7 +14,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".testframework.groundtruth.GTActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
