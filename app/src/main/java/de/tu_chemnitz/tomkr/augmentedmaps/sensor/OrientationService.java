@@ -38,8 +38,6 @@ public class OrientationService implements SensorEventListener{
 
         acc = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-        start();
     }
 
     public Orientation getOrientation(){
