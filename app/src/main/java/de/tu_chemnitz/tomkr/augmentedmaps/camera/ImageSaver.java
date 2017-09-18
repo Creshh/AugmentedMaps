@@ -30,7 +30,7 @@ public class ImageSaver implements Runnable {
      */
     private final File mFile;
 
-    public ImageSaver(Image image, File dir, String filename) {
+    public ImageSaver(Image image) {
         mImage = image;
 //        mFile = new File(dir, filename);
         mFile = getOutputMediaFile();
