@@ -71,7 +71,7 @@ public class ImageSaver implements Runnable {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.GERMAN).format(new Date());
         File mediaFile;
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + "image_" + timeStamp + ".jpg");
-        Log.d("ImageSaver", mediaFile.getAbsolutePath());
+
         return mediaFile;
     }
 

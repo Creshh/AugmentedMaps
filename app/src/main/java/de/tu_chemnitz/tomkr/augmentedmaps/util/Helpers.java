@@ -15,19 +15,6 @@ import java.util.Locale;
 
 public class Helpers {
 
-    /**
-     * Shows a {@link Toast} on the UI thread.
-     *
-     * @param text The message to show
-     */
-    public static void showToast(final String text, final Activity activity) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
     public static String createTimeStamp(long timestamp) {
         Calendar c = Calendar.getInstance();

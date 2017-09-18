@@ -15,9 +15,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
@@ -37,15 +35,15 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.CameraService;
+import de.tu_chemnitz.tomkr.augmentedmaps.camera.CameraHelpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageSaver;
 import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
@@ -53,10 +51,9 @@ import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
-import static de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers.showToast;
 
 
-public class GTActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, OrientationListener {
+public class GTActivity extends Activity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, OrientationListener {
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -79,31 +76,6 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
     private static final String TAG = "GTActivity";
 
     /**
-     * Camera state: Showing camera preview.
-     */
-    private static final int STATE_PREVIEW = 0;
-
-    /**
-     * Camera state: Waiting for the focus to be locked.
-     */
-    private static final int STATE_WAITING_LOCK = 1;
-
-    /**
-     * Camera state: Waiting for the exposure to be precapture state.
-     */
-    private static final int STATE_WAITING_PRECAPTURE = 2;
-
-    /**
-     * Camera state: Waiting for the exposure state to be something other than precapture.
-     */
-    private static final int STATE_WAITING_NON_PRECAPTURE = 3;
-
-    /**
-     * Camera state: Picture was taken.
-     */
-    private static final int STATE_PICTURE_TAKEN = 4;
-
-    /**
      * Max preview width that is guaranteed by Camera2 API
      */
     private static final int MAX_PREVIEW_WIDTH = 1920;
@@ -121,11 +93,14 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+            Log.d(TAG, "onSurfaceTextureAvailable: " + width + "-" + height);
             openCamera(width, height);
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
+            Log.d(TAG, "onSurfaceTextureSizeChanged: " + width + "-" + height);
+            Log.d(TAG, "onSurfaceTextureSizeChanged previewSize: " + mPreviewSize.getWidth() + "-" + mPreviewSize.getHeight());
             configureTransform(width, height);
         }
 
@@ -226,8 +201,7 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
             Log.d(TAG, "IMAGE AVAILABLE");
             String filename = "image_" + Helpers.createTimeStamp(System.currentTimeMillis()) + ".jpg";
 
-//            Helpers.showToast("Saved: " + file);
-//            Log.d(TAG, file.toString());
+            showToast("Saved: " + filename);
             mBackgroundHandler.post(new ImageSaver(reader.acquireLatestImage(), getExternalFilesDir(null), filename));
 
         }
@@ -244,104 +218,22 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
     private CaptureRequest mPreviewRequest;
 
     /**
-     * The current state of camera state for taking pictures.
-     *
-     * @see #mCaptureCallback
-     */
-    private int mState = STATE_PREVIEW;
-
-    /**
      * A {@link Semaphore} to prevent the app from exiting before closing the camera.
      */
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-
-    /**
-     * Whether the current camera device supports Flash or not.
-     */
-    private boolean mFlashSupported;
 
     /**
      * Orientation of the camera sensor
      */
     private int mSensorOrientation;
 
-    /**
-     * A {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
-     */
-    private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
-
-        private void process(CaptureResult result) {
-            switch (mState) {
-                case STATE_PREVIEW: {
-                    // We have nothing to do when the camera preview is working normally.
-                    Log.d(TAG, "### STATE PREVIEW ###");
-                    // TODO
-
-                    break;
-                }
-                case STATE_PICTURE_TAKEN: {
-                    Log.d(TAG, "### STATE PICTURE ###");
-                    // TODO
-
-                    break;
-                }
-//                case STATE_WAITING_LOCK: {
-//                    Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-//                    if (afState == null) {
-//                        captureStillPicture();
-//                    } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState || CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState) {
-//                        // CONTROL_AE_STATE can be null on some devices
-//                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-//                        if (aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-//                            mState = STATE_PICTURE_TAKEN;
-//                            captureStillPicture();
-//                        } else {
-//                            runPrecaptureSequence();
-//                        }
-//                    }
-//                    break;
-//                }
-//                case STATE_WAITING_PRECAPTURE: {
-//                    // CONTROL_AE_STATE can be null on some devices
-//                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-//                    if (aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-//                        mState = STATE_WAITING_NON_PRECAPTURE;
-//                    }
-//                    break;
-//                }
-//                case STATE_WAITING_NON_PRECAPTURE: {
-//                    // CONTROL_AE_STATE can be null on some devices
-//                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-//                    if (aeState == null || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
-//                        mState = STATE_PICTURE_TAKEN;
-//                        captureStillPicture();
-//                    }
-//                    break;
-//                }
-            }
-        }
-
-        @Override
-        public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
-            process(partialResult);
-        }
-
-        @Override
-        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-            process(result);
-        }
-
-    };
-
-
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.self = this;
         setContentView(R.layout.activity_gt);
-        mTextureView = (TextureView) findViewById(preview);
-
+        mTextureView = (TextureView) findViewById(R.id.preview);
+        hideSystemUI();
 
         Button btn = (Button) findViewById(R.id.captureBtn);
         btn.setOnClickListener(this);
@@ -381,7 +273,7 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
 
     private void requestCameraPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-            Helpers.showToast("Camerapermission needed", this);
+            showToast("Camerapermission needed");
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
@@ -391,7 +283,7 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Helpers.showToast("No permission for Camera granted", this);
+                showToast("No permission for Camera granted");
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -423,12 +315,11 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
                 }
 
                 // For still image captures, we use the largest available size.
-                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CameraService.CompareSizesByArea());
+                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CameraHelpers.CompareSizesByArea());
                 mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, /*maxImages*/2);
                 mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
-                // Find out if we need to swap dimension to get the preview size relative to sensor
-                // coordinate.
+                // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
                 int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
                 //noinspection ConstantConditions
                 mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
@@ -471,33 +362,15 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
                 if (maxPreviewHeight > MAX_PREVIEW_HEIGHT) {
                     maxPreviewHeight = MAX_PREVIEW_HEIGHT;
                 }
-
-                // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
-                // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
-                // garbage capture data.
-                mPreviewSize = CameraService.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
-
-                // We fit the aspect ratio of TextureView to the size of preview we picked.
-                int orientation = getResources().getConfiguration().orientation;
-                if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-//                    mTextureView.setAspectRatio(
-//                            mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                } else {
-//                    mTextureView.setAspectRatio(
-//                            mPreviewSize.getHeight(), mPreviewSize.getWidth());
-                }
-
+//                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
+                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.y, displaySize.x));
                 mCameraId = cameraId;
                 return;
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
-            // Currently an NPE is thrown when the Camera2API is used but not supported on the
-            // device this code runs.
             Log.e(TAG, "Currently an NPE is thrown when the Camera2API is used but not supported on the device this code runs.");
-//            ErrorDialog.newInstance(getString(R.string.camera_error))
-//                    .show(getChildFragmentManager(), FRAGMENT_DIALOG);
         }
     }
 
@@ -612,7 +485,7 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
 
                         // Finally, we start displaying the camera preview.
                         mPreviewRequest = mPreviewRequestBuilder.build();
-                        mCaptureSession.setRepeatingRequest(mPreviewRequest, mCaptureCallback, mBackgroundHandler);
+                        mCaptureSession.setRepeatingRequest(mPreviewRequest, null, mBackgroundHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -620,7 +493,7 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    showToast("Failed", getParent());
+                    showToast("ConfigureFailed");
                 }
             }, null);
         } catch (CameraAccessException e) {
@@ -637,6 +510,7 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
      * @param viewHeight The height of `mTextureView`
      */
     private void configureTransform(int viewWidth, int viewHeight) {
+        Log.d(TAG, "configureTransform: " + viewWidth + "-" + viewHeight);
         int rotation = getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
@@ -683,20 +557,18 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
 
 
             mCaptureSession.stopRepeating();
-            mState = STATE_PICTURE_TAKEN;
             mCaptureSession.capture(captureBuilder.build(), CaptureCallback, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
 
-    private void finishedPicture(){
+    private void finishedPicture() {
         try {
             Log.d(TAG, "FINISHED PICTURE");
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
+            mCaptureSession.capture(mPreviewRequestBuilder.build(), null, mBackgroundHandler);
             // After this, the camera will go back to the normal state of preview.
-            mState = STATE_PREVIEW;
-            mCaptureSession.setRepeatingRequest(mPreviewRequest, mCaptureCallback, mBackgroundHandler);
+            mCaptureSession.setRepeatingRequest(mPreviewRequest, null, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -725,5 +597,30 @@ public class GTActivity extends AppCompatActivity implements View.OnClickListene
     public void onOrientationChange(Orientation values) {
 //        Log.d("ORIENTATION", "X" + values.toString());
         orientationView.setText(values.toString());
+    }
+
+
+    /**
+     * Shows a {@link Toast} on the UI thread.
+     *
+     * @param text The message to show
+     */
+    public void showToast(final String text) {
+        final Activity a = this;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(a, text, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void hideSystemUI() {
+        // Set the IMMERSIVE flag.
+        // Set the content to appear under the system bars so that the content
+        // doesn't resize when the system bars hide and show.
+        mTextureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                | View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 }
