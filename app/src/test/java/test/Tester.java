@@ -1,9 +1,6 @@
 package test;
 
-import android.util.Log;
-
 import org.junit.Test;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -13,9 +10,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.OverpassService;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
 
 
 /**

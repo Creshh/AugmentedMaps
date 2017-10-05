@@ -1,16 +1,13 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.datatypes.testframework;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes;
 
 import android.media.Image;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.complextypes.InputType;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 
 /**
  * Created by Tom Kretzschmar on 31.08.2017.

@@ -3,15 +3,12 @@ package de.tu_chemnitz.tomkr.augmentedmaps.testframework;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.complextypes.OutputType;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.testframework.InputTypeGT;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputTypeGT;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.testframework.groundtruth.GTService;
-
-import static android.R.attr.x;
-import static android.R.attr.y;
 
 /**
  * Created by Tom Kretzschmar on 31.08.2017.

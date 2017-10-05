@@ -1,6 +1,6 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
 
 /**
  * Created by Tom Kretzschmar on 11.09.2017.

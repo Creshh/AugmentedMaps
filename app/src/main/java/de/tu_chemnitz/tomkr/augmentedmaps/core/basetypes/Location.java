@@ -1,4 +1,4 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes;
 
 /**
  * Created by Tom Kretzschmar on 01.09.2017.
@@ -51,5 +51,10 @@ public class Location {
 
     public void setHeight(float height) {
         this.height = height;
+    }
+
+    @Override
+    public String toString() {
+        return "Location{" + "lat=" + lat + ", lon=" + lon + ", height=" + height + '}';
     }
 }

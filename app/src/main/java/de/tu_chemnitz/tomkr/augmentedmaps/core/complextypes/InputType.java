@@ -1,9 +1,9 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.datatypes.complextypes;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes;
 
 import android.media.Image;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
 
 /**
  * Created by Tom Kretzschmar on 31.08.2017.

@@ -10,7 +10,7 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.

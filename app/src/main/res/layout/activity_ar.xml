@@ -23,9 +23,10 @@
         android:id="@+id/pos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Position"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true" />
+        android:text="Position"
+        android:textColor="@android:color/holo_red_light"/>
 
     <TextView
         android:id="@+id/orientation"
@@ -33,5 +34,6 @@
         android:layout_height="wrap_content"
         android:layout_alignEnd="@+id/pos"
         android:layout_below="@+id/pos"
-        android:text="Orientation" />
+        android:text="Orientation"
+        android:textColor="@android:color/holo_red_light"/>
 </RelativeLayout>

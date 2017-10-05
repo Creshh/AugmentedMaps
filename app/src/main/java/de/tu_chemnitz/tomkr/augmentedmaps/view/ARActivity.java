@@ -1,23 +1,22 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.view;
 
 import android.app.Activity;
-import android.media.ImageReader;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageSaver;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.PermissionHandler;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
+import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
-import de.tu_chemnitz.tomkr.augmentedmaps.testframework.groundtruth.GTActivity;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 
 /**
@@ -25,17 +24,20 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
  *
  */
 
-public class ARActivity extends Activity implements OrientationListener{
+public class ARActivity extends Activity implements OrientationListener, LocationListener{
 
     private static final String TAG = ARActivity.class.getName();
 
     private Camera2 camera;
     private OrientationService orientationService;
     private TextView orientationView;
+    private TextView locationView;
     private TextureView textureView;
     private ARView arView;
-    private Thread t;
+    private Thread debugHelperThread;
     private boolean stop = false;
+
+    private LocationService locationService;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,7 +57,8 @@ public class ARActivity extends Activity implements OrientationListener{
 
         arView.setMarkerListRef(Helpers.createSampleMarker(4, 1920, 1080));
 
-
+        locationView = (TextView) findViewById(R.id.pos);
+        locationService = new LocationService(this);
     }
 
     @Override
@@ -66,7 +69,7 @@ public class ARActivity extends Activity implements OrientationListener{
 
         camera.startService();
         stop = false;
-        t = new Thread(new Runnable() {
+        debugHelperThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while(!stop){
@@ -79,7 +82,10 @@ public class ARActivity extends Activity implements OrientationListener{
                 }
             }
         });
-        t.start();
+        debugHelperThread.start();
+        locationService.start();
+        locationService.registerListener(this);
+        locationService.pushLocation();
     }
 
     @Override
@@ -89,6 +95,8 @@ public class ARActivity extends Activity implements OrientationListener{
 
         camera.stopService();
         stop = true;
+        locationService.unregisterListener(this);
+        locationService.stop();
         super.onPause();
     }
 
@@ -107,4 +115,21 @@ public class ARActivity extends Activity implements OrientationListener{
     }
 
 
+    @Override
+    public void onBigLocationChange(Location loc) {
+        Log.d(TAG, "BigLoc -> " + loc);
+        locationView.setText("Pos|BigLoc -> " + loc);
+    }
+
+    @Override
+    public void onSmallLocationChange(Location loc) {
+        Log.d(TAG, "SmallLoc -> " + loc);
+        locationView.setText("Pos|SmallLoc -> " + loc);
+    }
+
+    @Override
+    public void onInitialLocation(Location loc) {
+        Log.d(TAG, "InitialLoc -> " + loc);
+        locationView.setText("Pos|IniLoc -> " + loc);
+    }
 }

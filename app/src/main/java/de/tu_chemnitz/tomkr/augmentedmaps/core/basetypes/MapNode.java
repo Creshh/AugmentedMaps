@@ -1,6 +1,4 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes;
-
-import java.util.Map;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.

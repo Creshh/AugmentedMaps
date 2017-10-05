@@ -20,9 +20,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.MapNode;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Tag;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Tag;
 
 
 /**
@@ -98,7 +98,7 @@ public class OverpassService implements MapNodeService {
      */
     @SuppressWarnings("nls")
     public List<MapNode> getNodes(Document xmlDocument) {
-        List<MapNode> mapNodes = new ArrayList<MapNode>();
+        List<MapNode> mapNodes = new ArrayList<>();
 
         // Document xml = getXML(8.32, 49.001);
         Node osmRoot = xmlDocument.getFirstChild();
@@ -108,7 +108,7 @@ public class OverpassService implements MapNodeService {
             if (item.getNodeName().equals("node")) {
                 NamedNodeMap attributes = item.getAttributes();
                 NodeList tagXMLNodes = item.getChildNodes();
-                Map<String, String> tags = new HashMap<String, String>();
+                Map<String, String> tags = new HashMap<>();
                 for (int j = 1; j < tagXMLNodes.getLength(); j++) {
                     Node tagItem = tagXMLNodes.item(j);
                     NamedNodeMap tagAttributes = tagItem.getAttributes();

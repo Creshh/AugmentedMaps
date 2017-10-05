@@ -9,7 +9,7 @@ import android.hardware.SensorManager;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
 
 /**
  * Created by Tom Kretzschmar on 01.09.2017.

@@ -1,8 +1,6 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.util;
 
-import android.app.Activity;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,8 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.view.ARView;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.MarkerDrawable;
 
 /**

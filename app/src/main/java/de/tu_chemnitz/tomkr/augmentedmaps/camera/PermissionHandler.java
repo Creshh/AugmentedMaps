@@ -23,7 +23,7 @@ public class PermissionHandler implements ActivityCompat.OnRequestPermissionsRes
     private WeakReference<Activity> activityWeakReference;
 
     public PermissionHandler(Activity activity){
-        this.activityWeakReference = new WeakReference<Activity>(activity);
+        this.activityWeakReference = new WeakReference<>(activity);
     }
 
     public void checkPermission() {

@@ -1,21 +1,12 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.view;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
-import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
 import java.util.List;
-
-import de.tu_chemnitz.tomkr.augmentedmaps.R;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.testframework.groundtruth.GTActivity;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.

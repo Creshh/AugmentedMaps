@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.testframework.InputTypeGT;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputTypeGT;
 
 import static java.lang.Float.parseFloat;
 
