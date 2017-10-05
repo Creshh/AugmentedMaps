@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Tom Kretzschmar on 18.09.2017.
- *
+ * TODO: wrong previewsize when starting landscape
  */
 public class Camera2 {
 
@@ -59,7 +59,7 @@ public class Camera2 {
     private CaptureRequest.Builder mPreviewRequestBuilder;
     private CaptureRequest mPreviewRequest;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-    private ImageReader.OnImageAvailableListener mOnImageAvailableListener;
+    private ImageReader.OnImageAvailableListener onImageAvailableListener;
 
     private TextureView previewTarget;
     private Context context;
@@ -75,11 +75,6 @@ public class Camera2 {
     private int displayRotation;
     private Display display;
 
-
-    private Camera2() {
-
-    }
-
     public static Camera2 instantiate(TextureView previewTarget, Context context, Display display) {
         Camera2 camera = new Camera2();
 
@@ -92,7 +87,7 @@ public class Camera2 {
     }
 
     public void registerImageAvailableListener(ImageReader.OnImageAvailableListener listener){
-        this.mOnImageAvailableListener = listener;
+        this.onImageAvailableListener = listener;
     }
 
 
@@ -106,15 +101,6 @@ public class Camera2 {
     }
 
     public void stopService() {
-        mBackgroundThread.quitSafely();
-        try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         try {
             mCameraOpenCloseLock.acquire();
             if (null != mCaptureSession) {
@@ -133,6 +119,15 @@ public class Camera2 {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
             mCameraOpenCloseLock.release();
+        }
+
+        mBackgroundThread.quitSafely();
+        try {
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -318,7 +313,7 @@ public class Camera2 {
                 // For still image captures, we use the largest available size.
 //                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CameraHelpers.CompareSizesByArea());
                 mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, /*maxImages*/2);
-                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
+                mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
                 // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
                 displayRotation = display.getRotation();
@@ -369,7 +364,7 @@ public class Camera2 {
                     maxPreviewHeight = MAX_PREVIEW_HEIGHT;
                 }
 //                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
-                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.y, displaySize.x));
+                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.x, displaySize.y));
                 mCameraId = cameraId;
                 return;
             }
@@ -401,7 +396,8 @@ public class Camera2 {
             //mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()), new CameraCaptureSession.StateCallback() {
+//            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()), new CameraCaptureSession.StateCallback() {
+            mCameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
 
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {

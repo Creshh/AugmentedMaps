@@ -1,56 +1,61 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.testframework.groundtruth;
+package de.tu_chemnitz.tomkr.augmentedmaps.view;
 
 import android.app.Activity;
 import android.media.ImageReader;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2Listener;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageSaver;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
+import de.tu_chemnitz.tomkr.augmentedmaps.testframework.groundtruth.GTActivity;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 
+/**
+ * Created by Tom Kretzschmar on 21.09.2017.
+ *
+ */
 
-public class GTActivity extends Activity implements View.OnClickListener, OrientationListener, Camera2Listener {
-    private static final String TAG = GTActivity.class.getName();
+public class ARActivity extends Activity implements OrientationListener{
+
+    private static final String TAG = ARActivity.class.getName();
 
     private Camera2 camera;
     private OrientationService orientationService;
     private TextView orientationView;
     private TextureView textureView;
-
+    private ARView arView;
+    private Thread t;
+    private boolean stop = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_gt);
+        setContentView(R.layout.activity_ar);
         textureView = (TextureView) findViewById(R.id.preview);
+        arView = (ARView) findViewById(R.id.arview);
         hideSystemUI();
 
-        Button btn = (Button) findViewById(R.id.captureBtn);
-        btn.setOnClickListener(this);
-
         orientationView = (TextView) findViewById(R.id.orientation);
-
         orientationService = new OrientationService(this);
-
 
         PermissionHandler pm = new PermissionHandler(this);
         pm.checkPermission();
         camera = Camera2.instantiate(textureView, this, getWindowManager().getDefaultDisplay());
-        camera.registerImageAvailableListener(onImageAvailableListener);
+
+
+        arView.setMarkerListRef(Helpers.createSampleMarker(4, 1920, 1080));
+
+
     }
 
     @Override
@@ -60,6 +65,21 @@ public class GTActivity extends Activity implements View.OnClickListener, Orient
         orientationService.start();
 
         camera.startService();
+        stop = false;
+        t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!stop){
+                    Log.d(TAG, "" + arView.getWidth() + "___" + arView.getHeight());
+                    try {
+                        Thread.sleep(5 * 1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        t.start();
     }
 
     @Override
@@ -68,14 +88,10 @@ public class GTActivity extends Activity implements View.OnClickListener, Orient
         orientationService.stop();
 
         camera.stopService();
+        stop = true;
         super.onPause();
     }
 
-
-    @Override
-    public void onClick(View view) {
-        camera.takePicture();
-    }
 
     @Override
     public void onOrientationChange(Orientation values) {
@@ -90,20 +106,5 @@ public class GTActivity extends Activity implements View.OnClickListener, Orient
                 | View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 
-    /**
-     * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
-     * still image is ready to be saved.
-     */
-    private final ImageReader.OnImageAvailableListener onImageAvailableListener = new ImageReader.OnImageAvailableListener() {
 
-        @Override
-        public void onImageAvailable(ImageReader reader) {
-            Log.d(TAG, "IMAGE AVAILABLE");
-            String filename = "image_" + Helpers.createTimeStamp(System.currentTimeMillis()) + ".jpg";
-
-//            showToast("Saved: " + filename);
-            Thread t = new Thread(new ImageSaver(reader.acquireLatestImage()));
-            t.start();
-        }
-    };
 }

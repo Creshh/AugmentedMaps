@@ -21,6 +21,8 @@ import java.util.Locale;
 
 public class ImageSaver implements Runnable {
 
+    private static final String TAG = ImageSaver.class.getName();
+
     /**
      * The JPEG image
      */
@@ -52,6 +54,7 @@ public class ImageSaver implements Runnable {
             if (null != output) {
                 try {
                     output.close();
+                    Log.d(TAG, "Written File to Storage");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

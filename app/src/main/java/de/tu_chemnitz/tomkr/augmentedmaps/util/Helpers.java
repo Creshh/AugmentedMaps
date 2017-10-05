@@ -1,12 +1,20 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.util;
 
 import android.app.Activity;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.Random;
+
+import de.tu_chemnitz.tomkr.augmentedmaps.datatypes.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.view.ARView;
+import de.tu_chemnitz.tomkr.augmentedmaps.view.MarkerDrawable;
 
 /**
  * Created by Tom Kretzschmar on 15.09.2017.
@@ -14,7 +22,16 @@ import java.util.Locale;
  */
 
 public class Helpers {
+    private static final String TAG = Helpers.class.getName();
 
+    private static Random random;
+
+    /**
+     * Initialisiert statische Variablen.
+     */
+    static{
+        random = new Random();
+    }
 
     public static String createTimeStamp(long timestamp) {
         Calendar c = Calendar.getInstance();
@@ -24,4 +41,52 @@ public class Helpers {
         return sdf.format(d);
     }
 
+
+    public static List<MarkerDrawable> createSampleMarker(int count, int maxWidth, int maxHeight){
+        List<MarkerDrawable> list = new ArrayList<>();
+        for(int i = 0; i < count; i++){
+            Marker m = new Marker(random(maxWidth), random(maxHeight), "randM");
+            MarkerDrawable md = new MarkerDrawable(m);
+            Log.d(TAG, "createMarker " + md);
+            list.add(md);
+        }
+        return list;
+    }
+
+    /**
+     * Ermittelt Zufallswert im Intervall um die Basis von base-variance bis base+variance.
+     * @param base Basis
+     * @param variance Intervall um die Basis
+     * @return Zufallszahl
+     */
+    public static float randomInterval(float base, float variance){
+        return randomInRange(base-variance, base+variance);
+    }
+
+    /**
+     * Ermittelt Zufallswert zwischen low und high.
+     * @param low Unterer Grenzwert
+     * @param high Oberer Grenzwert
+     * @return Zufallszahl
+     */
+    public static float randomInRange(float low, float high){
+        return random() * (high-low) + low;
+    }
+
+    /**
+     * Ermittelt Zufallswert zwischen 0 und high.
+     * @param high Oberer Grenzwert
+     * @return Zufallszahl
+     */
+    public static float random(float high){
+        return random() * high;
+    }
+
+    /**
+     * Ermittelt Zufallswert zwischen 0 und 1
+     * @return Zufallszahl
+     */
+    public static float random(){
+        return random.nextFloat();
+    }
 }
