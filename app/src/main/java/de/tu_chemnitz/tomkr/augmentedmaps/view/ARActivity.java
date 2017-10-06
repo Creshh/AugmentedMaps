@@ -28,7 +28,7 @@ import static android.R.attr.y;
  *
  */
 
-public class ARActivity extends Activity implements OrientationListener, LocationListener{
+public class ARActivity extends Activity implements OrientationListener, LocationListener {
 
     private static final String TAG = ARActivity.class.getName();
 
@@ -40,6 +40,8 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     private ARView arView;
     private Thread debugHelperThread;
     private boolean stop = false;
+
+    private Location ownLocation;
 
     private LocationService locationService;
 
@@ -63,19 +65,6 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         locationView = (TextView) findViewById(R.id.pos);
         locationService = new LocationService(this);
-
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ElevationService es = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
-                int elevations[] = es.getElevation(new Location[]{new Location(50.821428f, 12.945283f), new Location(50.9234237f, 13.0326581f)});
-                for(int e : elevations){
-                    Log.d(TAG, "Elevation -> " + e);
-                }
-            }
-        });
-        t.start();
-
     }
 
     @Override
@@ -89,7 +78,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         debugHelperThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(!stop){
+                while (!stop) {
                     Log.d(TAG, "" + arView.getWidth() + "___" + arView.getHeight());
                     try {
                         Thread.sleep(5 * 1000);
@@ -132,20 +121,47 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     }
 
 
+    private void acquireOwnHeight(final Location loc) {
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ElevationService es = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
+                int elevations[] = es.getElevation(new Location[]{loc});
+                for (int e : elevations) {
+                    Log.d(TAG, "Elevation -> " + e);
+                }
+                loc.setHeight(elevations[0]);
+            }
+        });
+        t.start();
+        while(t.isAlive()){
+            try {
+                Thread.sleep(100);
+                Log.d(TAG, "sleep");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+//        locationView.setText("Pos|Height -> " + loc);
+    }
+
     @Override
     public void onBigLocationChange(Location loc) {
+        acquireOwnHeight(loc);
         Log.d(TAG, "BigLoc -> " + loc);
         locationView.setText("Pos|BigLoc -> " + loc);
     }
 
     @Override
     public void onSmallLocationChange(Location loc) {
+        acquireOwnHeight(loc);
         Log.d(TAG, "SmallLoc -> " + loc);
         locationView.setText("Pos|SmallLoc -> " + loc);
     }
 
     @Override
     public void onInitialLocation(Location loc) {
+        acquireOwnHeight(loc);
         Log.d(TAG, "InitialLoc -> " + loc);
         locationView.setText("Pos|IniLoc -> " + loc);
     }

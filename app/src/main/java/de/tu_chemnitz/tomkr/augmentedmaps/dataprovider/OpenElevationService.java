@@ -62,6 +62,7 @@ public class OpenElevationService implements ElevationService {
         try {
             JsonReader reader = new JsonReader(new InputStreamReader(response, "utf-8"));
             reader.beginObject();
+            reader.skipValue();
             reader.beginArray();
             int i = 0;
             while (reader.hasNext()) {

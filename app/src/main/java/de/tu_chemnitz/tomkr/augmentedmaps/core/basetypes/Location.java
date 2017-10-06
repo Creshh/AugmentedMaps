@@ -9,7 +9,7 @@ public class Location {
 
     private float lat;
     private float lon;
-    private float height;
+    private int height;
 
     public Location(float lat, float lon) {
         this.lat = lat;
@@ -17,7 +17,7 @@ public class Location {
         this.height = 0;
     }
 
-    public Location(float lat, float lon, float height) {
+    public Location(float lat, float lon, int height) {
         this.lat = lat;
         this.lon = lon;
         this.height = height;
@@ -45,11 +45,11 @@ public class Location {
         this.lon = lon;
     }
 
-    public float getHeight() {
+    public int getHeight() {
         return height;
     }
 
-    public void setHeight(float height) {
+    public void setHeight(int height) {
         this.height = height;
     }
 
