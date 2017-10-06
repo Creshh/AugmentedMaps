@@ -13,11 +13,15 @@ import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
+
+import static android.R.attr.y;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -59,6 +63,19 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         locationView = (TextView) findViewById(R.id.pos);
         locationService = new LocationService(this);
+
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ElevationService es = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
+                int elevations[] = es.getElevation(new Location[]{new Location(50.821428f, 12.945283f), new Location(50.9234237f, 13.0326581f)});
+                for(int e : elevations){
+                    Log.d(TAG, "Elevation -> " + e);
+                }
+            }
+        });
+        t.start();
+
     }
 
     @Override

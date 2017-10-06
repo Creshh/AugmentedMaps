@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
@@ -50,5 +52,7 @@ public class Tester {
         }
         System.out.println("----------------------------------------------------------------------------------------------------------");
     }
+
+
 
 }
