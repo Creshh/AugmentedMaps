@@ -8,20 +8,34 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
+import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
+import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 
+import static android.R.attr.data;
 import static android.R.attr.y;
+import static android.R.string.no;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -34,6 +48,8 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
     private Camera2 camera;
     private OrientationService orientationService;
+    private MapNodeService mapNodeService;
+    private DataProcessor dataProcessor;
     private TextView orientationView;
     private TextView locationView;
     private TextureView textureView;
@@ -42,8 +58,11 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     private boolean stop = false;
 
     private Location ownLocation;
+    private List<MapNode> mapNodes;
 
     private LocationService locationService;
+    private Orientation orientation;
+    private List<MarkerDrawable> markerList;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,11 +79,16 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         pm.checkPermission();
         camera = Camera2.instantiate(textureView, this, getWindowManager().getDefaultDisplay());
 
-
-        arView.setMarkerListRef(Helpers.createSampleMarker(4, 1920, 1080));
+        markerList = Helpers.createSampleMarker(4, 1920, 1080);
+        arView.setMarkerListRef(markerList);
 
         locationView = (TextView) findViewById(R.id.pos);
         locationService = new LocationService(this);
+
+        mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
+        dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
+        dataProcessor.setCameraViewAngleH(100);
+        dataProcessor.setCameraViewAngleH(60);
     }
 
     @Override
@@ -75,23 +99,52 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         camera.startService();
         stop = false;
-        debugHelperThread = new Thread(new Runnable() {
+//        debugHelperThread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                while (!stop) {
+//                    Log.d(TAG, "" + arView.getWidth() + "___" + arView.getHeight());
+//                    try {
+//                        Thread.sleep(5 * 1000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        });
+//        debugHelperThread.start();
+        locationService.start();
+        locationService.registerListener(this);
+        locationService.pushLocation();
+
+        Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (!stop) {
-                    Log.d(TAG, "" + arView.getWidth() + "___" + arView.getHeight());
-                    try {
-                        Thread.sleep(5 * 1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                while(!stop){
+                    if(mapNodes!= null && mapNodes.size() > 0){
+                        markerList = new ArrayList<>();
+                        for(MapNode node : mapNodes){
+                            Marker marker = dataProcessor.processData(new InputType(node.getLoc(), orientation));
+                            markerList.add(new MarkerDrawable(marker));
+                        }
+                        arView.setMarkerListRef(markerList);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                arView.invalidate();
+                            }
+                        });
+
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
         });
-        debugHelperThread.start();
-        locationService.start();
-        locationService.registerListener(this);
-        locationService.pushLocation();
+        t.start();
     }
 
     @Override
@@ -111,6 +164,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     public void onOrientationChange(Orientation values) {
 //        Log.d("ORIENTATION", "X" + values.toString());
         orientationView.setText(values.toString());
+        orientation = values;
     }
 
     private void hideSystemUI() {
@@ -145,16 +199,29 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 //        locationView.setText("Pos|Height -> " + loc);
     }
 
+    private void acquireMapNodes(final Location loc){
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 5000);
+            }
+        });
+        t.start();
+    }
+
     @Override
     public void onBigLocationChange(Location loc) {
         acquireOwnHeight(loc);
+        dataProcessor.setOwnLocation(loc);
         Log.d(TAG, "BigLoc -> " + loc);
         locationView.setText("Pos|BigLoc -> " + loc);
+        acquireMapNodes(loc);
     }
 
     @Override
     public void onSmallLocationChange(Location loc) {
         acquireOwnHeight(loc);
+        dataProcessor.setOwnLocation(loc);
         Log.d(TAG, "SmallLoc -> " + loc);
         locationView.setText("Pos|SmallLoc -> " + loc);
     }
@@ -162,7 +229,9 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     @Override
     public void onInitialLocation(Location loc) {
         acquireOwnHeight(loc);
+        dataProcessor.setOwnLocation(loc);
         Log.d(TAG, "InitialLoc -> " + loc);
         locationView.setText("Pos|IniLoc -> " + loc);
+        acquireMapNodes(loc);
     }
 }

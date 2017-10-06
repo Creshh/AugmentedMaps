@@ -8,17 +8,13 @@ package de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes;
 public class MapNode {
     private String id;
     private String name;
-    private String lat;
-    private String lon;
-    private float height;
+    private Location loc;
     private String tag;
 
-    public MapNode(String id, String name, String lat, String lon, String tag, float height) {
+    public MapNode(String id, String name, Location loc, String tag) {
         this.id = id;
         this.name = name;
-        this.lat = lat;
-        this.lon = lon;
-        this.height = height;
+        this.loc = loc;
         this.tag = tag;
     }
 
@@ -38,28 +34,12 @@ public class MapNode {
         this.name = name;
     }
 
-    public String getLat() {
-        return lat;
+    public Location getLoc() {
+        return loc;
     }
 
-    public void setLat(String lat) {
-        this.lat = lat;
-    }
-
-    public String getLon() {
-        return lon;
-    }
-
-    public void setLon(String lon) {
-        this.lon = lon;
-    }
-
-    public float getHeight() {
-        return height;
-    }
-
-    public void setHeight(float height) {
-        this.height = height;
+    public void setLoc(Location loc) {
+        this.loc = loc;
     }
 
     public String getTag() {
@@ -72,6 +52,6 @@ public class MapNode {
 
     @Override
     public String toString() {
-        return "MapNode{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", lat='" + lat + '\'' + ", lon='" + lon + '\'' + ", height=" + height + ", tag='" + tag + '\'' + '}';
+        return "MapNode{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", loc=" + loc.toString() + ", tag='" + tag + '\'' + '}';
     }
 }

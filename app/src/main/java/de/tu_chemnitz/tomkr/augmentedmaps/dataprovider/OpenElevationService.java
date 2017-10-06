@@ -1,10 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.dataprovider;
 
 import android.util.JsonReader;
-import android.util.JsonToken;
 import android.util.Log;
-
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;

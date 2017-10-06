@@ -1,5 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.processing;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
 
@@ -9,5 +11,11 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
  */
 
 public interface DataProcessor {
-    OutputType processData(InputType input);
+    void setCameraViewAngleH(float cameraViewAngleH);
+
+    void setCameraViewAngleV(float cameraViewAngleV);
+
+    Marker processData(InputType input);
+
+    void setOwnLocation(Location loc);
 }

@@ -44,7 +44,7 @@ public class LocationService {
     }
 
     public LocationService(Context context) {
-        Log.e(TAG, "initializeLocationManager");
+        Log.d(TAG, "initializeLocationManager");
         if (locationManager == null) {
             locationManager = (LocationManager) context.getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         }
@@ -73,7 +73,7 @@ public class LocationService {
     }
 
     public void stop() {
-        Log.e(TAG, "stopGPS");
+        Log.d(TAG, "stopGPS");
         if (locationManager != null) {
             for (int i = 0; i < mLocationListeners.length; i++) {
                 try {
@@ -90,9 +90,9 @@ public class LocationService {
 
         public LocationListener(String provider) {
             lastSmallLocation = new Location(provider);
-            Log.e(TAG, "LocationListener " + provider + " Location: " + lastSmallLocation);
+            Log.d(TAG, "LocationListener " + provider + " Location: " + lastSmallLocation);
             try {
-                Log.e(TAG, "LocationListener " + provider + " LastKnownLocation: " + locationManager.getLastKnownLocation(provider));
+                Log.d(TAG, "LocationListener " + provider + " LastKnownLocation: " + locationManager.getLastKnownLocation(provider));
                 if(locationManager.getLastKnownLocation(provider) != null)
                     lastBigLocation = locationManager.getLastKnownLocation(provider);
                     lastSmallLocation = locationManager.getLastKnownLocation(provider);
@@ -103,7 +103,7 @@ public class LocationService {
 
         @Override
         public void onLocationChanged(Location location) {
-            Log.e(TAG, "onLocationChanged: " + location);
+            Log.d(TAG, "onLocationChanged: " + location);
             lastSmallLocation.set(location);
             if(lastBigLocation.distanceTo(location)>DIST){
                 lastBigLocation = location;
@@ -118,17 +118,17 @@ public class LocationService {
 
         @Override
         public void onProviderDisabled(String provider) {
-            Log.e(TAG, "onProviderDisabled: " + provider);
+            Log.d(TAG, "onProviderDisabled: " + provider);
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            Log.e(TAG, "onProviderEnabled: " + provider);
+            Log.d(TAG, "onProviderEnabled: " + provider);
         }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            Log.e(TAG, "onStatusChanged: " + provider);
+            Log.d(TAG, "onStatusChanged: " + provider);
         }
     }
 }

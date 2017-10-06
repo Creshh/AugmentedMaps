@@ -55,4 +55,9 @@ public class InputType {
     public void setImg(Image img) {
         this.img = img;
     }
+
+    @Override
+    public String toString() {
+        return "InputType{" + "loc=" + loc.toString() + ", o=" + o.toString() + '}';
+    }
 }
