@@ -41,7 +41,7 @@ public class Tester {
             + "  <print e=\"\" from=\"_\" geometry=\"skeleton\" limit=\"\" mode=\"body\" n=\"\" order=\"id\" s=\"\" w=\"\"/>"
             + "</osm-script>";
 
-    @Test
+//    @Test
     public void test() throws ParserConfigurationException, SAXException, IOException {
         MapNodeService mapService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
 //        List<MapNode> nodes = opService.getMapPointsInProximity(new Location(50.8322608f, 12.9252977f), null, 5000);
@@ -51,5 +51,40 @@ public class Tester {
             System.out.println(node.toString());
         }
         System.out.println("----------------------------------------------------------------------------------------------------------");
+    }
+
+    @Test
+    public void testDistance(){
+        Location locBase = new Location(50.83592f, 12.923312f); // Karl-Marx-Kopf Chemnitz
+
+        Location loc1 = new Location(50.82421f, 12.900267f);    // Industriemuseum Chemnitz
+        Location loc2 = new Location(50.833128f, 12.818298f);   // Burg Rabenstein
+
+        Location loc3 = new Location(50.812931f, 13.099308f);   // Schloss Augustusburg
+
+        Location loc4 = new Location(50.64859f, 12.930436f);     // Naturbühne Greifensteine
+
+
+        Location loc5 = new Location(50.429081f, 12.954426f);   // Fichtelberg
+        Location loc6 = new Location(51.051889f, 13.741493f);   // Frauenkirche Dresden
+
+        System.out.println("DistanceCorr=" + locBase.getDistanceCorr(loc1) + " DistanceApprx=" + locBase.getDistanceApprx(loc1) + " Diff=" + Math.abs(locBase.getDistanceCorr(loc1)-locBase.getDistanceApprx(loc1)));
+        System.out.println("DistanceCorr=" + locBase.getDistanceCorr(loc2) + " DistanceApprx=" + locBase.getDistanceApprx(loc2) + " Diff=" + Math.abs(locBase.getDistanceCorr(loc2)-locBase.getDistanceApprx(loc2)));
+        System.out.println("DistanceCorr=" + locBase.getDistanceCorr(loc3) + " DistanceApprx=" + locBase.getDistanceApprx(loc3) + " Diff=" + Math.abs(locBase.getDistanceCorr(loc3)-locBase.getDistanceApprx(loc3)));
+        System.out.println("DistanceCorr=" + locBase.getDistanceCorr(loc4) + " DistanceApprx=" + locBase.getDistanceApprx(loc4) + " Diff=" + Math.abs(locBase.getDistanceCorr(loc4)-locBase.getDistanceApprx(loc4)));
+        System.out.println("DistanceCorr=" + locBase.getDistanceCorr(loc5) + " DistanceApprx=" + locBase.getDistanceApprx(loc5) + " Diff=" + Math.abs(locBase.getDistanceCorr(loc5)-locBase.getDistanceApprx(loc5)));
+        System.out.println("DistanceCorr=" + locBase.getDistanceCorr(loc6) + " DistanceApprx=" + locBase.getDistanceApprx(loc6) + " Diff=" + Math.abs(locBase.getDistanceCorr(loc6)-locBase.getDistanceApprx(loc6)));
+
+        System.out.println("Bearing=" + locBase.getBearingTo(loc1));
+        System.out.println("Bearing=" + locBase.getBearingTo(loc2));
+        System.out.println("Bearing=" + locBase.getBearingTo(loc3));
+        System.out.println("Bearing=" + locBase.getBearingTo(loc4));
+        System.out.println("Bearing=" + locBase.getBearingTo(loc4));
+        System.out.println("Bearing=" + locBase.getBearingTo(loc5));
+        System.out.println("Bearing=" + locBase.getBearingTo(loc6));
+
+
+
+
     }
 }

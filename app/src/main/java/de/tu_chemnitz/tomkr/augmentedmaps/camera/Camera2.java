@@ -23,6 +23,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
+import android.util.SizeF;
 import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.Surface;
@@ -74,6 +75,8 @@ public class Camera2 {
     private Integer mSensorOrientation;
     private int displayRotation;
     private Display display;
+    public float horizonalAngle;
+    public float verticalAngle;
 
     public static Camera2 instantiate(TextureView previewTarget, Context context, Display display) {
         Camera2 camera = new Camera2();
@@ -98,6 +101,7 @@ public class Camera2 {
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
         setupCamera();
+
     }
 
     public void stopService() {
@@ -208,6 +212,7 @@ public class Camera2 {
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        calculateFOV(manager);
         try {
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
@@ -459,6 +464,26 @@ public class Camera2 {
             matrix.postRotate(180, centerX, centerY);
         }
         previewTarget.setTransform(matrix);
+    }
+
+    // TODO: Fix Function
+    private void calculateFOV(CameraManager cManager) {
+        try {
+            for (final String cameraId : cManager.getCameraIdList()) {
+                CameraCharacteristics characteristics = cManager.getCameraCharacteristics(cameraId);
+                int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) {
+                    float[] maxFocus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                    SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+                    float w = size.getWidth();
+                    float h = size.getHeight();
+                    horizonalAngle = (float) (2*Math.atan(w/(maxFocus[0]*2)));
+                    verticalAngle = (float) (2*Math.atan(h/(maxFocus[0]*2)));
+                }
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
 
 

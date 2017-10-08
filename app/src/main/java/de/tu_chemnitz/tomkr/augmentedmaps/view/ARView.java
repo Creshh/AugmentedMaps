@@ -48,6 +48,7 @@ public class ARView extends View {
 
         for(MarkerDrawable md : markerDrawables){
             Log.d(TAG, "Draw Marker " + md);
+            md.setSize(width, height);
             md.draw(canvas);
         }
     }

@@ -9,24 +9,32 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
+
+import static android.R.attr.x;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
  *
  */
 
-public class MarkerDrawable extends Drawable{
-
+public class MarkerDrawable extends Drawable {
+    private static final String TAG = "H_POS";
     private Marker marker;
     private Paint paintStroke;
     private Paint paintFill;
 
     private static final int WIDTH = 30;
     private static final int HEIGHT = 30;
+    private int w;
+    private int h;
 
-    public MarkerDrawable(Marker marker){
+    public MarkerDrawable(Marker marker) {
+
+
+
         this.marker = marker;
         this.paintStroke = new Paint();
         this.paintStroke.setColor(Color.GREEN);
@@ -44,8 +52,15 @@ public class MarkerDrawable extends Drawable{
 
     @Override
     public void draw(@NonNull Canvas canvas) {
-        canvas.drawRect(marker.getX()-(WIDTH/2), marker.getY()-(HEIGHT/2), marker.getX() + (WIDTH/2), marker.getY() + (HEIGHT/2), paintStroke);
-        canvas.drawRect(marker.getX()-(WIDTH/4), marker.getY()-(HEIGHT/4), marker.getX() + (WIDTH/4), marker.getY() + (HEIGHT/4), paintFill);
+        if(marker.getX() > 0) {
+            int x = (int) (marker.getX() * w);// TODO -> recalculate from Marker x/y [0..1] to pixel values [0..1080] etc.
+            int y = (int) marker.getY();
+
+            Log.d(TAG, "w=" + w + " x=" + x);
+
+            canvas.drawRect(x - (WIDTH / 2), y - (HEIGHT / 2), x + (WIDTH / 2), y + (HEIGHT / 2), paintStroke);
+            canvas.drawRect(x - (WIDTH / 4), y - (HEIGHT / 4), x + (WIDTH / 4), y + (HEIGHT / 4), paintFill);
+        }
     }
 
     @Override
@@ -64,7 +79,12 @@ public class MarkerDrawable extends Drawable{
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "MD[" + marker.getX() + "|" + marker.getY() + "]";
+    }
+
+    public void setSize(int width, int height) {
+        this.w = width;
+        this.h = height;
     }
 }

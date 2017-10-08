@@ -39,7 +39,6 @@ import static android.R.string.no;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
- *
  */
 
 public class ARActivity extends Activity implements OrientationListener, LocationListener {
@@ -87,8 +86,10 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
-        dataProcessor.setCameraViewAngleH(100);
-        dataProcessor.setCameraViewAngleH(60);
+//        dataProcessor.setCameraViewAngleH(camera.horizonalAngle);
+//        dataProcessor.setCameraViewAngleH(camera.verticalAngle);
+        dataProcessor.setCameraViewAngleH(70);
+        dataProcessor.setCameraViewAngleV(50);
     }
 
     @Override
@@ -120,10 +121,11 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(!stop){
-                    if(mapNodes!= null && mapNodes.size() > 0){
+                while (!stop) {
+                    if (mapNodes != null && mapNodes.size() > 0) {
                         markerList = new ArrayList<>();
-                        for(MapNode node : mapNodes){
+                        for (MapNode node : mapNodes) {
+//                        MapNode node = mapNodes.get(0);
                             Marker marker = dataProcessor.processData(new InputType(node.getLoc(), orientation));
                             markerList.add(new MarkerDrawable(marker));
                         }
@@ -136,7 +138,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
                         });
 
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(200);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -188,7 +190,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
             }
         });
         t.start();
-        while(t.isAlive()){
+        while (t.isAlive()) {
             try {
                 Thread.sleep(100);
                 Log.d(TAG, "sleep");
@@ -199,7 +201,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 //        locationView.setText("Pos|Height -> " + loc);
     }
 
-    private void acquireMapNodes(final Location loc){
+    private void acquireMapNodes(final Location loc) {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {

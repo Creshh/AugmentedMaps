@@ -13,6 +13,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
 
+import static android.R.attr.offset;
 import static android.R.attr.x;
 import static android.R.attr.y;
 
@@ -23,8 +24,8 @@ import static android.R.attr.y;
 
 public class DataProcessorA implements DataProcessor {
 
-    private static final String TAG = DataProcessorA.class.getName();
-
+    //private static final String TAG = DataProcessorA.class.getName();
+    private static final String TAG = "H_POS";
     private Location loc;
     private float cameraViewAngleH;
     private float cameraViewAngleV;
@@ -32,6 +33,7 @@ public class DataProcessorA implements DataProcessor {
     @Override
     public void setCameraViewAngleH(float cameraViewAngleH) {
         this.cameraViewAngleH = cameraViewAngleH;
+        Log.d(TAG, "FOV=" + cameraViewAngleH);
     }
 
     @Override
@@ -49,11 +51,21 @@ public class DataProcessorA implements DataProcessor {
 
         // TODO: calculate Exact Point for Marker
 
-        return new Marker(Helpers.random(1000), Helpers.random(1000), "test");
+        float bearingH = this.loc.getBearingTo(input.getLoc());
+        float diffH = bearingH - input.getO().getX();
+        float offsetH = -1;
+        if(Math.abs(diffH) < (cameraViewAngleH/2f)) {
+            offsetH = diffH / (cameraViewAngleH/2f); // [-1..1]
+            offsetH = ((offsetH + 1) / 2f); // offsetH has to be in Range [0..1] to be drawn
+        }
+        Log.d(TAG, "bearing: " + bearingH + "| orientation: " + input.getO().getX() + " | diff: " + diffH + " | offset: " + offsetH);
+        return new Marker(offsetH, 1000, "test");
+//        return new Marker(Helpers.random(1000), Helpers.random(1000), "test");
     }
 
     @Override
     public void setOwnLocation(Location loc) {
         this.loc = loc;
     }
+
 }

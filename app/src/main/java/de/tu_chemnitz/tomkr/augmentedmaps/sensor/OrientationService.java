@@ -47,9 +47,9 @@ public class OrientationService implements SensorEventListener{
         SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading);
         // Express the updated rotation matrix as three orientation angles.
         SensorManager.getOrientation(rotationMatrix , orientationAngles );
-        o.setX(orientationAngles [0]); // angle to horizon
-        o.setY(orientationAngles [1]);
-        o.setZ(orientationAngles [2]); // angle to north
+        o.setX((float) Math.toDegrees(orientationAngles[0])); // angle to horizon
+        o.setY((float) Math.toDegrees(orientationAngles [1]));
+        o.setZ((float) Math.toDegrees(orientationAngles [2])); // angle to north
         return o;
     }
 
