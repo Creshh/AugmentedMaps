@@ -85,7 +85,7 @@ public class Location {
 
         float y = (float) (Math.sin(ld2 - ld1) * Math.cos(phi2));
         float x = (float) (Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(ld2 - ld1));
-        return (float) Math.toDegrees(Math.atan2(y, x));
+        return (float) (Math.toDegrees(Math.atan2(y, x)) + 360) % 360;
     }
 
     @Override

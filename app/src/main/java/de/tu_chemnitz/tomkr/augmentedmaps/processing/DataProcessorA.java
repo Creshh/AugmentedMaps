@@ -53,7 +53,7 @@ public class DataProcessorA implements DataProcessor {
         }
 
         // TODO: calculate vertical position
-        
+
 
 //        Log.d(TAG, "bearing: " + bearingH + "| orientation: " + input.getO().getX() + " | diff: " + diffH + " | offset: " + offsetH);
         return new Marker(offsetH, 1000, "test");
