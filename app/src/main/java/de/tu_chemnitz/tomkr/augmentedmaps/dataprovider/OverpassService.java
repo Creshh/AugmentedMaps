@@ -126,7 +126,7 @@ public class OverpassService implements MapNodeService {
                     String id = namedItemID.getNodeValue();
                     String lat = namedItemLat.getNodeValue();
                     String lon = namedItemLon.getNodeValue();
-                    int ele = (int) (tags.get(TAG_ELEVATION) == null ? -1f : Float.parseFloat(tags.get(TAG_ELEVATION)));
+                    int ele = (int) (tags.get(TAG_ELEVATION) == null ? -1f : Float.parseFloat(tags.get(TAG_ELEVATION).replaceAll(",", ".")));
                     String tag = "";
                     for(Map.Entry<String, String> tagEntry : tags.entrySet()){
                         if(tagEntry.getKey().equals(TAG_NATURAL) || tagEntry.getKey().equals(TAG_PLACE)){

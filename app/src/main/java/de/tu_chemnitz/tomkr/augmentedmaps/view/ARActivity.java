@@ -127,6 +127,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
                         for (MapNode node : mapNodes) {
 //                        MapNode node = mapNodes.get(0);
                             Marker marker = dataProcessor.processData(new InputType(node.getLoc(), orientation));
+                            marker.setKey(node.getName());
                             markerList.add(new MarkerDrawable(marker));
                         }
                         arView.setMarkerListRef(markerList);
@@ -205,7 +206,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 5000);
+                mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 10000);
             }
         });
         t.start();

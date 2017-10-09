@@ -48,6 +48,9 @@ public class MarkerDrawable extends Drawable {
         this.paintFill.setStyle(Paint.Style.FILL);
         this.paintFill.setAntiAlias(true);
         this.paintFill.setAlpha(255);
+        this.paintFill.setTextAlign(Paint.Align.LEFT);
+        this.paintFill.setTextSize(40);
+        this.paintFill.setAntiAlias(true);
     }
 
     @Override
@@ -56,10 +59,16 @@ public class MarkerDrawable extends Drawable {
             int x = (int) (marker.getX() * w);// TODO -> recalculate from Marker x/y [0..1] to pixel values [0..1080] etc.
             int y = (int) marker.getY();
 
-            Log.d(TAG, "w=" + w + " x=" + x);
+//            Log.d(TAG, "w=" + w + " x=" + x);
 
             canvas.drawRect(x - (WIDTH / 2), y - (HEIGHT / 2), x + (WIDTH / 2), y + (HEIGHT / 2), paintStroke);
             canvas.drawRect(x - (WIDTH / 4), y - (HEIGHT / 4), x + (WIDTH / 4), y + (HEIGHT / 4), paintFill);
+            if(marker.getKey() != null){
+                canvas.save();
+                canvas.rotate(-90f, x + (WIDTH/2), y-HEIGHT);
+                canvas.drawText(marker.getKey(), x + (WIDTH/2), y - HEIGHT, paintFill);
+                canvas.restore();
+            }
         }
     }
 
