@@ -43,14 +43,7 @@ public class DataProcessorA implements DataProcessor {
 
     @Override
     public Marker processData(InputType input) {
-//        Marker marker = new Marker(x, y, key);
-//        Log.d(TAG, "+++++++++++++++++++++++++++++++++++++++++++++++++");
-//        Log.d(TAG, "Input: " + input.toString());
-//        Log.d(TAG, "Loc: " + loc.toString());
-//        Log.d(TAG, "+++++++++++++++++++++++++++++++++++++++++++++++++");
-
-        // TODO: calculate Exact Point for Marker
-
+        // calculate horizontal position
         float bearingH = this.loc.getBearingTo(input.getLoc());
         float diffH = bearingH - input.getO().getX();
         float offsetH = -1;
@@ -58,7 +51,11 @@ public class DataProcessorA implements DataProcessor {
             offsetH = diffH / (cameraViewAngleH/2f); // [-1..1]
             offsetH = ((offsetH + 1) / 2f); // offsetH has to be in Range [0..1] to be drawn
         }
-        Log.d(TAG, "bearing: " + bearingH + "| orientation: " + input.getO().getX() + " | diff: " + diffH + " | offset: " + offsetH);
+
+        // TODO: calculate vertical position
+        
+
+//        Log.d(TAG, "bearing: " + bearingH + "| orientation: " + input.getO().getX() + " | diff: " + diffH + " | offset: " + offsetH);
         return new Marker(offsetH, 1000, "test");
 //        return new Marker(Helpers.random(1000), Helpers.random(1000), "test");
     }

@@ -40,14 +40,14 @@ public class ARView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Log.d(TAG, "onDraw");
+//        Log.d(TAG, "onDraw");
 
         int width = getWidth();
         int height = getHeight();
-        Log.d(TAG, "Size: " + width + "___" + height);
+//        Log.d(TAG, "Size: " + width + "___" + height);
 
         for(MarkerDrawable md : markerDrawables){
-            Log.d(TAG, "Draw Marker " + md);
+//            Log.d(TAG, "Draw Marker " + md);
             md.setSize(width, height);
             md.draw(canvas);
         }

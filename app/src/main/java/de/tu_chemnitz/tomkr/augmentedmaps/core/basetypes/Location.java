@@ -16,7 +16,7 @@ public class Location {
     public Location(float lat, float lon) {
         this.lat = lat;
         this.lon = lon;
-        this.height = 0;
+        this.height = -1;
     }
 
     public Location(float lat, float lon, int height) {
@@ -28,7 +28,7 @@ public class Location {
     public Location() {
         this.lat = 0;
         this.lon = 0;
-        this.height = 0;
+        this.height = -1;
     }
 
     public float getLat() {

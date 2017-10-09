@@ -127,7 +127,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
                         for (MapNode node : mapNodes) {
 //                        MapNode node = mapNodes.get(0);
                             Marker marker = dataProcessor.processData(new InputType(node.getLoc(), orientation));
-                            marker.setKey(node.getName());
+                            marker.setKey(node.getName() + " [" + node.getLoc().getHeight() + "]");
                             markerList.add(new MarkerDrawable(marker));
                         }
                         arView.setMarkerListRef(markerList);
@@ -202,11 +202,19 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 //        locationView.setText("Pos|Height -> " + loc);
     }
 
+
+
     private void acquireMapNodes(final Location loc) {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 10000);
+                ElevationService es = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
+                for (MapNode node : mapNodes){
+                    if(node.getLoc().getHeight() == -1){
+                        node.getLoc().setHeight(es.getElevation(new Location[]{node.getLoc()})[0]); // TODO: change to batch query
+                    }
+                }
             }
         });
         t.start();
