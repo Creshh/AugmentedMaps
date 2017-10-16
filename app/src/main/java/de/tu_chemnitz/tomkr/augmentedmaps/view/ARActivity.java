@@ -39,6 +39,7 @@ import static android.R.string.no;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
+ *
  */
 
 public class ARActivity extends Activity implements OrientationListener, LocationListener {
@@ -86,10 +87,8 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
-//        dataProcessor.setCameraViewAngleH(camera.horizonalAngle);
-//        dataProcessor.setCameraViewAngleH(camera.verticalAngle);
-        dataProcessor.setCameraViewAngleH(70);
-        dataProcessor.setCameraViewAngleV(50);
+        dataProcessor.setCameraViewAngleH(camera.horizonalAngle);
+        dataProcessor.setCameraViewAngleH(camera.verticalAngle);
     }
 
     @Override

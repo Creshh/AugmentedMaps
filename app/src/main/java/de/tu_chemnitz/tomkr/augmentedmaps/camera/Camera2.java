@@ -212,7 +212,11 @@ public class Camera2 {
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        calculateFOV(manager);
+        try {
+            calculateFOV(manager.getCameraCharacteristics(mCameraId));
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
         try {
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
@@ -467,23 +471,13 @@ public class Camera2 {
     }
 
     // TODO: Fix Function
-    private void calculateFOV(CameraManager cManager) {
-        try {
-            for (final String cameraId : cManager.getCameraIdList()) {
-                CameraCharacteristics characteristics = cManager.getCameraCharacteristics(cameraId);
-                int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) {
-                    float[] maxFocus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
-                    SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
-                    float w = size.getWidth();
-                    float h = size.getHeight();
-                    horizonalAngle = (float) (2*Math.atan(w/(maxFocus[0]*2)));
-                    verticalAngle = (float) (2*Math.atan(h/(maxFocus[0]*2)));
-                }
-            }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
+    private void calculateFOV(CameraCharacteristics characteristics) {
+        float[] maxFocus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+        SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+        float w = size.getWidth();
+        float h = size.getHeight();
+        horizonalAngle = (float) Math.toDegrees(2 * Math.atan(w / (maxFocus[0] * 2)));
+        verticalAngle = (float) Math.toDegrees(2 * Math.atan(h / (maxFocus[0] * 2)));
     }
 
 
