@@ -55,9 +55,10 @@ public class MarkerDrawable extends Drawable {
 
     @Override
     public void draw(@NonNull Canvas canvas) {
+        Log.d("DRAW", "" + marker.getX() + "|" + marker.getY());
         if(marker.getX() > 0) {
-            int x = (int) (marker.getX() * w);// TODO -> recalculate from Marker x/y [0..1] to pixel values [0..1080] etc.
-            int y = (int) marker.getY();
+            int x = (int) (marker.getX() * w); //recalculate from Marker x/y [0..1] to pixel values [0..1080] etc.
+            int y = (int) (marker.getY() * h);
 
 //            Log.d(TAG, "w=" + w + " x=" + x);
 

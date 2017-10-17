@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         setContentView(R.layout.activity_ar);
         textureView = (TextureView) findViewById(R.id.preview);
         arView = (ARView) findViewById(R.id.arview);
-        hideSystemUI();
+
 
         orientationView = (TextView) findViewById(R.id.orientation);
         orientationService = new OrientationService(this);
@@ -87,13 +88,16 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
-        dataProcessor.setCameraViewAngleH(camera.horizonalAngle);
-        dataProcessor.setCameraViewAngleH(camera.verticalAngle);
+        float[] fov = camera.calculateFOV();
+        dataProcessor.setCameraViewAngleH(fov[0]);
+        dataProcessor.setCameraViewAngleH(fov[1]);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        hideSystemUI();
         orientationService.registerListener(this);
         orientationService.start();
 
@@ -151,6 +155,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
     @Override
     public void onPause() {
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         orientationService.unregisterListener(this);
         orientationService.stop();
 
@@ -207,13 +212,21 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 10000);
+                Log.d(TAG, "acquireMapNodes for Location " + loc.toString());
+                int count = 0;
+                do {
+                    mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 6000);
+                    count ++;
+                } while (count < 3 && mapNodes == null);
+                if(mapNodes == null) return;
                 ElevationService es = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
-                for (MapNode node : mapNodes){
-                    if(node.getLoc().getHeight() == -1){
+                for (MapNode node : mapNodes) {
+                    Log.d(TAG, "acquired node " + node.getName());
+                    if (node.getLoc().getHeight() == -1) {
                         node.getLoc().setHeight(es.getElevation(new Location[]{node.getLoc()})[0]); // TODO: change to batch query
                     }
                 }
+                Log.d(TAG, "----------------------- finished acquireMapNodes");
             }
         });
         t.start();

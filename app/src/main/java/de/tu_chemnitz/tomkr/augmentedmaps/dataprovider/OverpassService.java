@@ -33,7 +33,6 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Tag;
 public class OverpassService implements MapNodeService {
 
     private static final String OVERPASS_API = "http://www.overpass-api.de/api/interpreter";
-    private static final String OPENSTREETMAP_API_06 = "http://www.openstreetmap.org/api/0.6/";
 
     private static final String TAG_NAME = "name";
     private static final String TAG_ELEVATION = "ele";
@@ -60,11 +59,12 @@ public class OverpassService implements MapNodeService {
         String query = QUERY_TEMPLATE.replaceAll("__LAT__", String.valueOf(loc.getLat()))
                 .replaceAll("__LON__", String.valueOf(loc.getLon()))
                 .replaceAll("__RAD__", String.valueOf(maxDistance));
-        Document doc = null;
+        Document doc;
         try {
             doc = getNodesViaOverpass(query);
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
         return getNodes(doc);
     }
@@ -97,7 +97,7 @@ public class OverpassService implements MapNodeService {
      * @return a list of openstreetmap nodes extracted from xml
      */
     @SuppressWarnings("nls")
-    public List<MapNode> getNodes(Document xmlDocument) {
+    private List<MapNode> getNodes(Document xmlDocument) {
         List<MapNode> mapNodes = new ArrayList<>();
 
         // Document xml = getXML(8.32, 49.001);

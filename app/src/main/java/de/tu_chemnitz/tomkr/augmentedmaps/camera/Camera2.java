@@ -13,6 +13,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -75,8 +76,6 @@ public class Camera2 {
     private Integer mSensorOrientation;
     private int displayRotation;
     private Display display;
-    public float horizonalAngle;
-    public float verticalAngle;
 
     public static Camera2 instantiate(TextureView previewTarget, Context context, Display display) {
         Camera2 camera = new Camera2();
@@ -85,6 +84,8 @@ public class Camera2 {
         camera.context = context;
         camera.display = display;
 
+
+        // TODO set cameraID!
 
         return camera;
     }
@@ -212,11 +213,6 @@ public class Camera2 {
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        try {
-            calculateFOV(manager.getCameraCharacteristics(mCameraId));
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
         try {
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
@@ -470,15 +466,33 @@ public class Camera2 {
         previewTarget.setTransform(matrix);
     }
 
-    // TODO: Fix Function
-    private void calculateFOV(CameraCharacteristics characteristics) {
+    public float[] calculateFOV() {
+
+        CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        CameraCharacteristics characteristics;
+        String cameraId = null;
+        try {
+        for(String id : manager.getCameraIdList()){ // TODO: put this code in initializer
+            characteristics = manager.getCameraCharacteristics(id);
+            if(characteristics.get(CameraCharacteristics.LENS_FACING) != CameraMetadata.LENS_FACING_BACK)
+                break;
+            else
+                cameraId = id;
+        }
+            characteristics = manager.getCameraCharacteristics(cameraId);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+
         float[] maxFocus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
         SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
         float w = size.getWidth();
         float h = size.getHeight();
-        horizonalAngle = (float) Math.toDegrees(2 * Math.atan(w / (maxFocus[0] * 2)));
-        verticalAngle = (float) Math.toDegrees(2 * Math.atan(h / (maxFocus[0] * 2)));
+        float horizontalAngle = (float) Math.toDegrees(2 * Math.atan(w / (maxFocus[0] * 2)));
+        float verticalAngle = (float) Math.toDegrees(2 * Math.atan(h / (maxFocus[0] * 2)));
+
+        Log.d(TAG, "FOV => " + horizontalAngle + "x" + verticalAngle);
+        return new float[]{horizontalAngle, verticalAngle};
     }
-
-
 }
