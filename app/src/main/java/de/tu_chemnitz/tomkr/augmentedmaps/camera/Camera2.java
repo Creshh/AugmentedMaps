@@ -1,9 +1,6 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -22,7 +19,6 @@ import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SizeF;
@@ -31,7 +27,8 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.TextureView;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +39,7 @@ import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
  * Created by Tom Kretzschmar on 18.09.2017.
  * TODO: wrong previewsize when starting landscape
  */
+@SuppressWarnings("ConstantConditions")
 public class Camera2 {
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final String TAG = "Camera2";
@@ -73,37 +71,31 @@ public class Camera2 {
     }
 
     private Integer mSensorOrientation;
-    private int displayRotation;
     private Display display;
 
     private CameraManager manager;
 
     /**
-     * Default Camera2 instantiation function attempts to use the backfacing camera.
+     * Default Camera2 Constructor attempts to use the backfacing camera.
      *
      * @param previewTarget TextureView where the camera preview will be shown.
-     * @param context The Activity Context, from where this is called.
-     * @param display The Display of the device on which the preview will be shown.
-     * @return Returns a Camera2 instance ready for usage.
+     * @param context       The Activity Context, from where this is called.
+     * @param display       The Display of the device on which the preview will be shown.
      */
-    public static Camera2 instantiate(TextureView previewTarget, Context context, Display display) {
-        return instantiate(previewTarget, context, display, CameraMetadata.LENS_FACING_BACK);
+    public Camera2(TextureView previewTarget, Context context, Display display) {
+        new Camera2(previewTarget, context, display, CameraMetadata.LENS_FACING_BACK);
     }
 
-    public static Camera2 instantiate(TextureView previewTarget, Context context, Display display, final int lensFacing) {
-        return new Camera2(previewTarget, context.getApplicationContext(), display, lensFacing);
-    }
-
-    private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing){
+    private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing) {
         this.previewTarget = previewTarget;
         this.display = display;
 
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         CameraCharacteristics characteristics;
         try {
-            for(String id : manager.getCameraIdList()){
+            for (String id : manager.getCameraIdList()) {
                 characteristics = manager.getCameraCharacteristics(id);
-                if(characteristics.get(LENS_FACING) == lensFacing) {
+                if (characteristics.get(LENS_FACING) == lensFacing) {
                     cameraId = id;
                 }
             }
@@ -112,7 +104,7 @@ public class Camera2 {
         }
     }
 
-    public void registerImageAvailableListener(ImageReader.OnImageAvailableListener listener){
+    public void registerImageAvailableListener(ImageReader.OnImageAvailableListener listener) {
         this.onImageAvailableListener = listener;
     }
 
@@ -131,6 +123,7 @@ public class Camera2 {
         try {
             mCameraOpenCloseLock.acquire();
             if (null != mCaptureSession) {
+                mCaptureSession.abortCaptures();
                 mCaptureSession.close();
                 mCaptureSession = null;
             }
@@ -144,6 +137,8 @@ public class Camera2 {
             }
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         } finally {
             mCameraOpenCloseLock.release();
         }
@@ -159,7 +154,7 @@ public class Camera2 {
     }
 
 
-    public void takePicture(){
+    public void takePicture() {
         try {
             final CaptureRequest.Builder captureBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(mImageReader.getSurface());
@@ -324,9 +319,9 @@ public class Camera2 {
             mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
-            displayRotation = display.getRotation();
+            int displayRotation = display.getRotation();
             //noinspection ConstantConditions
-            mSensorOrientation = (int) characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             boolean swappedDimensions = false;
             switch (displayRotation) {
                 case Surface.ROTATION_0:
@@ -402,7 +397,9 @@ public class Camera2 {
 
             // Here, we create a CameraCaptureSession for camera preview.
 //            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()), new CameraCaptureSession.StateCallback() {
-            mCameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
+            List<Surface> targets = new ArrayList<>();
+            targets.add(surface);
+            mCameraDevice.createCaptureSession(targets, new CameraCaptureSession.StateCallback() {
 
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {

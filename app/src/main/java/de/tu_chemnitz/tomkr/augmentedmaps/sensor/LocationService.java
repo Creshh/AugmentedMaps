@@ -55,7 +55,7 @@ public class LocationService {
     }
 
     public void start() {
-        Log.e(TAG, "startGPS");
+        Log.d(TAG, "startGPS");
         try {
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE, mLocationListeners[1]);
         } catch (java.lang.SecurityException ex) {

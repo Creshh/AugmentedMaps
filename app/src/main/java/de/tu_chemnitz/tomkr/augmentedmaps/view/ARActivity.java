@@ -101,7 +101,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
-        camera = Camera2.instantiate(textureView, this, getWindowManager().getDefaultDisplay());
+        camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
         float[] fov = camera.calculateFOV();
         dataProcessor.setCameraViewAngleH(fov[0]);
         dataProcessor.setCameraViewAngleV(fov[1]);
