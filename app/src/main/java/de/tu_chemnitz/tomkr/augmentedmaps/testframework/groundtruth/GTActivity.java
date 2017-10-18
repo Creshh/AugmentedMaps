@@ -47,7 +47,7 @@ public class GTActivity extends Activity implements View.OnClickListener, Orient
 
         PermissionHandler pm = new PermissionHandler(this);
         pm.checkPermission();
-        camera = Camera2.instantiate(textureView, this, getWindowManager().getDefaultDisplay());
+        camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
         camera.registerImageAvailableListener(onImageAvailableListener);
     }
 

@@ -41,8 +41,10 @@ import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
  */
 @SuppressWarnings("ConstantConditions")
 public class Camera2 {
+    private static final String TAG = Camera2.class.getName();
+
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    private static final String TAG = "Camera2";
+
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
@@ -83,7 +85,7 @@ public class Camera2 {
      * @param display       The Display of the device on which the preview will be shown.
      */
     public Camera2(TextureView previewTarget, Context context, Display display) {
-        new Camera2(previewTarget, context, display, CameraMetadata.LENS_FACING_BACK);
+        this(previewTarget, context, display, CameraMetadata.LENS_FACING_BACK);
     }
 
     private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing) {

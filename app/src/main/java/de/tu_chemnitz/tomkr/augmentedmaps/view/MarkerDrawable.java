@@ -21,7 +21,8 @@ import static android.R.attr.x;
  */
 
 public class MarkerDrawable extends Drawable {
-    private static final String TAG = "H_POS";
+    private static final String TAG = MarkerDrawable.class.getName();
+
     private Marker marker;
     private Paint paintStroke;
     private Paint paintFill;
@@ -32,9 +33,6 @@ public class MarkerDrawable extends Drawable {
     private int h;
 
     public MarkerDrawable(Marker marker) {
-
-
-
         this.marker = marker;
         this.paintStroke = new Paint();
         this.paintStroke.setColor(Color.GREEN);
@@ -55,12 +53,10 @@ public class MarkerDrawable extends Drawable {
 
     @Override
     public void draw(@NonNull Canvas canvas) {
-        Log.d("DRAW", "" + marker.getX() + "|" + marker.getY());
+//        Log.d(TAG, "" + marker.getX() + "|" + marker.getY());
         if(marker.getX() > 0) {
             int x = (int) (marker.getX() * w); //recalculate from Marker x/y [0..1] to pixel values [0..1080] etc.
             int y = (int) (marker.getY() * h);
-
-//            Log.d(TAG, "w=" + w + " x=" + x);
 
             canvas.drawRect(x - (WIDTH / 2), y - (HEIGHT / 2), x + (WIDTH / 2), y + (HEIGHT / 2), paintStroke);
             canvas.drawRect(x - (WIDTH / 4), y - (HEIGHT / 4), x + (WIDTH / 4), y + (HEIGHT / 4), paintFill);

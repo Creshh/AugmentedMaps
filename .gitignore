@@ -9,3 +9,4 @@
 .externalNativeBuild
 .idea
 /app/proguard-rules.pro
+/openCVLibrary330/build

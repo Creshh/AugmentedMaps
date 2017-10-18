@@ -40,6 +40,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import static android.R.attr.data;
 import static android.R.attr.y;
 import static android.R.string.no;
+import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -85,7 +86,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         tags.get("natural").add("rock");
 
 
-        textureView = (TextureView) findViewById(R.id.preview);
+        textureView = (TextureView) findViewById(preview);
         arView = (ARView) findViewById(R.id.arview);
 
 
@@ -120,6 +121,16 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         locationService.start();
         locationService.registerListener(this);
         locationService.pushLocation();
+
+        Thread motionAnalyzer = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!stop){
+                    //textureView.getBitmap();
+                }
+            }
+        });
+        motionAnalyzer.start();
 
         Thread t = new Thread(new Runnable() {
             @Override
