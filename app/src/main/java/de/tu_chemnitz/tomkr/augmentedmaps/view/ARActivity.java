@@ -90,7 +90,7 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
         float[] fov = camera.calculateFOV();
         dataProcessor.setCameraViewAngleH(fov[0]);
-        dataProcessor.setCameraViewAngleH(fov[1]);
+        dataProcessor.setCameraViewAngleV(fov[1]);
     }
 
     @Override

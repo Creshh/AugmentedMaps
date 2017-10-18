@@ -56,7 +56,7 @@ public class DataProcessorA implements DataProcessor {
         float betaV = input.getO().getY() > 180 ? 360 - input.getO().getY() : -input.getO().getY();
         float h = loc.getHeight() - input.getLoc().getHeight();
         float d = loc.getDistanceCorr(input.getLoc());
-        float alphaV = (float) Math.atan2(h,d);
+        float alphaV = (float) Math.toDegrees(Math.atan2(h,d));
         float diffV = betaV + alphaV;
         float offsetV = -1;
         if(Math.abs(betaV) < (cameraViewAngleV/2f)){ // TODO -> diffV?????
@@ -66,8 +66,8 @@ public class DataProcessorA implements DataProcessor {
 
 
 //        Log.d(TAG, "bearing: " + bearingH + "| orientation: " + input.getO().getX() + " | diff: " + diffH + " | offset: " + offsetH);
-        //return new Marker(offsetH, offsetV, "test");
-        return new Marker(offsetH, .2f, "test");
+        return new Marker(offsetH, offsetV, "test");
+//        return new Marker(offsetH, .8f, "test");
     }
 
     @Override

@@ -128,8 +128,10 @@ public class OrientationService implements SensorEventListener {
         float output = newValue;
         if (oldValue != 0) {
             float diff = newValue - oldValue;
-            output = oldValue + (ALPHA * diff);
+            if(Math.abs(diff) < 180) {
+                output = oldValue + (ALPHA * diff);
 //            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
+            }
         }
         return output;
     }
