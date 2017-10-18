@@ -46,10 +46,12 @@ public class ARView extends View {
         int height = getHeight();
 //        Log.d(TAG, "Size: " + width + "___" + height);
 
-        for(MarkerDrawable md : markerDrawables){
+        if(markerDrawables != null) {
+            for (MarkerDrawable md : markerDrawables) {
 //            Log.d(TAG, "Draw Marker " + md);
-            md.setSize(width, height);
-            md.draw(canvas);
+                md.setSize(width, height);
+                md.draw(canvas);
+            }
         }
     }
 

@@ -58,10 +58,8 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     private TextView locationView;
     private TextureView textureView;
     private ARView arView;
-    private Thread debugHelperThread;
     private boolean stop = false;
 
-    private Location ownLocation;
     private List<MapNode> mapNodes;
 
     private LocationService locationService;
@@ -74,6 +72,8 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ar);
 
+        PermissionHandler p = new PermissionHandler(this);
+        p.checkPermission();
 
         tags.put("place", new ArrayList<String>());
         tags.get("place").add("town");
@@ -94,16 +94,14 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         PermissionHandler pm = new PermissionHandler(this);
         pm.checkPermission();
-        camera = Camera2.instantiate(textureView, this, getWindowManager().getDefaultDisplay());
 
-        markerList = Helpers.createSampleMarker(4, 1920, 1080);
-        arView.setMarkerListRef(markerList);
 
         locationView = (TextView) findViewById(R.id.pos);
         locationService = new LocationService(this);
 
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
+        camera = Camera2.instantiate(textureView, this, getWindowManager().getDefaultDisplay());
         float[] fov = camera.calculateFOV();
         dataProcessor.setCameraViewAngleH(fov[0]);
         dataProcessor.setCameraViewAngleV(fov[1]);
@@ -119,20 +117,6 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
 
         camera.startService();
         stop = false;
-//        debugHelperThread = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while (!stop) {
-//                    Log.d(TAG, "" + arView.getWidth() + "___" + arView.getHeight());
-//                    try {
-//                        Thread.sleep(5 * 1000);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
-//        debugHelperThread.start();
         locationService.start();
         locationService.registerListener(this);
         locationService.pushLocation();

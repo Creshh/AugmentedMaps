@@ -35,7 +35,7 @@ public class Tester {
                  + "node(around.center:5000)[\"natural\"~\"(peak)|(rock)\"];);"
                  + "out;";
 
-    String query2 = "<osm-script>"  // TODO Parameterize Query for multiple keys and multiple tags
+    String query2 = "<osm-script>"
             + "  <union into=\"_\">"
             + "    <query into=\"_\" type=\"node\">"
             + "      <around into=\"_\" lat=\"50.8322608\" lon=\"12.9252977\" radius=\"5000\"/>"

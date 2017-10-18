@@ -1,6 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
@@ -31,9 +32,10 @@ import android.view.Surface;
 import android.view.TextureView;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
 
 
 /**
@@ -41,14 +43,12 @@ import java.util.concurrent.TimeUnit;
  * TODO: wrong previewsize when starting landscape
  */
 public class Camera2 {
-
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final String TAG = "Camera2";
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
-
-    private String mCameraId;
+    private String cameraId;
     private CameraCaptureSession mCaptureSession;
 
     private CameraDevice mCameraDevice;
@@ -64,7 +64,6 @@ public class Camera2 {
     private ImageReader.OnImageAvailableListener onImageAvailableListener;
 
     private TextureView previewTarget;
-    private Context context;
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -77,17 +76,40 @@ public class Camera2 {
     private int displayRotation;
     private Display display;
 
+    private CameraManager manager;
+
+    /**
+     * Default Camera2 instantiation function attempts to use the backfacing camera.
+     *
+     * @param previewTarget TextureView where the camera preview will be shown.
+     * @param context The Activity Context, from where this is called.
+     * @param display The Display of the device on which the preview will be shown.
+     * @return Returns a Camera2 instance ready for usage.
+     */
     public static Camera2 instantiate(TextureView previewTarget, Context context, Display display) {
-        Camera2 camera = new Camera2();
+        return instantiate(previewTarget, context, display, CameraMetadata.LENS_FACING_BACK);
+    }
 
-        camera.previewTarget = previewTarget;
-        camera.context = context;
-        camera.display = display;
+    public static Camera2 instantiate(TextureView previewTarget, Context context, Display display, final int lensFacing) {
+        return new Camera2(previewTarget, context.getApplicationContext(), display, lensFacing);
+    }
 
+    private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing){
+        this.previewTarget = previewTarget;
+        this.display = display;
 
-        // TODO set cameraID!
-
-        return camera;
+        manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        CameraCharacteristics characteristics;
+        try {
+            for(String id : manager.getCameraIdList()){
+                characteristics = manager.getCameraCharacteristics(id);
+                if(characteristics.get(LENS_FACING) == lensFacing) {
+                    cameraId = id;
+                }
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     public void registerImageAvailableListener(ImageReader.OnImageAvailableListener listener){
@@ -212,17 +234,12 @@ public class Camera2 {
 
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
-        CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         try {
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                //TODO call PermissionHandler
-                return;
-            }
-            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
-        } catch (CameraAccessException e) {
+            manager.openCamera(cameraId, mStateCallback, mBackgroundHandler);
+        } catch (CameraAccessException | SecurityException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
@@ -288,9 +305,6 @@ public class Camera2 {
     };
 
 
-
-
-
     /**
      * Sets up member variables related to camera.
      *
@@ -298,81 +312,67 @@ public class Camera2 {
      * @param height The height of available size for camera preview
      */
     private void setUpCameraOutputs(int width, int height) {
-
-        CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         try {
-            for (String cameraId : manager.getCameraIdList()) {
-                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-
-                // We don't use a front facing camera in this sample.
-                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
-                }
-
-                StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                if (map == null) {
-                    continue;
-                }
-
-                // For still image captures, we use the largest available size.
-//                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CameraHelpers.CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, /*maxImages*/2);
-                mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
-
-                // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
-                displayRotation = display.getRotation();
-                //noinspection ConstantConditions
-                mSensorOrientation = (int) characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-                boolean swappedDimensions = false;
-                switch (displayRotation) {
-                    case Surface.ROTATION_0:
-                    case Surface.ROTATION_180:
-                        if (mSensorOrientation == 90 || mSensorOrientation == 270) {
-                            swappedDimensions = true;
-                        }
-                        break;
-                    case Surface.ROTATION_90:
-                    case Surface.ROTATION_270:
-                        if (mSensorOrientation == 0 || mSensorOrientation == 180) {
-                            swappedDimensions = true;
-                        }
-                        break;
-                    default:
-                        Log.e(TAG, "Display rotation is invalid: " + displayRotation);
-                }
-
-                Point displaySize = new Point();
-                display.getSize(displaySize);
-                int rotatedPreviewWidth = width;
-                int rotatedPreviewHeight = height;
-                int maxPreviewWidth = displaySize.x;
-                int maxPreviewHeight = displaySize.y;
-
-
-                if (swappedDimensions) {
-                    //noinspection SuspiciousNameCombination
-                    rotatedPreviewWidth = height;
-                    //noinspection SuspiciousNameCombination
-                    rotatedPreviewHeight = width;
-                    //noinspection SuspiciousNameCombination
-                    maxPreviewWidth = displaySize.y;
-                    //noinspection SuspiciousNameCombination
-                    maxPreviewHeight = displaySize.x;
-                }
-
-                if (maxPreviewWidth > MAX_PREVIEW_WIDTH) {
-                    maxPreviewWidth = MAX_PREVIEW_WIDTH;
-                }
-
-                if (maxPreviewHeight > MAX_PREVIEW_HEIGHT) {
-                    maxPreviewHeight = MAX_PREVIEW_HEIGHT;
-                }
-//                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
-                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.x, displaySize.y));
-                mCameraId = cameraId;
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (map == null) {
                 return;
             }
+
+            // For still image captures, we use the largest available size.
+            mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, /*maxImages*/2);
+            mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
+
+            // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
+            displayRotation = display.getRotation();
+            //noinspection ConstantConditions
+            mSensorOrientation = (int) characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            boolean swappedDimensions = false;
+            switch (displayRotation) {
+                case Surface.ROTATION_0:
+                case Surface.ROTATION_180:
+                    if (mSensorOrientation == 90 || mSensorOrientation == 270) {
+                        swappedDimensions = true;
+                    }
+                    break;
+                case Surface.ROTATION_90:
+                case Surface.ROTATION_270:
+                    if (mSensorOrientation == 0 || mSensorOrientation == 180) {
+                        swappedDimensions = true;
+                    }
+                    break;
+                default:
+                    Log.e(TAG, "Display rotation is invalid: " + displayRotation);
+            }
+
+            Point displaySize = new Point();
+            display.getSize(displaySize);
+            int rotatedPreviewWidth = width;
+            int rotatedPreviewHeight = height;
+            int maxPreviewWidth = displaySize.x;
+            int maxPreviewHeight = displaySize.y;
+
+
+            if (swappedDimensions) {
+                //noinspection SuspiciousNameCombination
+                rotatedPreviewWidth = height;
+                //noinspection SuspiciousNameCombination
+                rotatedPreviewHeight = width;
+                //noinspection SuspiciousNameCombination
+                maxPreviewWidth = displaySize.y;
+                //noinspection SuspiciousNameCombination
+                maxPreviewHeight = displaySize.x;
+            }
+
+            if (maxPreviewWidth > MAX_PREVIEW_WIDTH) {
+                maxPreviewWidth = MAX_PREVIEW_WIDTH;
+            }
+
+            if (maxPreviewHeight > MAX_PREVIEW_HEIGHT) {
+                maxPreviewHeight = MAX_PREVIEW_HEIGHT;
+            }
+//                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
+            mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.x, displaySize.y));
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
@@ -467,24 +467,13 @@ public class Camera2 {
     }
 
     public float[] calculateFOV() {
-
-        CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         CameraCharacteristics characteristics;
-        String cameraId = null;
         try {
-        for(String id : manager.getCameraIdList()){ // TODO: put this code in initializer
-            characteristics = manager.getCameraCharacteristics(id);
-            if(characteristics.get(CameraCharacteristics.LENS_FACING) != CameraMetadata.LENS_FACING_BACK)
-                break;
-            else
-                cameraId = id;
-        }
             characteristics = manager.getCameraCharacteristics(cameraId);
         } catch (CameraAccessException e) {
             e.printStackTrace();
             return null;
         }
-
         float[] maxFocus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
         SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
         float w = size.getWidth();
