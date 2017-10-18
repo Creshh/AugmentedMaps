@@ -10,7 +10,9 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
@@ -19,6 +21,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.camera.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MissingParameterException;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
@@ -64,11 +67,24 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
     private LocationService locationService;
     private Orientation orientation;
     private List<MarkerDrawable> markerList;
+    private Map<String, List<String>> tags = new HashMap<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ar);
+
+
+        tags.put("place", new ArrayList<String>());
+        tags.get("place").add("town");
+        tags.get("place").add("village");
+        tags.get("place").add("city");
+
+        tags.put("natural", new ArrayList<String>());
+        tags.get("natural").add("peak");
+        tags.get("natural").add("rock");
+
+
         textureView = (TextureView) findViewById(R.id.preview);
         arView = (ARView) findViewById(R.id.arview);
 
@@ -215,7 +231,11 @@ public class ARActivity extends Activity implements OrientationListener, Locatio
                 Log.d(TAG, "acquireMapNodes for Location " + loc.toString());
                 int count = 0;
                 do {
-                    mapNodes = mapNodeService.getMapPointsInProximity(loc, null, 6000);
+                    try {
+                        mapNodes = mapNodeService.getMapPointsInProximity(loc, tags, 6000);
+                    } catch (MissingParameterException e) {
+                        e.printStackTrace();
+                    }
                     count ++;
                 } while (count < 3 && mapNodes == null);
                 if(mapNodes == null) return;

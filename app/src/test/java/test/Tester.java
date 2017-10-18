@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MissingParameterException;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
@@ -48,8 +49,8 @@ public class Tester {
             + "  <print e=\"\" from=\"_\" geometry=\"skeleton\" limit=\"\" mode=\"body\" n=\"\" order=\"id\" s=\"\" w=\"\"/>"
             + "</osm-script>";
 
-//    @Test
-    public void test() throws ParserConfigurationException, SAXException, IOException {
+    @Test
+    public void test() throws ParserConfigurationException, SAXException, IOException, MissingParameterException {
         MapNodeService mapService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
 //        List<MapNode> nodes = opService.getMapPointsInProximity(new Location(50.8322608f, 12.9252977f), null, 5000);
         List<MapNode> nodes = mapService.getMapPointsInProximity(new Location(50.83f, 12.9f), null, 10000);
@@ -91,9 +92,8 @@ public class Tester {
         System.out.println("Bearing=" + locBase.getBearingTo(loc6));
     }
 
-    @Test
+//    @Test
     public void testCalculatePosition(){
-        // TODO: calculate vertical position
 
         float o = 22.5f;
 

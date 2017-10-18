@@ -52,7 +52,6 @@ public class DataProcessorA implements DataProcessor {
             offsetH = ((offsetH + 1) / 2f); // offsetH has to be in Range [0..1] to be drawn
         }
 
-        // TODO: calculate vertical position
         float betaV = input.getO().getY() > 180 ? 360 - input.getO().getY() : -input.getO().getY();
         float h = loc.getHeight() - input.getLoc().getHeight();
         float d = loc.getDistanceCorr(input.getLoc());
@@ -61,13 +60,10 @@ public class DataProcessorA implements DataProcessor {
         float offsetV = -1;
         if(Math.abs(betaV) < (cameraViewAngleV/2f)){ // TODO -> diffV?????
             offsetV = diffV / (cameraViewAngleV/2f);
-            offsetV = ((offsetV + 1) /2f);
-        } // TODO offsetV  is always -1
+            offsetV = ((offsetV + 1) /2f); // offsetH has to be in Range [0..1] to be drawn
+        }
 
-
-//        Log.d(TAG, "bearing: " + bearingH + "| orientation: " + input.getO().getX() + " | diff: " + diffH + " | offset: " + offsetH);
-        return new Marker(offsetH, offsetV, "test");
-//        return new Marker(offsetH, .8f, "test");
+        return new Marker(offsetH, offsetV, "key");
     }
 
     @Override
