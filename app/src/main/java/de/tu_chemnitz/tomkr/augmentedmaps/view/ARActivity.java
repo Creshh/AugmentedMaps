@@ -85,11 +85,9 @@ public class ARActivity extends Activity{
                     arView.invalidate();
                 }
                 if (message.what == MSG_UPDATE_ORIENTATION_VIEW) {
-
                     orientationView.setText((String) message.obj);
                 }
                 if (message.what == MSG_UPDATE_LOC_VIEW) {
-
                     locationView.setText((String) message.obj);
                 }
                 return true;

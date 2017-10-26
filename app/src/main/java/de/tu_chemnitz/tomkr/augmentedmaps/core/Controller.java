@@ -203,13 +203,11 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
             smallLocationUpdate = true;
-            state = State.LOCATION_ACQUIRED;
         } else {
-            state = State.LOCATION_ACQUIRED;
         }
-
         this.loc = loc;
         state = State.LOCATION_ACQUIRED;
+        Log.i(TAG, "Controller State changed to " + state.name());
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
     }
 
@@ -224,7 +222,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public boolean handleMessage(Message message) {
         switch (message.what) {
             case MSG_UPDATE_OWN_HEIGHT:
-                Log.d(TAG, "Message -> MSG_UPDATE_OWN_HEIGHT inbound");
                 if (loc != null) {
                     int elevations[] = elevationService.getElevation(new Location[]{loc});
                     for (int e : elevations) {
@@ -234,21 +231,21 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     dataProcessor.setOwnLocation(loc);
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
                     state = State.OWN_HEIGHT_ACQUIRED;
+                    Log.i(TAG, "Controller State changed to " + state.name());
                 }
                 break;
 
             case MSG_UPDATE_MAPNODES:
-                Log.d(TAG, "Message -> MSG_UPDATE_MAPNODES inbound");
                 try {
                     mapNodes = mapNodeService.getMapPointsInProximity(loc, tags, MAX_DISTANCE);
                     state = State.NODES_ACQUIRED;
+                    Log.i(TAG, "Controller State changed to " + state.name());
                 } catch (MissingParameterException e) {
                     e.printStackTrace();
                 }
                 break;
 
             case MSG_UPDATE_NODE_HEIGHT:
-                Log.d(TAG, "Message -> MSG_UPDATE_HEIGHT inbound");
                 if (mapNodes != null) {
                     for (MapNode node : mapNodes) {
                         Log.d(TAG, "acquired node " + node.getName());
@@ -257,6 +254,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
                         }
                     }
                     state = State.NODES_HEIGHT_ACQUIRED;
+                    Log.i(TAG, "Controller State changed to " + state.name());
                 }
                 break;
 
@@ -273,6 +271,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                 }
                 state = State.DATA_PROCESSING;
+                Log.i(TAG, "Controller State changed to " + state.name());
                 break;
         }
         return true;
