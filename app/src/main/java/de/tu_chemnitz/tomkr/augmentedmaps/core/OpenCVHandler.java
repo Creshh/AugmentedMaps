@@ -7,8 +7,14 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Size;
+import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.video.SparsePyrLKOpticalFlow;
+
+import static android.R.attr.maxLevel;
+import static android.os.Build.VERSION_CODES.M;
 
 
 /**
@@ -28,13 +34,42 @@ public class OpenCVHandler {
         }
     }
 
-    private Bitmap old;
+    private Mat old;
+    private Mat pts;
+    private Mat status;
 
-    private void calculateOpticalFlow(Bitmap current){
+    public OpenCVHandler(){
+        status = new Mat();
+    }
 
-        Imgproc.
+    private void calculateFeatureSet(Bitmap bmp){
+        double quality = 1;
+        double minDist = 10;
+        Mat current = new Mat();
+        Utils.bitmapToMat(bmp, current);
+        MatOfPoint corners = new MatOfPoint();
+        Imgproc.goodFeaturesToTrack(current, corners, 10 /*max Corners*/, quality, minDist);
+    }
+
+    private void calculateOpticalFlow(Bitmap bmp, int w, int h){
+        Size winSize = new Size(w, h);
+        int maxLevel = 3;
+        TermCriteria crit = new TermCriteria();
+        int flags = 0;
+        double minEigThreshold = 1;
+
+
+        Mat nextPts = new Mat();
+        Mat current = new Mat();
+        Utils.bitmapToMat(bmp, current);
+
+//        SparsePyrLKOpticalFlow.create(winSize, maxLevel, crit, flags, minEigThreshold);
+        SparsePyrLKOpticalFlow sparsePyrLKOpticalFlow = SparsePyrLKOpticalFlow.create();
+        sparsePyrLKOpticalFlow.calc(old, current, pts, nextPts, status);
+
 
         this.old = current;
+        this.pts = nextPts;
     }
 
 

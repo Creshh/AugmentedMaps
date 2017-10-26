@@ -39,7 +39,7 @@ public class LocationService {
 
     public void pushLocation(){
         for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
-            listener.onInitialLocation(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)lastBigLocation.getLatitude(), (float)lastBigLocation.getLongitude(), (int)lastBigLocation.getAltitude()));
+            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)lastBigLocation.getLatitude(), (float)lastBigLocation.getLongitude(), (int)lastBigLocation.getAltitude()));
         }
     }
 
@@ -101,18 +101,16 @@ public class LocationService {
             }
         }
 
+        // TODO proper Location handling with usage of both providers
         @Override
         public void onLocationChanged(Location location) {
             Log.d(TAG, "onLocationChanged: " + location);
             lastSmallLocation.set(location);
             if(lastBigLocation.distanceTo(location)>DIST){
                 lastBigLocation = location;
-                for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
-                    listener.onBigLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
-                }
             }
             for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
-                listener.onSmallLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
+                listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
             }
         }
 

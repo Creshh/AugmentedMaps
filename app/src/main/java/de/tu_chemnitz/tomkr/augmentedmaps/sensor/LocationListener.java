@@ -8,7 +8,5 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
  */
 
 public interface LocationListener {
-    void onBigLocationChange(Location loc);
-    void onSmallLocationChange(Location loc);
-    void onInitialLocation(Location loc);
+    void onLocationChange(Location loc);
 }
