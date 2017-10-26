@@ -9,6 +9,9 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOCATION_UPDATE_DISTANCE;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOCATION_UPDATE_INTERVAL;
+
 
 /**
  * Created by Tom Kretzschmar on 01.09.2017.
@@ -21,12 +24,9 @@ public class LocationService {
 
     private LocationManager locationManager;
     private LocationListener[] mLocationListeners;
-    private static final int LOCATION_INTERVAL = 1000;
-    private static final float LOCATION_DISTANCE = 10f;
-    private static final int DIST = 500;
 
-    private Location lastBigLocation;
-    private Location lastSmallLocation;
+
+    private Location lastLocation;
     private List<de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener> listeners = new ArrayList<>();
 
     public void registerListener(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener){
@@ -39,7 +39,7 @@ public class LocationService {
 
     public void pushLocation(){
         for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
-            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)lastBigLocation.getLatitude(), (float)lastBigLocation.getLongitude(), (int)lastBigLocation.getAltitude()));
+            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)lastLocation.getLatitude(), (float)lastLocation.getLongitude(), (int)lastLocation.getAltitude()));
         }
     }
 
@@ -57,14 +57,14 @@ public class LocationService {
     public void start() {
         Log.d(TAG, "startGPS");
         try {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE, mLocationListeners[1]);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, LOCATION_UPDATE_INTERVAL, LOCATION_UPDATE_DISTANCE, mLocationListeners[1]);
         } catch (java.lang.SecurityException ex) {
             Log.i(TAG, "fail to request location update, ignore", ex);
         } catch (IllegalArgumentException ex) {
             Log.d(TAG, "network provider does not exist, " + ex.getMessage());
         }
         try {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE, mLocationListeners[0]);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_UPDATE_INTERVAL, LOCATION_UPDATE_DISTANCE, mLocationListeners[0]);
         } catch (java.lang.SecurityException ex) {
             Log.i(TAG, "fail to request location update, ignore", ex);
         } catch (IllegalArgumentException ex) {
@@ -89,13 +89,12 @@ public class LocationService {
 
 
         public LocationListener(String provider) {
-            lastSmallLocation = new Location(provider);
-            Log.d(TAG, "LocationListener " + provider + " Location: " + lastSmallLocation);
+            lastLocation = new Location(provider);
+            Log.d(TAG, "LocationListener " + provider + " Location: " + lastLocation);
             try {
                 Log.d(TAG, "LocationListener " + provider + " LastKnownLocation: " + locationManager.getLastKnownLocation(provider));
                 if(locationManager.getLastKnownLocation(provider) != null)
-                    lastBigLocation = locationManager.getLastKnownLocation(provider);
-                    lastSmallLocation = locationManager.getLastKnownLocation(provider);
+                    lastLocation = locationManager.getLastKnownLocation(provider);
             } catch (SecurityException ex) {
 
             }
@@ -105,10 +104,7 @@ public class LocationService {
         @Override
         public void onLocationChanged(Location location) {
             Log.d(TAG, "onLocationChanged: " + location);
-            lastSmallLocation.set(location);
-            if(lastBigLocation.distanceTo(location)>DIST){
-                lastBigLocation = location;
-            }
+            lastLocation.set(location);
             for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
                 listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
             }

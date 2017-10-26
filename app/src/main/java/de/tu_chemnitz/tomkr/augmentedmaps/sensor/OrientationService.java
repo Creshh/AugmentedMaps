@@ -14,6 +14,7 @@ import java.util.List;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
 
 import static android.R.attr.rotation;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FACTOR;
 
 
 /**
@@ -24,8 +25,6 @@ import static android.R.attr.rotation;
 public class OrientationService implements SensorEventListener {
 
     private static final String TAG = OrientationService.class.getName();
-
-    private static final float ALPHA = 0.25f;
     private List<OrientationListener> listeners;
     private SensorManager sensorManager;
 
@@ -116,7 +115,7 @@ public class OrientationService implements SensorEventListener {
         if (oldValue != 0) {
             float diff = newValue - oldValue;
             if(Math.abs(diff) < 180) {
-                output = oldValue + (ALPHA * diff);
+                output = oldValue + (LOW_PASS_FACTOR * diff);
 //            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
             }
         }

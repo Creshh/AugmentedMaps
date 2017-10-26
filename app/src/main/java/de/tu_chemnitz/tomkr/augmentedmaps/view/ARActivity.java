@@ -44,6 +44,9 @@ import static android.R.attr.data;
 import static android.R.attr.y;
 import static android.R.string.no;
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -77,15 +80,15 @@ public class ARActivity extends Activity{
         Handler.Callback updateViewCallback = new Handler.Callback() {
             @Override
             public boolean handleMessage(Message message) {
-                if (message.what == Controller.MSG_UPDATE_VIEW) {
+                if (message.what == MSG_UPDATE_VIEW) {
                     arView.setMarkerListRef(controller.getMarkerList());
                     arView.invalidate();
                 }
-                if (message.what == Controller.MSG_UPDATE_ORIENTATION_VIEW) {
+                if (message.what == MSG_UPDATE_ORIENTATION_VIEW) {
 
                     orientationView.setText((String) message.obj);
                 }
-                if (message.what == Controller.MSG_UPDATE_LOC_VIEW) {
+                if (message.what == MSG_UPDATE_LOC_VIEW) {
 
                     locationView.setText((String) message.obj);
                 }

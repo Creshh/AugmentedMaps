@@ -1,15 +1,23 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.util;
 
+import android.content.Context;
+import android.content.res.Resources;
 import android.util.Log;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.MarkerDrawable;
 
@@ -85,5 +93,37 @@ public class Helpers {
      */
     public static float random(){
         return random.nextFloat();
+    }
+
+    public static String getConfigValue(Context context, String name) {
+        Resources resources = context.getResources();
+
+        try {
+            InputStream rawResource = resources.openRawResource(R.raw.config);
+            Properties properties = new Properties();
+            properties.load(rawResource);
+            return properties.getProperty(name);
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Unable to find the config file: " + e.getMessage());
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to open config file.");
+        }
+
+        return null;
+    }
+
+    public static Map<String, List<String>> getTagsFromConfig(Context context) {
+        Map<String, List<String>> tags = new HashMap<>();
+        String configValue = Helpers.getConfigValue(context, "tags");
+        String[] sets = configValue.split("|");
+        for (String set : sets) {
+            String key = set.split(":")[0];
+            String[] values = set.split(":")[1].split(",");
+            tags.put(key, new ArrayList<String>());
+            for (String value : values) {
+                tags.get(key).add(value);
+            }
+        }
+        return tags;
     }
 }

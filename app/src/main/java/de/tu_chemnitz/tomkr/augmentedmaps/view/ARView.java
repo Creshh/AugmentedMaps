@@ -50,14 +50,13 @@ public class ARView extends View {
 //        Log.d(TAG, "Size: " + width + "___" + height);
 
         if(markerDrawables != null) {
-
-            Controller.rwLock.readLock().lock();
-            for (MarkerDrawable md : markerDrawables) {
+            synchronized (markerDrawables) {
+                for (MarkerDrawable md : markerDrawables) {
 //            Log.d(TAG, "Draw Marker " + md);
-                md.setSize(width, height);
-                md.draw(canvas);
+                    md.setSize(width, height);
+                    md.draw(canvas);
+                }
             }
-            Controller.rwLock.readLock().unlock();
         }
     }
 

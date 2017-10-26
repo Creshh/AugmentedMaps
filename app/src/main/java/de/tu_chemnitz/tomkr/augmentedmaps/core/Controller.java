@@ -8,11 +8,8 @@ import android.os.Message;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
@@ -30,91 +27,76 @@ import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.MarkerDrawable;
+
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.DIST_THRESHOLD;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MAX_DISTANCE;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_PROCESS_DATA;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_MAPNODES;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_NODE_HEIGHT;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_OWN_HEIGHT;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.
  *
  * Main Application Controller
  */
-
 public class Controller extends Thread implements OrientationListener, LocationListener, Handler.Callback {
 
     private static final String TAG = Controller.class.getName();
 
-    public static ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private enum State{
+        INITIALIZED, LOCATION_ACQUIRED, OWN_HEIGHT_ACQUIRED, NODES_ACQUIRED, NODES_HEIGHT_ACQUIRED, DATA_PROCESSING
+    }
+    private State state;
+    private boolean smallLocationUpdate;
 
-    private static final int TICKS_PER_SECOND = 20;
-    private static final int TARGET_FRAMETIME = 1000/TICKS_PER_SECOND;
-    private static final int MAX_DISTANCE = 5000;
-    private static final float DIST_THRESHOLD = 500;
-    public static final int MSG_UPDATE_VIEW = 1;
-    public static final int MSG_UPDATE_LOC_VIEW = 2;
-    public static final int MSG_UPDATE_ORIENTATION_VIEW = 3;
-    private static final int MSG_UPDATE_MAPNODES = 4;
-    private static final int MSG_PROCESS_DATA = 5;
-    private static final int MSG_UPDATE_OWN_HEIGHT = 6;
-    private static final int MSG_UPDATE_HEIGHT = 7;
     private final LocationService locationService;
     private final OrientationService orientationService;
+    private final DataProcessor dataProcessor;
+    private final ElevationService elevationService;
+    private final MapNodeService mapNodeService;
 
+    private Orientation orientation;
     private Location loc;
+
     private Map<String, List<String>> tags;
-
-
     private List<MapNode> mapNodes;
     private List<MarkerDrawable> markerList;
 
-    private MapNodeService mapNodeService;
     private HandlerThread dataFetchThread;
     private Handler dataFetchHandler;
     private HandlerThread dataProcThread;
     private Handler dataProcHandler;
+    private Handler mainHandler;
+
     private boolean stop;
     private boolean pause;
-    private Object pauseLock;
-
-    private Orientation orientation;
-    private DataProcessor dataProcessor;
-    private ElevationService elevationService;
-
-
-    private Handler mainHandler;
-    private boolean dataProcessed;
-    private boolean ownHeightSet;
-    private boolean mapNodeHeightSet;
-    private boolean bigUpdate;
-    private boolean smallUpdate;
-    private boolean mapNodeChange;
+    private final Object pauseLock;
 
     public Controller(Handler.Callback activityCallback, Context context) {
-        setTags();
+        tags = Helpers.getTagsFromConfig(context);
         mainHandler = new Handler(Looper.getMainLooper(), activityCallback);
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
         elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
         locationService = new LocationService(context);
         orientationService = new OrientationService(context);
-    }
 
-    private void setTags() {
-        tags = new HashMap<>();
-        tags.put("place", new ArrayList<String>());
-        tags.get("place").add("town");
-        tags.get("place").add("village");
-        tags.get("place").add("city");
-
-        tags.put("natural", new ArrayList<String>());
-        tags.get("natural").add("peak");
-        tags.get("natural").add("rock");
+        state = State.INITIALIZED;
+        pauseLock = new Object();
     }
 
     @Override
     public void run() {
         Log.d(TAG, "run");
         while (!stop) {
-
-            long startttime = System.currentTimeMillis();
+            long starttime = System.currentTimeMillis();
 
             synchronized (pauseLock) {
                 while (pause) {
@@ -125,30 +107,35 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                 }
             }
-            if (mapNodeChange) {
-                mapNodeChange = false;
-                mapNodeHeightSet = false;
-                dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_HEIGHT));
+
+            switch(state){
+                case INITIALIZED:
+                    // location will be acquired automatically or call pushLocation now
+                    locationService.pushLocation();
+                    break;
+                case LOCATION_ACQUIRED:
+                    dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
+                    break;
+                case OWN_HEIGHT_ACQUIRED:
+                    if(smallLocationUpdate) {
+                        smallLocationUpdate = false;
+                        state = State.DATA_PROCESSING;
+                    }
+                    else {
+                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_MAPNODES));
+                    }
+                    break;
+                case NODES_ACQUIRED:
+                    dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_NODE_HEIGHT));
+                    break;
+                case NODES_HEIGHT_ACQUIRED:
+                case DATA_PROCESSING:
+                    dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
+                    break;
             }
-            if (ownHeightSet && mapNodeHeightSet) {
-                dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
-            }
-            if (smallUpdate) {
-                smallUpdate = false;
-                ownHeightSet = false;
-                dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
-            }
-            if (bigUpdate) {
-                bigUpdate = false;
-                ownHeightSet = false;
-                dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_MAPNODES));
-                dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
-            }
-            if (dataProcessed) { // or markerList not null
-                mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
-//                dataProcessed = false;
-            }
-            long frametime = (System.currentTimeMillis()-startttime);
+            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
+
+            long frametime = (System.currentTimeMillis()-starttime);
             if(frametime < TARGET_FRAMETIME){
                 try {
                     sleep(TARGET_FRAMETIME-frametime);
@@ -161,21 +148,12 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     public void startApplication() {
         stop = false;
-        if(pauseLock == null){
-            pauseLock = new Object();
-        } else {
-            synchronized (pauseLock){
-                pause = false;
-                pauseLock.notifyAll();
-            }
+        synchronized (pauseLock){
+            pause = false;
+            pauseLock.notifyAll();
         }
 
-        dataProcessed = false;
-        ownHeightSet = false;
-        mapNodeHeightSet = false;
-        bigUpdate = false;
-        smallUpdate = false;
-        mapNodeChange = false;
+        smallLocationUpdate = false;
 
         dataFetchThread = new HandlerThread("DataFetchThread");
         dataFetchThread.start();
@@ -189,7 +167,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
         locationService.start();
         orientationService.registerListener(this);
         locationService.registerListener(this);
-        locationService.pushLocation();
 
         if(!this.isAlive()){
             this.start();
@@ -225,11 +202,14 @@ public class Controller extends Thread implements OrientationListener, LocationL
     @Override // TODO after onResume, no nodes will be displayed
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
-            smallUpdate = true;
+            smallLocationUpdate = true;
+            state = State.LOCATION_ACQUIRED;
         } else {
-            bigUpdate = true;
+            state = State.LOCATION_ACQUIRED;
         }
+
         this.loc = loc;
+        state = State.LOCATION_ACQUIRED;
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
     }
 
@@ -243,47 +223,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
     @Override
     public boolean handleMessage(Message message) {
         switch (message.what) {
-            case MSG_UPDATE_MAPNODES:
-                Log.d(TAG, "Message -> MSG_UPDATE_MAPNODES inbound");
-                try {
-                    mapNodes = mapNodeService.getMapPointsInProximity(loc, tags, MAX_DISTANCE);
-                    mapNodeChange = true;
-                } catch (MissingParameterException e) {
-                    e.printStackTrace();
-                }
-                Log.d(TAG, "Message -> MSG_UPDATE_MAPNODES finished");
-                break;
-            case MSG_PROCESS_DATA:
-                if (mapNodes != null && mapNodes.size() > 0) {
-                    List<MarkerDrawable> tempList = new ArrayList<>();
-                    for (MapNode node : mapNodes) {
-                        Marker marker = dataProcessor.processData(new InputType(node.getLoc(), orientation));
-                        marker.setKey(node.getName() + " [" + node.getLoc().getHeight() + "]");
-                        tempList.add(new MarkerDrawable(marker));
-                    }
-                    if(rwLock.writeLock().tryLock()) {
-                        try {
-                            markerList = tempList;
-                        } finally {
-                            rwLock.writeLock().unlock();
-                        }
-                    }
-                }
-                dataProcessed = true;
-                break;
-            case MSG_UPDATE_HEIGHT:
-                Log.d(TAG, "Message -> MSG_UPDATE_HEIGHT inbound");
-                if (mapNodes != null) {
-                    for (MapNode node : mapNodes) {
-                        Log.d(TAG, "acquired node " + node.getName());
-                        if (node.getLoc().getHeight() == -1) {
-                            node.getLoc().setHeight(elevationService.getElevation(new Location[]{node.getLoc()})[0]); // TODO: change to batch query
-                        }
-                    }
-                    mapNodeHeightSet = true;
-                }
-                Log.d(TAG, "Message -> MSG_UPDATE_HEIGHT finished");
-                break;
             case MSG_UPDATE_OWN_HEIGHT:
                 Log.d(TAG, "Message -> MSG_UPDATE_OWN_HEIGHT inbound");
                 if (loc != null) {
@@ -294,11 +233,46 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     loc.setHeight(elevations[0]);
                     dataProcessor.setOwnLocation(loc);
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
-                    ownHeightSet = true;
+                    state = State.OWN_HEIGHT_ACQUIRED;
                 }
-                Log.d(TAG, "Message -> MSG_UPDATE_OWN_HEIGHT finished");
                 break;
-            default:
+
+            case MSG_UPDATE_MAPNODES:
+                Log.d(TAG, "Message -> MSG_UPDATE_MAPNODES inbound");
+                try {
+                    mapNodes = mapNodeService.getMapPointsInProximity(loc, tags, MAX_DISTANCE);
+                    state = State.NODES_ACQUIRED;
+                } catch (MissingParameterException e) {
+                    e.printStackTrace();
+                }
+                break;
+
+            case MSG_UPDATE_NODE_HEIGHT:
+                Log.d(TAG, "Message -> MSG_UPDATE_HEIGHT inbound");
+                if (mapNodes != null) {
+                    for (MapNode node : mapNodes) {
+                        Log.d(TAG, "acquired node " + node.getName());
+                        if (node.getLoc().getHeight() == -1) {
+                            node.getLoc().setHeight(elevationService.getElevation(new Location[]{node.getLoc()})[0]); // TODO: change to batch query
+                        }
+                    }
+                    state = State.NODES_HEIGHT_ACQUIRED;
+                }
+                break;
+
+            case MSG_PROCESS_DATA:
+                if (mapNodes != null && mapNodes.size() > 0) {
+                    List<MarkerDrawable> tempList = new ArrayList<>();
+                    for (MapNode node : mapNodes) {
+                        Marker marker = dataProcessor.processData(new InputType(node.getLoc(), orientation));
+                        marker.setKey(node.getName() + " [" + node.getLoc().getHeight() + "]");
+                        tempList.add(new MarkerDrawable(marker));
+                    }
+                    synchronized (markerList) {
+                        markerList = tempList;
+                    }
+                }
+                state = State.DATA_PROCESSING;
                 break;
         }
         return true;
