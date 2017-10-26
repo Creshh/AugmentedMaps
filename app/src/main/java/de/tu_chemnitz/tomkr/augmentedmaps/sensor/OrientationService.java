@@ -23,7 +23,6 @@ import static android.R.attr.rotation;
 
 public class OrientationService implements SensorEventListener {
 
-
     private static final String TAG = OrientationService.class.getName();
 
     private static final float ALPHA = 0.25f;
@@ -40,7 +39,7 @@ public class OrientationService implements SensorEventListener {
     private Sensor mag;
 
     private Orientation orientation;
-    private int defaultDisplayRotation;
+//    private int defaultDisplayRotation;
 
     public OrientationService(Context context) {
         listeners = new ArrayList<>();
@@ -50,7 +49,7 @@ public class OrientationService implements SensorEventListener {
         mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         orientation = new Orientation();
-        defaultDisplayRotation = ((WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+//        defaultDisplayRotation = ((WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
     }
 
     private Orientation getOrientation() {
@@ -59,25 +58,14 @@ public class OrientationService implements SensorEventListener {
         // Rotation matrix based on current readings from accelerometer and magnetometer.
         SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading);
 
-
         // Remap Coordinate System correctly
         float[] remappedMatrix = new float[9];
 
 //        if (defaultDisplayRotation == 1) {
-//            SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_MINUS_Z, remappedMatrix);
         SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, remappedMatrix); // Correct mapping -> see Using the camera (Y axis along the camera's axis) for an augmented reality application where the rotation angles are neede remapCoordinateSystem(inR, AXIS_X, AXIS_Z, outR);
-//            Log.d(TAG, "############################################# Rotation = 1 -> LANDSCAPE");
 //        } else {
-//            Log.d(TAG, "############################################# Rotation = 0 -> PORTRAIT");
 //            SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_Z, remappedMatrix);
 //        }
-
-//        if(defaultDisplayRotation == 0) // Default display rotation is portrait
-//            SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_MINUS_X, SensorManager.AXIS_Y, remappedMatrix);
-//        else   // Default display rotation is landscape
-//            SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_X, remappedMatrix);
-
-//        remappedMatrix = rotationMatrix;
 
         // Express the updated rotation matrix as three orientation angles.
         SensorManager.getOrientation(remappedMatrix, orientationAngles);
@@ -98,7 +86,6 @@ public class OrientationService implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) accelerometerReading = sensorEvent.values;
         if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) magnetometerReading = sensorEvent.values;
         orientation = getOrientation();

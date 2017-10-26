@@ -66,20 +66,12 @@ public class ARActivity extends Activity{
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ar);
-
         PermissionHandler p = new PermissionHandler(this);
         p.checkPermission();
-
         textureView = (TextureView) findViewById(preview);
         arView = (ARView) findViewById(R.id.arview);
-
         orientationView = (TextView) findViewById(R.id.orientation);
-
-        PermissionHandler pm = new PermissionHandler(this);
-        pm.checkPermission();
-
         locationView = (TextView) findViewById(R.id.pos);
-
         camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
 
         Handler.Callback updateViewCallback = new Handler.Callback() {
@@ -100,7 +92,7 @@ public class ARActivity extends Activity{
                 return true;
             }
         };
-
+        
         controller = new Controller(updateViewCallback, this);
         controller.setFov(camera.calculateFOV());
     }

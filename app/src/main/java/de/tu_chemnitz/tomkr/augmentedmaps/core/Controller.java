@@ -1,23 +1,16 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.core;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -51,8 +44,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     public static ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private static final int FRAMETIME = 1000/2;
-    private long oldTime = -1;
+    private static final int TICKS_PER_SECOND = 20;
+    private static final int TARGET_FRAMETIME = 1000/TICKS_PER_SECOND;
     private static final int MAX_DISTANCE = 5000;
     private static final float DIST_THRESHOLD = 500;
     public static final int MSG_UPDATE_VIEW = 1;
@@ -96,17 +89,12 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     public Controller(Handler.Callback activityCallback, Context context) {
         setTags();
-
-
         mainHandler = new Handler(Looper.getMainLooper(), activityCallback);
-
-
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
         elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
         locationService = new LocationService(context);
         orientationService = new OrientationService(context);
-
     }
 
     private void setTags() {
@@ -126,6 +114,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
         Log.d(TAG, "run");
         while (!stop) {
 
+            long startttime = System.currentTimeMillis();
+
             synchronized (pauseLock) {
                 while (pause) {
                     try {
@@ -135,21 +125,17 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                 }
             }
-
             if (mapNodeChange) {
                 mapNodeChange = false;
                 mapNodeHeightSet = false;
-
                 dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_HEIGHT));
             }
             if (ownHeightSet && mapNodeHeightSet) {
                 dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
             }
             if (smallUpdate) {
-
                 smallUpdate = false;
                 ownHeightSet = false;
-
                 dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
             }
             if (bigUpdate) {
@@ -162,22 +148,15 @@ public class Controller extends Thread implements OrientationListener, LocationL
                 mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
 //                dataProcessed = false;
             }
-
-
-
-
-            if(oldTime != -1){
-                long current = System.currentTimeMillis();
+            long frametime = (System.currentTimeMillis()-startttime);
+            if(frametime < TARGET_FRAMETIME){
                 try {
-                    long sleeptime = FRAMETIME-(current - oldTime);
-                    sleep(sleeptime);
+                    sleep(TARGET_FRAMETIME-frametime);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                oldTime = current;
             }
         }
-
     }
 
     public void startApplication() {
@@ -221,7 +200,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
         synchronized (pauseLock) {
             pause = true;
         }
-
         orientationService.unregisterListener(this);
         locationService.unregisterListener(this);
         orientationService.stop();
@@ -244,7 +222,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
 
-    @Override
+    @Override // TODO after onResume, no nodes will be displayed
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
             smallUpdate = true;
@@ -264,7 +242,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     @Override
     public boolean handleMessage(Message message) {
-//        Log.d(TAG, "handleMessage[" + message.what + "]");
         switch (message.what) {
             case MSG_UPDATE_MAPNODES:
                 Log.d(TAG, "Message -> MSG_UPDATE_MAPNODES inbound");
@@ -277,7 +254,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
                 Log.d(TAG, "Message -> MSG_UPDATE_MAPNODES finished");
                 break;
             case MSG_PROCESS_DATA:
-//                Log.d(TAG, "Message -> MSG_PROCESS_DATA inbound");
                 if (mapNodes != null && mapNodes.size() > 0) {
                     List<MarkerDrawable> tempList = new ArrayList<>();
                     for (MapNode node : mapNodes) {
@@ -294,7 +270,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                 }
                 dataProcessed = true;
-//                Log.d(TAG, "Message -> MSG_PROCESS_DATA finished");
                 break;
             case MSG_UPDATE_HEIGHT:
                 Log.d(TAG, "Message -> MSG_UPDATE_HEIGHT inbound");
@@ -318,6 +293,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                     loc.setHeight(elevations[0]);
                     dataProcessor.setOwnLocation(loc);
+                    mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
                     ownHeightSet = true;
                 }
                 Log.d(TAG, "Message -> MSG_UPDATE_OWN_HEIGHT finished");
@@ -325,7 +301,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
             default:
                 break;
         }
-
         return true;
     }
 
