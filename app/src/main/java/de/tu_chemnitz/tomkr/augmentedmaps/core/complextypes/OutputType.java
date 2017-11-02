@@ -7,8 +7,8 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 /**
  * Created by Tom Kretzschmar on 31.08.2017.
  *
+ * Class can be omitted - UNUSED!
  */
-
 public class OutputType {
     private List<Marker> marker;
 

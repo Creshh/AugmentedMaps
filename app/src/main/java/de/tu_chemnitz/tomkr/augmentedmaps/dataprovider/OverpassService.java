@@ -90,10 +90,10 @@ public class OverpassService implements MapNodeService {
 
 
     /**
-     * @param query the overpass query
+     * @param query the overpass query string
      * @return the nodes in the formulated query
      */
-    public Document getNodesViaOverpass(String query) throws IOException, ParserConfigurationException, SAXException {
+    private Document getNodesViaOverpass(String query) throws IOException, ParserConfigurationException, SAXException {
         URL osm = new URL(OVERPASS_API);
         HttpURLConnection connection = (HttpURLConnection) osm.openConnection();
         connection.setDoInput(true);
@@ -112,7 +112,7 @@ public class OverpassService implements MapNodeService {
 
     /**
      *
-     * @param xmlDocument
+     * @param xmlDocument the xml document retrieved from the Overpass API
      * @return a list of openstreetmap nodes extracted from xml
      */
     @SuppressWarnings("nls")

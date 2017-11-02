@@ -16,6 +16,7 @@ import java.util.Locale;
 /**
  * Created by Tom Kretzschmar on 15.09.2017.
  *
+ * May be used to create Images for Evaluation.
  */
 
 

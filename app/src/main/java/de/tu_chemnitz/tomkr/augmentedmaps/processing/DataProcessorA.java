@@ -2,20 +2,12 @@ package de.tu_chemnitz.tomkr.augmentedmaps.processing;
 
 
 
-import android.graphics.Point;
-import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.util.Log;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.OutputType;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
-import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
 
-import static android.R.attr.offset;
-import static android.R.attr.x;
-import static android.R.attr.y;
 
 /**
  * Created by Tom Kretzschmar on 31.08.2017.
@@ -24,8 +16,7 @@ import static android.R.attr.y;
 
 public class DataProcessorA implements DataProcessor {
 
-    //private static final String TAG = DataProcessorA.class.getName();
-    private static final String TAG = "H_POS";
+    private static final String TAG = DataProcessorA.class.getName();
     private Location loc;
     private float cameraViewAngleH;
     private float cameraViewAngleV;
