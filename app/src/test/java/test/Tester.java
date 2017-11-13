@@ -1,10 +1,15 @@
 package test;
 
+import android.util.Log;
+
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -19,9 +24,11 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 
 import static android.R.attr.data;
 import static android.R.id.input;
+import static android.content.ContentValues.TAG;
 
 
 /**
@@ -29,6 +36,24 @@ import static android.R.id.input;
  *
  */
 public class Tester {
+
+    @Test
+    public void testHelpers(){
+        Map<String, List<String>> tags = new HashMap<>();
+        String configValue = "place:town,village,city|natural:peak,rock";
+        System.out.println("configValue: " + configValue);
+        String[] sets = configValue.split("\\|");
+        for (String set : sets) {
+            System.out.println("set: " + set);
+            String key = set.split(":")[0];
+            String[] values = set.split(":")[1].split(",");
+            tags.put(key, new ArrayList<String>());
+            for (String value : values) {
+                tags.get(key).add(value);
+                System.out.println("key: " + key + " value: " + value);
+            }
+        }
+    }
 
     String query1 = "node[\"place\"=\"city\"][\"name\"=\"Chemnitz\"]->.center;"
                  + "(node(around.center:5000)[\"place\"~\"(town)|(village)|(city)\"];"
@@ -49,7 +74,7 @@ public class Tester {
             + "  <print e=\"\" from=\"_\" geometry=\"skeleton\" limit=\"\" mode=\"body\" n=\"\" order=\"id\" s=\"\" w=\"\"/>"
             + "</osm-script>";
 
-    @Test
+//    @Test
     public void test() throws ParserConfigurationException, SAXException, IOException, MissingParameterException {
         MapNodeService mapService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
 //        List<MapNode> nodes = opService.getMapPointsInProximity(new Location(50.8322608f, 12.9252977f), null, 5000);

@@ -50,7 +50,7 @@ public class ARView extends View {
 //        Log.d(TAG, "Size: " + width + "___" + height);
 
         if(markerDrawables != null) {
-            synchronized (markerDrawables) {
+            synchronized (Controller.listLock) {
                 for (MarkerDrawable md : markerDrawables) {
 //            Log.d(TAG, "Draw Marker " + md);
                     md.setSize(width, height);

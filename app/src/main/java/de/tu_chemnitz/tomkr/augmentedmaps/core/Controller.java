@@ -10,6 +10,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
@@ -38,21 +39,23 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_MAPNO
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_NODE_HEIGHT;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_OWN_HEIGHT;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.
- *
+ * <p>
  * Main Application Controller
  */
 public class Controller extends Thread implements OrientationListener, LocationListener, Handler.Callback {
 
     private static final String TAG = Controller.class.getName();
 
-    private enum State{
+    private enum State {
         INITIALIZED, LOCATION_ACQUIRED, OWN_HEIGHT_ACQUIRED, NODES_ACQUIRED, NODES_HEIGHT_ACQUIRED, DATA_PROCESSING
     }
+
     private State state;
     private boolean smallLocationUpdate;
 
@@ -61,6 +64,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
     private final DataProcessor dataProcessor;
     private final ElevationService elevationService;
     private final MapNodeService mapNodeService;
+
+    private boolean fetching;
 
     private Orientation orientation;
     private Location loc;
@@ -78,6 +83,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     private boolean stop;
     private boolean pause;
     private final Object pauseLock;
+    public static final Object listLock = new Object();
 
     public Controller(Handler.Callback activityCallback, Context context) {
         tags = Helpers.getTagsFromConfig(context);
@@ -108,37 +114,46 @@ public class Controller extends Thread implements OrientationListener, LocationL
                 }
             }
 
-            switch(state){
-                case INITIALIZED:
-                    // location will be acquired automatically or call pushLocation now
-                    locationService.pushLocation();
-                    break;
-                case LOCATION_ACQUIRED:
-                    dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
-                    break;
-                case OWN_HEIGHT_ACQUIRED:
-                    if(smallLocationUpdate) {
-                        smallLocationUpdate = false;
-                        state = State.DATA_PROCESSING;
-                    }
-                    else {
-                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_MAPNODES));
-                    }
-                    break;
-                case NODES_ACQUIRED:
-                    dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_NODE_HEIGHT));
-                    break;
-                case NODES_HEIGHT_ACQUIRED:
-                case DATA_PROCESSING:
-                    dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
-                    break;
+            if (!fetching) {
+                switch (state) {
+                    case INITIALIZED:
+                        // location will be acquired automatically or call pushLocation now
+                        fetching = true;
+                        Log.i(TAG, "fetching Location");
+                        locationService.pushLocation();
+                        break;
+                    case LOCATION_ACQUIRED:
+                        fetching = true;
+                        Log.i(TAG, "fetching own height");
+                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
+                        break;
+                    case OWN_HEIGHT_ACQUIRED:
+                        if (smallLocationUpdate) {
+                            smallLocationUpdate = false;
+                            state = State.DATA_PROCESSING;
+                        } else {
+                            fetching = true;
+                            Log.i(TAG, "fetching MapNodes");
+                            dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_MAPNODES));
+                        }
+                        break;
+                    case NODES_ACQUIRED:
+                        fetching = true;
+                        Log.i(TAG, "fetching Node Heights");
+                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_NODE_HEIGHT));
+                        break;
+                    case NODES_HEIGHT_ACQUIRED:
+                    case DATA_PROCESSING:
+                        dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
+                        break;
+                }
             }
             mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
 
-            long frametime = (System.currentTimeMillis()-starttime);
-            if(frametime < TARGET_FRAMETIME){
+            long frametime = (System.currentTimeMillis() - starttime);
+            if (frametime < TARGET_FRAMETIME) {
                 try {
-                    sleep(TARGET_FRAMETIME-frametime);
+                    sleep(TARGET_FRAMETIME - frametime);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -147,12 +162,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
     public void startApplication() {
-        stop = false;
-        synchronized (pauseLock){
-            pause = false;
-            pauseLock.notifyAll();
-        }
-
         smallLocationUpdate = false;
 
         dataFetchThread = new HandlerThread("DataFetchThread");
@@ -168,7 +177,14 @@ public class Controller extends Thread implements OrientationListener, LocationL
         orientationService.registerListener(this);
         locationService.registerListener(this);
 
-        if(!this.isAlive()){
+        stop = false;
+        fetching = false;
+        synchronized (pauseLock) {
+            pause = false;
+            pauseLock.notifyAll();
+        }
+
+        if (!this.isAlive()) {
             this.start();
         }
     }
@@ -194,7 +210,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
         }
     }
 
-    public void quitApplication(){
+    public void quitApplication() {
         stop = true;
     }
 
@@ -203,12 +219,13 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
             smallLocationUpdate = true;
-        } else {
         }
         this.loc = loc;
         state = State.LOCATION_ACQUIRED;
+        fetching = false;
         Log.i(TAG, "Controller State changed to " + state.name());
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
     }
 
     @Override
@@ -231,7 +248,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     dataProcessor.setOwnLocation(loc);
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
                     state = State.OWN_HEIGHT_ACQUIRED;
-                    Log.i(TAG, "Controller State changed to " + state.name());
+                    fetching = false;
+                    Log.i(TAG, "Controller State changed to " + state.name() + " at MSG_UPDATE_OWN_HEIGHT");
+                    mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                 }
                 break;
 
@@ -239,7 +258,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
                 try {
                     mapNodes = mapNodeService.getMapPointsInProximity(loc, tags, MAX_DISTANCE);
                     state = State.NODES_ACQUIRED;
-                    Log.i(TAG, "Controller State changed to " + state.name());
+                    fetching = false;
+                    Log.i(TAG, "Controller State changed to " + state.name() + " at MSG_UPDATE_MAPNODES");
+                    mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                 } catch (MissingParameterException e) {
                     e.printStackTrace();
                 }
@@ -254,7 +275,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
                         }
                     }
                     state = State.NODES_HEIGHT_ACQUIRED;
-                    Log.i(TAG, "Controller State changed to " + state.name());
+                    fetching = false;
+                    Log.i(TAG, "Controller State changed to " + state.name() + " at MSG_UPDATE_NODE_HEIGHT");
+                    mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                 }
                 break;
 
@@ -266,12 +289,15 @@ public class Controller extends Thread implements OrientationListener, LocationL
                         marker.setKey(node.getName() + " [" + node.getLoc().getHeight() + "]");
                         tempList.add(new MarkerDrawable(marker));
                     }
-                    synchronized (markerList) {
+                    synchronized (listLock) {
                         markerList = tempList;
                     }
                 }
-                state = State.DATA_PROCESSING;
-                Log.i(TAG, "Controller State changed to " + state.name());
+                if (state != State.DATA_PROCESSING) {
+                    state = State.DATA_PROCESSING;
+                    Log.i(TAG, "Controller State changed to " + state.name() + " at MSG_PROCESS_DATA");
+                    mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
+                }
                 break;
         }
         return true;

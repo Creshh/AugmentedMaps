@@ -38,6 +38,7 @@ public class LocationService {
     }
 
     public void pushLocation(){
+        Log.d(TAG, "pushLocation");
         for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
             listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)lastLocation.getLatitude(), (float)lastLocation.getLongitude(), (int)lastLocation.getAltitude()));
         }

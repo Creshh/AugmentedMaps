@@ -115,8 +115,10 @@ public class Helpers {
     public static Map<String, List<String>> getTagsFromConfig(Context context) {
         Map<String, List<String>> tags = new HashMap<>();
         String configValue = Helpers.getConfigValue(context, "tags");
-        String[] sets = configValue.split("|");
+        Log.d(TAG, "configValue: " + configValue);
+        String[] sets = configValue.split("\\|");
         for (String set : sets) {
+            Log.d(TAG, "set: " + set);
             String key = set.split(":")[0];
             String[] values = set.split(":")[1].split(",");
             tags.put(key, new ArrayList<String>());

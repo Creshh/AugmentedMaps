@@ -32,11 +32,12 @@ public class Constants {
     public static final int MSG_PROCESS_DATA = 5;
     public static final int MSG_UPDATE_OWN_HEIGHT = 6;
     public static final int MSG_UPDATE_NODE_HEIGHT = 7;
+    public static final int MSG_UPDATE_STATE_VIEW = 8;
 
     /**
      * Factor for lowPass Filter in OrientationService
      */
-    public static final float LOW_PASS_FACTOR = 0.25f;
+    public static final float LOW_PASS_FACTOR = 0.20f;
 
     /**
      *

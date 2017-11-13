@@ -19,6 +19,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
 
 /**
@@ -33,6 +34,7 @@ public class ARActivity extends Activity{
     private Camera2 camera;
     private TextView orientationView;
     private TextView locationView;
+    private TextView stateView;
     private TextureView textureView;
     private ARView arView;
 
@@ -48,6 +50,7 @@ public class ARActivity extends Activity{
         arView = (ARView) findViewById(R.id.arview);
         orientationView = (TextView) findViewById(R.id.orientation);
         locationView = (TextView) findViewById(R.id.pos);
+        stateView = (TextView) findViewById(R.id.state);
         camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
 
         Handler.Callback updateViewCallback = new Handler.Callback() {
@@ -62,6 +65,9 @@ public class ARActivity extends Activity{
                 }
                 if (message.what == MSG_UPDATE_LOC_VIEW) {
                     locationView.setText((String) message.obj);
+                }
+                if (message.what == MSG_UPDATE_STATE_VIEW) {
+                    stateView.setText((String) message.obj);
                 }
                 return true;
             }
