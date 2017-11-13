@@ -1,6 +1,6 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.

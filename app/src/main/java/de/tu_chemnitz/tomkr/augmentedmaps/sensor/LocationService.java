@@ -26,6 +26,8 @@ public class LocationService {
     private LocationListener[] mLocationListeners;
 
 
+    private Location currentBestEstimate;
+
     private Location lastLocation;
     private List<de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener> listeners = new ArrayList<>();
 
@@ -40,7 +42,7 @@ public class LocationService {
     public void pushLocation(){
         Log.d(TAG, "pushLocation");
         for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
-            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)lastLocation.getLatitude(), (float)lastLocation.getLongitude(), (int)lastLocation.getAltitude()));
+            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location((float)lastLocation.getLatitude(), (float)lastLocation.getLongitude(), (int)lastLocation.getAltitude()));
         }
     }
 
@@ -107,7 +109,7 @@ public class LocationService {
             Log.d(TAG, "onLocationChanged: " + location);
             lastLocation.set(location);
             for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
-                listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
+                listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
             }
         }
 

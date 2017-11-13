@@ -10,7 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 
 
 /**

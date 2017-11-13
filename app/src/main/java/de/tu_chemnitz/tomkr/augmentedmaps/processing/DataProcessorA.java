@@ -1,23 +1,18 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.processing;
 
-
-
 import android.util.Log;
-
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
-
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 
 /**
  * Created by Tom Kretzschmar on 31.08.2017.
  *
  */
-
 public class DataProcessorA implements DataProcessor {
 
     private static final String TAG = DataProcessorA.class.getName();
-    private Location loc;
     private float cameraViewAngleH;
     private float cameraViewAngleV;
 
@@ -33,19 +28,39 @@ public class DataProcessorA implements DataProcessor {
     }
 
     @Override
-    public Marker processData(InputType input) {
-        // calculate horizontal position
-        float bearingH = this.loc.getBearingTo(input.getLoc());
-        float diffH = bearingH - input.getO().getX();
+    public Marker processData(MapNode node, Orientation orientation, Location location) {
+        return new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]");
+    }
+
+    /**
+     * Calculate horizontal marker position.
+     * @param node MapNode which position should be calculated
+     * @param orientation Current device orientation
+     * @param location Current device position
+     * @return horizontal position of marker in pixel
+     */
+    private int getX(MapNode node, Orientation orientation, Location location){
+        float bearingH = location.getBearingTo(node.getLoc());
+        float diffH = bearingH - orientation.getX();
         float offsetH = -1;
         if(Math.abs(diffH) < (cameraViewAngleH/2f)) {
             offsetH = diffH / (cameraViewAngleH/2f); // [-1..1]
             offsetH = ((offsetH + 1) / 2f); // offsetH has to be in Range [0..1] to be drawn
         }
+        return (int) offsetH;
+    }
 
-        float betaV = input.getO().getY() > 180 ? 360 - input.getO().getY() : -input.getO().getY();
-        float h = loc.getHeight() - input.getLoc().getHeight();
-        float d = loc.getDistanceCorr(input.getLoc());
+    /**
+     * Calculate vertical marker position.
+     * @param node MapNode which position should be calculated
+     * @param orientation Current device orientation
+     * @param location Current device position
+     * @return vertical position of marker in pixel
+     */
+    private int getY(MapNode node, Orientation orientation, Location location){
+        float betaV = orientation.getY() > 180 ? 360 - orientation.getY() : - orientation.getY();
+        float h = location.getHeight() - node.getLoc().getHeight();
+        float d = location.getDistanceCorr(node.getLoc());
         float alphaV = (float) Math.toDegrees(Math.atan2(h,d));
         float diffV = betaV + alphaV;
         float offsetV = -1;
@@ -53,13 +68,7 @@ public class DataProcessorA implements DataProcessor {
             offsetV = diffV / (cameraViewAngleV/2f);
             offsetV = ((offsetV + 1) /2f); // offsetH has to be in Range [0..1] to be drawn
         }
-
-        return new Marker(offsetH, offsetV, "key");
-    }
-
-    @Override
-    public void setOwnLocation(Location loc) {
-        this.loc = loc;
+        return (int) offsetV;
     }
 
 }

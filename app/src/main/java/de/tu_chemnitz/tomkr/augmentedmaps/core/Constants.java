@@ -1,11 +1,36 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.core;
 
+import android.graphics.Color;
+import android.graphics.Paint;
+
 /**
  * Created by Tom Kretzschmar on 26.10.2017.
  *
  */
-
+@SuppressWarnings("WeakerAccess")
 public class Constants {
+
+    public static Paint paintStroke;
+    public static Paint paintFill;
+
+    static {
+        paintStroke = new Paint();
+        paintStroke.setColor(Color.GREEN);
+        paintStroke.setStyle(Paint.Style.STROKE);
+        paintStroke.setStrokeWidth(3);
+        paintStroke.setAntiAlias(true);
+        paintStroke.setAlpha(255);
+
+        paintFill = new Paint();
+        paintFill.setColor(Color.GREEN);
+        paintFill.setStyle(Paint.Style.FILL);
+        paintFill.setAntiAlias(true);
+        paintFill.setAlpha(255);
+        paintFill.setTextAlign(Paint.Align.LEFT);
+        paintFill.setTextSize(40);
+        paintFill.setAntiAlias(true);
+    }
+
     /**
      * Maximum count of calculating and refreshing marker positions per second.
      */

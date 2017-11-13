@@ -18,7 +18,7 @@ import java.util.Properties;
 import java.util.Random;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.MarkerDrawable;
 
 /**

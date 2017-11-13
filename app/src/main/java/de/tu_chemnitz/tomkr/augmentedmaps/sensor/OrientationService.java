@@ -5,15 +5,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
-import android.view.WindowManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 
-import static android.R.attr.rotation;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FACTOR;
 
 

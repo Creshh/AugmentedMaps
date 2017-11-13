@@ -1,7 +1,5 @@
 package test;
 
-import android.util.Log;
-
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -13,22 +11,12 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MissingParameterException;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MissingParameterException;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
-import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
-import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.basetypes.MapNode;
-import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
-import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
-
-import static android.R.attr.data;
-import static android.R.id.input;
-import static android.content.ContentValues.TAG;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
 
 
 /**
