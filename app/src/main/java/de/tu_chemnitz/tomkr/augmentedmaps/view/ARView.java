@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -19,7 +20,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 public class ARView extends View {
     private static final String TAG = ARView.class.getName();
 
-    private List<MarkerDrawable> markerDrawables;
+    private List<Marker> markerDrawables;
 
     public ARView(Context context) {
         super(context);
@@ -51,7 +52,7 @@ public class ARView extends View {
 
         if(markerDrawables != null) {
             synchronized (Controller.listLock) {
-                for (MarkerDrawable md : markerDrawables) {
+                for (Marker md : markerDrawables) {
 //            Log.d(TAG, "Draw Marker " + md);
                     md.setSize(width, height);
                     md.draw(canvas);
@@ -60,7 +61,7 @@ public class ARView extends View {
         }
     }
 
-    public void setMarkerListRef(List<MarkerDrawable> markerDrawables){
+    public void setMarkerListRef(List<Marker> markerDrawables){
         this.markerDrawables = markerDrawables;
     }
 

@@ -19,7 +19,6 @@ import java.util.Random;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.view.MarkerDrawable;
 
 /**
  * Created by Tom Kretzschmar on 15.09.2017.
@@ -47,16 +46,16 @@ public class Helpers {
     }
 
 
-    public static List<MarkerDrawable> createSampleMarker(int count, int maxWidth, int maxHeight){
-        List<MarkerDrawable> list = new ArrayList<>();
-        for(int i = 0; i < count; i++){
-            Marker m = new Marker(random(maxWidth), random(maxHeight), "randM");
-            MarkerDrawable md = new MarkerDrawable(m);
-            Log.d(TAG, "createMarker " + md);
-            list.add(md);
-        }
-        return list;
-    }
+//    public static List<Marker> createSampleMarker(int count, int maxWidth, int maxHeight){
+//        List<Marker> list = new ArrayList<>();
+//        for(int i = 0; i < count; i++){
+//            Marker m = new Marker(random(maxWidth), random(maxHeight), "randM");
+//            Marker md = new Marker(m);
+//            Log.d(TAG, "createMarker " + md);
+//            list.add(md);
+//        }
+//        return list;
+//    }
 
     /**
      * Ermittelt Zufallswert im Intervall um die Basis von base-variance bis base+variance.

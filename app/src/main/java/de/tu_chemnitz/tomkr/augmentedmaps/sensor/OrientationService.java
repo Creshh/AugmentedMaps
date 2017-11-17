@@ -107,15 +107,15 @@ public class OrientationService implements SensorEventListener {
     /**
     * Low-pass filter, which smoothes the newValue values.
     */
-    public float lowPass(float newValue, float oldValue) {
+    private float lowPass(float newValue, float oldValue) {
         float output = newValue;
-        if (oldValue != 0) {
-            float diff = newValue - oldValue;
-            if(Math.abs(diff) < 180) {
-                output = oldValue + (LOW_PASS_FACTOR * diff);
-//            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
-            }
-        }
+//        if (oldValue != 0) {
+//            float diff = newValue - oldValue;
+//            if(Math.abs(diff) < 180) {
+//                output = oldValue + (LOW_PASS_FACTOR * diff);
+////            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
+//            }
+//        }
         return output;
     }
 }

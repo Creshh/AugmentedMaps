@@ -12,7 +12,6 @@ import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MissingParameterException;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.complextypes.InputType;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
