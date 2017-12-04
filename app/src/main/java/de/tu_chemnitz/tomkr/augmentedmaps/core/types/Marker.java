@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 
@@ -33,20 +34,15 @@ public class Marker extends Drawable {
 
     }
 
-    public void setX(float x) {
-        this.x = x;
-    }
-    public void setY(float y) {
-        this.y = y;
-    }
-
     @Override
     public void draw(@NonNull Canvas canvas) {
-//        Log.d(TAG, "" + marker.getX() + "|" + marker.getY());
+//        Log.d(TAG, "draw " + key + " " + x + " " + y);
+
         if(x > 0) {
             int xPx = (int) (x * w); //recalculate from Marker x/y [0..1] to pixel values [0..1080] etc.
             int yPx = (int) (y * h);
 
+//            Log.d(TAG, "draw " + key + " " + x + " " + y);
             canvas.drawRect(xPx - (WIDTH / 2), yPx - (HEIGHT / 2), xPx + (WIDTH / 2), yPx + (HEIGHT / 2), Constants.paintStroke);
             canvas.drawRect(xPx - (WIDTH / 4), yPx - (HEIGHT / 4), xPx + (WIDTH / 4), yPx + (HEIGHT / 4), Constants.paintFill);
             if(key != null){

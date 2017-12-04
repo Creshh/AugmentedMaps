@@ -1,6 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -483,5 +484,9 @@ public class Camera2 {
 
         Log.d(TAG, "FOV => " + horizontalAngle + "x" + verticalAngle);
         return new float[]{horizontalAngle, verticalAngle};
+    }
+
+    public Bitmap getCurrentImage(){
+        return previewTarget.getBitmap();
     }
 }

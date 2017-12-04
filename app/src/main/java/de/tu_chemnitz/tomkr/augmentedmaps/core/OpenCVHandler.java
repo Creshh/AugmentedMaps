@@ -7,13 +7,21 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.video.SparsePyrLKOpticalFlow;
+import org.opencv.video.Video;
+
+import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 import static android.R.attr.maxLevel;
+import static android.R.attr.width;
 import static android.os.Build.VERSION_CODES.M;
 
 
@@ -29,47 +37,83 @@ public class OpenCVHandler {
     static {
         if(!OpenCVLoader.initDebug()){
             Log.d(TAG, "OpenCV not loaded");
+            System.exit(1);
         } else {
             Log.d(TAG, "OpenCV loaded");
         }
     }
 
-    private Mat old;
-    private Mat pts;
-    private Mat status;
+    private Mat oldImage;
+    private MatOfPoint2f featurePoints;
+    private MatOfByte status;
+    private MatOfFloat err;
 
     public OpenCVHandler(){
-        status = new Mat();
+        featurePoints = new MatOfPoint2f();
     }
 
-    private void calculateFeatureSet(Bitmap bmp){
+    private MatOfPoint calculateFeatureSet(Mat current){
         double quality = 1;
         double minDist = 10;
-        Mat current = new Mat();
-        Utils.bitmapToMat(bmp, current);
         MatOfPoint corners = new MatOfPoint();
         Imgproc.goodFeaturesToTrack(current, corners, 10 /*max Corners*/, quality, minDist);
+        return corners;
     }
 
-    private void calculateOpticalFlow(Bitmap bmp, int w, int h){
-        Size winSize = new Size(w, h);
-        int maxLevel = 3;
-        TermCriteria crit = new TermCriteria();
-        int flags = 0;
-        double minEigThreshold = 1;
+    public Point[] calculateOpticalFlowPyrLK(Bitmap bmp){
 
-
-        Mat nextPts = new Mat();
         Mat current = new Mat();
-        Utils.bitmapToMat(bmp, current);
+        Mat color = new Mat();
+        Utils.bitmapToMat(bmp, color);
+        Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
+        if(oldImage != null) {
+            status = new MatOfByte();
+            err = new MatOfFloat();
+            MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
 
-//        SparsePyrLKOpticalFlow.create(winSize, maxLevel, crit, flags, minEigThreshold);
-        SparsePyrLKOpticalFlow sparsePyrLKOpticalFlow = SparsePyrLKOpticalFlow.create();
-        sparsePyrLKOpticalFlow.calc(old, current, pts, nextPts, status);
+            Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
+            this.featurePoints = newFeaturePoints;
+            this.oldImage = current;
+        } else {
+            Log.d(TAG, "INIT FEATURE_POINTS");
+            MatOfPoint initial = new MatOfPoint();
+            Imgproc.goodFeaturesToTrack(current, initial, 10, 0.01, 0.01);
+            initial.convertTo(featurePoints, CvType.CV_32F);
+            this.oldImage = current;
+        }
+        return featurePoints.toArray();
+    }
 
-
-        this.old = current;
-        this.pts = nextPts;
+    public Vec2f calculateOpticalFlow(Bitmap bmp, int w, int h){
+//        Mat current = new Mat();
+//        Mat color = new Mat();
+//        Utils.bitmapToMat(bmp, color);
+//        Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
+////        if(old != null) {
+////            Size winSize = new Size(w, h);
+////            int maxLevel = 3;
+////            TermCriteria crit = new TermCriteria();
+////            int flags = 0;
+////            double minEigThreshold = 1;
+////
+////
+////            Mat nextPts = new Mat();
+////
+////
+//////        SparsePyrLKOpticalFlow.create(winSize, maxLevel, crit, flags, minEigThreshold);
+////            SparsePyrLKOpticalFlow sparsePyrLKOpticalFlow = SparsePyrLKOpticalFlow.create();
+////            sparsePyrLKOpticalFlow.calc(old, current, pts, nextPts, status);
+////
+////            this.old = current;
+//////            this.pts = nextPts;
+////
+////            return null;
+////        } else {
+//            this.pts = calculateFeatureSet(current);
+//            this.old = current;
+//            return new Vec2f(0,0);
+////        }
+        return null;
     }
 
 

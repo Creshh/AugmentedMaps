@@ -65,9 +65,9 @@ public class OrientationService implements SensorEventListener {
 
         // Express the updated rotation matrix as three orientation angles.
         SensorManager.getOrientation(remappedMatrix, orientationAngles);
-        o.setX(lowPass((float) (Math.toDegrees(orientationAngles[0]) + 360) % 360, orientation.getX()));
-        o.setY(lowPass((float) (Math.toDegrees(orientationAngles[1]) + 360) % 360, orientation.getY()));
-        o.setZ(lowPass((float) (Math.toDegrees(orientationAngles[2]) + 360) % 360, orientation.getZ()));
+        o.setX((float) (Math.toDegrees(orientationAngles[0]) + 360) % 360);
+        o.setY((float) (Math.toDegrees(orientationAngles[1]) + 360) % 360);
+        o.setZ((float) (Math.toDegrees(orientationAngles[2]) + 360) % 360);
         return o;
     }
 
@@ -102,20 +102,5 @@ public class OrientationService implements SensorEventListener {
     public void start() {
         sensorManager.registerListener(this, acc, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_NORMAL);
-    }
-
-    /**
-    * Low-pass filter, which smoothes the newValue values.
-    */
-    private float lowPass(float newValue, float oldValue) {
-        float output = newValue;
-//        if (oldValue != 0) {
-//            float diff = newValue - oldValue;
-//            if(Math.abs(diff) < 180) {
-//                output = oldValue + (LOW_PASS_FACTOR * diff);
-////            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
-//            }
-//        }
-        return output;
     }
 }

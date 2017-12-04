@@ -29,7 +29,7 @@ public class DataProcessorA implements DataProcessor {
 
     @Override
     public Marker processData(MapNode node, Orientation orientation, Location location) {
-        return new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]");
+        return  new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]");
     }
 
     /**
@@ -39,7 +39,8 @@ public class DataProcessorA implements DataProcessor {
      * @param location Current device position
      * @return horizontal position of marker in pixel
      */
-    private int getX(MapNode node, Orientation orientation, Location location){
+    private float getX(MapNode node, Orientation orientation, Location location){
+
         float bearingH = location.getBearingTo(node.getLoc());
         float diffH = bearingH - orientation.getX();
         float offsetH = -1;
@@ -47,7 +48,8 @@ public class DataProcessorA implements DataProcessor {
             offsetH = diffH / (cameraViewAngleH/2f); // [-1..1]
             offsetH = ((offsetH + 1) / 2f); // offsetH has to be in Range [0..1] to be drawn
         }
-        return (int) offsetH;
+//        Log.d(TAG, node.getName() + " " + orientation + " " + location + " " + diffH + " " + offsetH);
+        return offsetH;
     }
 
     /**
@@ -57,7 +59,7 @@ public class DataProcessorA implements DataProcessor {
      * @param location Current device position
      * @return vertical position of marker in pixel
      */
-    private int getY(MapNode node, Orientation orientation, Location location){
+    private float getY(MapNode node, Orientation orientation, Location location){
         float betaV = orientation.getY() > 180 ? 360 - orientation.getY() : - orientation.getY();
         float h = location.getHeight() - node.getLoc().getHeight();
         float d = location.getDistanceCorr(node.getLoc());
@@ -68,7 +70,8 @@ public class DataProcessorA implements DataProcessor {
             offsetV = diffV / (cameraViewAngleV/2f);
             offsetV = ((offsetV + 1) /2f); // offsetH has to be in Range [0..1] to be drawn
         }
-        return (int) offsetV;
+//        Log.d(TAG, node.getName() + " " + orientation + " " + location + " " + diffV + " " + offsetV);
+        return offsetV;
     }
 
 }

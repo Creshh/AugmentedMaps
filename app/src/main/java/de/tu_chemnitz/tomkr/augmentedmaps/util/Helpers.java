@@ -2,8 +2,11 @@ package de.tu_chemnitz.tomkr.augmentedmaps.util;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Environment;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -29,6 +32,7 @@ public class Helpers {
     private static final String TAG = Helpers.class.getName();
 
     private static Random random;
+    public static File dir;
 
     /**
      * Initialisiert statische Variablen.
@@ -126,5 +130,30 @@ public class Helpers {
             }
         }
         return tags;
+    }
+
+    public static void saveLogToFile(ArrayList<Vec2f> dataLog) {
+        String filename = "sensor" + createTimeStamp(System.currentTimeMillis()) + ".log";
+        StringBuilder builder = new StringBuilder();
+        for(Vec2f p : dataLog){
+            builder.append(p.getX());
+            builder.append(" ");
+            builder.append(p.getY());
+            builder.append(System.lineSeparator());
+        }
+        File fileDir = new File(Environment.getExternalStorageDirectory(), "AugmentedMapsLog");
+        if(!fileDir.exists()){
+            fileDir.mkdirs();
+        }
+        FileOutputStream outputStream;
+        File file = new File(fileDir, filename);
+        try {
+            outputStream = new FileOutputStream(file);
+            outputStream.write(builder.toString().getBytes());
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "File " + file.getAbsolutePath() + " written!");
     }
 }

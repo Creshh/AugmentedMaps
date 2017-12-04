@@ -45,4 +45,36 @@
         android:layout_alignParentTop="true"
         android:text="State"
         android:textColor="@android:color/holo_red_light"/>
+
+    <CheckBox
+        android:id="@+id/toggleLP"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/state"
+        android:text="LowPass"/>
+
+    <CheckBox
+        android:id="@+id/toggleBA"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/toggleLP"
+        android:text="Bildanalyse"/>
+
+    <CheckBox
+        android:id="@+id/toggleSensor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/toggleBA"
+        android:text="Raw Sensor"/>
+
+    <Button
+        android:id="@+id/btnLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/toggleLP"
+        android:layout_below="@+id/toggleSensor"
+        android:text="Log Data"/>
 </RelativeLayout>

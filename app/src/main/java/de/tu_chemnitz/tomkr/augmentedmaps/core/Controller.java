@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.ApplicationState;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
@@ -21,6 +22,8 @@ import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
+import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.MotionAnalyzer;
+import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.MotionAnalyzerProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
@@ -28,8 +31,10 @@ import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.DIST_THRESHOLD;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FACTOR;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MAX_DISTANCE;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_PROCESS_DATA;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
@@ -49,6 +54,8 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME
 public class Controller extends Thread implements OrientationListener, LocationListener, Handler.Callback {
 
     private static final String TAG = Controller.class.getName();
+    private final Camera2 camera;
+    private MotionAnalyzer motionAnalyzer;
     private ApplicationState state;
     private boolean smallLocationUpdate;
 
@@ -77,8 +84,13 @@ public class Controller extends Thread implements OrientationListener, LocationL
     private boolean pause;
     private final Object pauseLock;
     public static final Object listLock = new Object();
+    private OpenCVHandler openCVHandler;
+    public boolean lowPass;
+    public boolean logData = false;
+    public long logStart;
+    private ArrayList<Vec2f> dataLog;
 
-    public Controller(Handler.Callback activityCallback, Context context) {
+    public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
         tags = Helpers.getTagsFromConfig(context);
         mainHandler = new Handler(Looper.getMainLooper(), activityCallback);
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
@@ -86,6 +98,10 @@ public class Controller extends Thread implements OrientationListener, LocationL
         elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
         locationService = new LocationService(context);
         orientationService = new OrientationService(context);
+        motionAnalyzer = MotionAnalyzerProvider.getMotionAnalyzer(MotionAnalyzerProvider.MotionAnalyzerType.A);
+        openCVHandler = new OpenCVHandler();
+
+        this.camera = camera;
 
         state = ApplicationState.INITIALIZED;
         pauseLock = new Object();
@@ -96,7 +112,14 @@ public class Controller extends Thread implements OrientationListener, LocationL
         Log.d(TAG, "run");
         while (!stop) {
             long starttime = System.currentTimeMillis();
-
+            if(logData) {
+                if (logStart + Constants.LOG_TIME < starttime) {
+                    logData = false;
+                    Helpers.saveLogToFile(dataLog);
+                } else {
+                    dataLog.add(new Vec2f(this.orientation.getX(), this.orientation.getY()));
+                }
+            }
             synchronized (pauseLock) {
                 while (pause) {
                     try {
@@ -106,6 +129,10 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                 }
             }
+
+
+//            Vec2f motionVector = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+
 
             if (!fetching) {
                 switch (state) {
@@ -124,6 +151,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
                         if (smallLocationUpdate) {
                             smallLocationUpdate = false;
                             state = ApplicationState.DATA_PROCESSING;
+                            Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at OWN_HEIGHT_ACQUIRED");
+                            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                         } else {
                             fetching = true;
                             Log.i(TAG, "fetching MapNodes");
@@ -223,7 +252,13 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     @Override
     public void onOrientationChange(Orientation values) {
-        this.orientation = values;
+        if(lowPass){
+            this.orientation.setX(lowPass(values.getX(), this.orientation.getX()));
+            this.orientation.setY(lowPass(values.getY(), this.orientation.getY()));
+            this.orientation.setZ(lowPass(values.getZ(), this.orientation.getZ()));
+        } else {
+            this.orientation = values;
+        }
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString()));
     }
 
@@ -302,6 +337,31 @@ public class Controller extends Thread implements OrientationListener, LocationL
             dataProcessor.setCameraViewAngleH(fov[0]);
             dataProcessor.setCameraViewAngleV(fov[1]);
         }
+    }
+
+    /**
+     * Low-pass filter, which smoothes the newValue values.
+     */
+    private float lowPass(float newValue, float oldValue) {
+        float output = newValue;
+        if (oldValue != 0) {
+            float diff = newValue - oldValue;
+            if(Math.abs(diff) < 180) {
+                output = oldValue + (LOW_PASS_FACTOR * diff);
+//            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
+            }
+        }
+        return output;
+    }
+
+    public void log() {
+        logStart = System.currentTimeMillis();
+        if(dataLog == null){
+            dataLog = new ArrayList<>();
+        } else {
+            dataLog.clear();
+        }
+        logData = true;
     }
 }
 

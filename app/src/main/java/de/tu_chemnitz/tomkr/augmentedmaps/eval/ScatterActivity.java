@@ -3,30 +3,14 @@ package de.tu_chemnitz.tomkr.augmentedmaps.eval;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
-import android.view.TextureView;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.PermissionHandler;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
-import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
-import de.tu_chemnitz.tomkr.augmentedmaps.view.ARView;
-
-import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
 
 public class ScatterActivity extends Activity implements OrientationListener, Handler.Callback{
     private static final String TAG = ScatterActivity.class.getName();

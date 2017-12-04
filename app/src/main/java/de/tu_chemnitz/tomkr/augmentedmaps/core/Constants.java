@@ -37,10 +37,12 @@ public class Constants {
     public static final int TICKS_PER_SECOND = 20;
     public static final int TARGET_FRAMETIME = 1000/TICKS_PER_SECOND;
 
+    public static final int LOG_TIME = 30 * 1000;
+
     /**
      * Maximum distance in meters in which MapNodes are allocated.
      */
-    public static final int MAX_DISTANCE = 10000;
+    public static final int MAX_DISTANCE = 4000;
 
     /**
      * Distance in meters after which new MapNodes are allocated.
