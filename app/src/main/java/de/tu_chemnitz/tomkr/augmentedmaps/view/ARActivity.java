@@ -45,6 +45,7 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     private TextureView textureView;
     private ARView arView;
     private CheckBox toggleLowPass;
+    private CheckBox toggleMotion;
     private Button logBtn;
 
     private static ARView arViewStatic;
@@ -70,6 +71,8 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
         stateView = (TextView) findViewById(R.id.state);
         toggleLowPass = (CheckBox) findViewById(R.id.toggleLP);
         toggleLowPass.setOnCheckedChangeListener(this);
+        toggleMotion = (CheckBox) findViewById(R.id.toggleBA);
+        toggleMotion.setOnCheckedChangeListener(this);
         logBtn = (Button) findViewById(R.id.btnLog);
         logBtn.setOnClickListener(this);
 
@@ -135,6 +138,10 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
             case R.id.toggleLP:
                 Log.d(TAG, "toggle LowPass");
                 controller.lowPass = b;
+                break;
+            case R.id.toggleBA:
+                Log.d(TAG, "toogle MotionAnalyzer");
+                controller.motion = b;
                 break;
         }
     }

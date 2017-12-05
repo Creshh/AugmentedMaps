@@ -89,6 +89,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public boolean logData = false;
     public long logStart;
     private ArrayList<Vec2f> dataLog;
+    public boolean motion;
+    private float fovH = 10;
+    private Vec2f motionVec;
 
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
         tags = Helpers.getTagsFromConfig(context);
@@ -131,7 +134,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
             }
 
             try {
-                Vec2f motionVector = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+                motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -240,32 +243,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
 
-    @Override // TODO after onResume, no nodes will be displayed
-    public void onLocationChange(Location loc) {
-        if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
-            smallLocationUpdate = true;
-        }
-        this.loc = loc;
-        state = ApplicationState.LOCATION_ACQUIRED;
-        fetching = false;
-        Log.i(TAG, "Controller ApplicationState changed to " + state.name());
-        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
-        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
-    }
-
-    @Override
-    public void onOrientationChange(Orientation values) {
-        if(lowPass){
-            this.orientation.setX(lowPass(values.getX(), this.orientation.getX()));
-            this.orientation.setY(lowPass(values.getY(), this.orientation.getY()));
-            this.orientation.setZ(lowPass(values.getZ(), this.orientation.getZ()));
-        } else {
-            this.orientation = values;
-        }
-        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString()));
-    }
-
-
     @Override
     public boolean handleMessage(Message message) {
         switch (message.what) {
@@ -340,6 +317,69 @@ public class Controller extends Thread implements OrientationListener, LocationL
             dataProcessor.setCameraViewAngleH(fov[0]);
             dataProcessor.setCameraViewAngleV(fov[1]);
         }
+
+        this.fovH = fov[0];
+    }
+
+
+    @Override // TODO after onResume, no nodes will be displayed
+    public void onLocationChange(Location loc) {
+        if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
+            smallLocationUpdate = true;
+        }
+        this.loc = loc;
+        state = ApplicationState.LOCATION_ACQUIRED;
+        fetching = false;
+        Log.i(TAG, "Controller ApplicationState changed to " + state.name());
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
+    }
+
+    @Override
+    public void onOrientationChange(Orientation values) {
+        Orientation temp = new Orientation();
+        if(lowPass){
+            temp.setX(lowPass(values.getX(), this.orientation.getX()));
+            temp.setY(lowPass(values.getY(), this.orientation.getY()));
+            temp.setZ(lowPass(values.getZ(), this.orientation.getZ()));
+        } else if(motion) {
+
+//            Vec2f motionVec = null;
+//            try {
+//                motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+//            } catch (Exception e){
+//                e.printStackTrace();
+//            }
+            if(motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
+                temp.setX(motion(values.getX(), this.orientation.getX(), motionVec.getX(), fovH));
+//                temp.setY(motion(values.getY(), this.orientation.getY(), motionVec.getY()));
+                temp.setY(values.getY());
+            } else {
+                temp.setX(values.getX());
+                temp.setY(values.getY());
+            }
+        } else {
+            temp = values;
+        }
+        this.orientation = temp;
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + temp.toString()));
+    }
+
+
+    private float motion(float newValue, float oldValue, float motionValue, float fov){
+        // TODO: calculate angular motion from vector in display coordinates.
+        // TODO: move to separate module
+        // TODO: or calculate estimated Marker movement, and take it to consideration when updating all markers -> then the marker position must be evaluated, and not the orientation values!!!
+
+
+        float diff = newValue-oldValue;
+        float angle = motionValue * fov/2f; // motionValue is in [0..1]
+        Log.d(TAG, "sensorAngle: " + diff + " motionAngle: " + angle + " from value: " + motionValue);
+
+
+        float intervalTest = 0; // TODO: calculate the motion in 0..1 like in dataprocessor to test correctness
+
+        return oldValue - angle;
     }
 
     /**
@@ -357,7 +397,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
         return output;
     }
 
-    public void log() {
+    public void log() { // TODO: separate button for debugging -> start from actual orientation and then log orientation and with motionanalyzer estimated orientation separaetely -> move -> check how much these values differ
         // TODO: maybe Log defined Point, not Orientation values. Evaluate correct calculated position. maybe use image analysation for new position estimation, and measure the correctness using distance between closest points (maybe with only 1 point)
         logStart = System.currentTimeMillis();
         if(dataLog == null){

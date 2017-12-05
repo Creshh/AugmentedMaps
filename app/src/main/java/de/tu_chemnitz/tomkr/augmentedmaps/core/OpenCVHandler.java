@@ -48,6 +48,7 @@ public class OpenCVHandler {
     private MatOfPoint2f featurePoints;
     private MatOfByte status;
     private MatOfFloat err;
+    private boolean init = false;
 
     public OpenCVHandler(){
         featurePoints = new MatOfPoint2f();
@@ -65,20 +66,35 @@ public class OpenCVHandler {
 //        Log.d(TAG, " " + bmp.getWidth() + " x " + bmp.getHeight());
         Mat current = new Mat();
         Mat colorX = new Mat();
+
+//        Mat color = new Mat();
+//        Utils.bitmapToMat(bmp, color);
+
         Utils.bitmapToMat(bmp, colorX);
         Mat color = colorX.t();
         Core.flip(colorX.t(), color, 1);
         Imgproc.resize(color, color, colorX.size());
+
+
         Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
 
         boolean resetFeatures = false;
         for(Point p : featurePoints.toArray()){
-            if(p.x > 1920 || p.y > 1080 || p.x < 0 || p.y < 0){//(float)p.y, 1080-(float)p.x
+            if(p.x > color.size().width || p.y > color.size().height || p.x < 0 || p.y < 0){
                 resetFeatures = true;
             }
         }
 
-        if(oldImage != null && !resetFeatures && !featurePoints.empty()) {
+        if(oldImage == null || resetFeatures || featurePoints.empty()) {
+            init = true;
+            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
+            MatOfPoint initial = new MatOfPoint();
+//            initial.fromArray(new Point(960,540));
+            Imgproc.goodFeaturesToTrack(current, initial, 5, 0.1, 30);
+            initial.convertTo(featurePoints, CvType.CV_32F);
+            this.oldImage = current;
+        } else {
+            init = false;
             status = new MatOfByte();
             err = new MatOfFloat();
             MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
@@ -91,15 +107,12 @@ public class OpenCVHandler {
 
             this.featurePoints = newFeaturePoints;
             this.oldImage = current;
-        } else {
-            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
-            MatOfPoint initial = new MatOfPoint();
-            initial.fromArray(new Point(960,540));
-//            Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 20);
-            initial.convertTo(featurePoints, CvType.CV_32F);
-            this.oldImage = current;
         }
-        return featurePoints.toArray(); // TODO: remap coordinate system!!! correct now, but slow., better features?
+        return featurePoints.toArray(); // TODO: remap coordinate system!!! correct now, but slow. wrong initially because of transform of textureView preview. maybe get bitmap / data directly from bytes, better features?
+    }
+
+    public boolean getInit(){
+        return init;
     }
 
     public Vec2f calculateOpticalFlow(Bitmap bmp, int w, int h){

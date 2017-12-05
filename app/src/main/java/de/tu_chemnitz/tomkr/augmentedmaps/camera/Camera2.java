@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+
 import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
 
 
@@ -67,6 +68,8 @@ public class Camera2 {
 
     private TextureView previewTarget;
 
+    private int orientation;
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -93,7 +96,7 @@ public class Camera2 {
     private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing) {
         this.previewTarget = previewTarget;
         this.display = display;
-
+        orientation = context.getResources().getConfiguration().orientation;
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         CameraCharacteristics characteristics;
         try {
@@ -318,8 +321,7 @@ public class Camera2 {
                 return;
             }
 
-            // For still image captures, we use the largest available size.
-            mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, /*maxImages*/2);
+            mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 2);
             mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
@@ -372,6 +374,10 @@ public class Camera2 {
             }
 //                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
             mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.x, displaySize.y));
+
+
+
+
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {

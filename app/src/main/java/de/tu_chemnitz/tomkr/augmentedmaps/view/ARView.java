@@ -14,6 +14,7 @@ import java.util.List;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -25,6 +26,7 @@ public class ARView extends View {
 
     private List<Marker> markerDrawables;
     private Point[] points;
+    private Vec2f debugVec;
 
     public ARView(Context context) {
         super(context);
@@ -75,6 +77,9 @@ public class ARView extends View {
 //                canvas.drawCircle((float)p.x, (float)p.y, 10, Constants.paintStroke);
             }
         }
+        if(debugVec != null){
+            canvas.drawLine(width/2, height/2, (width/2) + debugVec.getX(), (height/2) + debugVec.getY(), Constants.paintStroke);
+        }
     }
 
     public void setMarkerListRef(List<Marker> markerDrawables){
@@ -89,4 +94,8 @@ public class ARView extends View {
         this.points = points;
     }
 
+    public void setDebugVec(Vec2f debugVec) {
+        this.debugVec = debugVec;
+
+    }
 }
