@@ -5,6 +5,7 @@ import android.util.Log;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
@@ -56,32 +57,49 @@ public class OpenCVHandler {
         double quality = 1;
         double minDist = 10;
         MatOfPoint corners = new MatOfPoint();
-        Imgproc.goodFeaturesToTrack(current, corners, 10 /*max Corners*/, quality, minDist);
+        Imgproc.goodFeaturesToTrack(current, corners, 5 /*max Corners*/, quality, minDist);
         return corners;
     }
 
-    public Point[] calculateOpticalFlowPyrLK(Bitmap bmp){
-
+    public Point[] calculateOpticalFlowPyrLK(Bitmap bmp){// below is working
+//        Log.d(TAG, " " + bmp.getWidth() + " x " + bmp.getHeight());
         Mat current = new Mat();
-        Mat color = new Mat();
-        Utils.bitmapToMat(bmp, color);
+        Mat colorX = new Mat();
+        Utils.bitmapToMat(bmp, colorX);
+        Mat color = colorX.t();
+        Core.flip(colorX.t(), color, 1);
+        Imgproc.resize(color, color, colorX.size());
         Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
-        if(oldImage != null) {
+
+        boolean resetFeatures = false;
+        for(Point p : featurePoints.toArray()){
+            if(p.x > 1920 || p.y > 1080 || p.x < 0 || p.y < 0){//(float)p.y, 1080-(float)p.x
+                resetFeatures = true;
+            }
+        }
+
+        if(oldImage != null && !resetFeatures && !featurePoints.empty()) {
             status = new MatOfByte();
             err = new MatOfFloat();
             MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
 
             Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
+            Point[] points = featurePoints.toArray();
+            float[] error = err.toArray();
+
+            Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y + " Err: " + error[0]);
+
             this.featurePoints = newFeaturePoints;
             this.oldImage = current;
         } else {
-            Log.d(TAG, "INIT FEATURE_POINTS");
+            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
             MatOfPoint initial = new MatOfPoint();
-            Imgproc.goodFeaturesToTrack(current, initial, 10, 0.01, 0.01);
+            initial.fromArray(new Point(960,540));
+//            Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 20);
             initial.convertTo(featurePoints, CvType.CV_32F);
             this.oldImage = current;
         }
-        return featurePoints.toArray();
+        return featurePoints.toArray(); // TODO: remap coordinate system!!! correct now, but slow., better features?
     }
 
     public Vec2f calculateOpticalFlow(Bitmap bmp, int w, int h){

@@ -22,6 +22,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 
+import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.arview;
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
@@ -46,7 +47,13 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     private CheckBox toggleLowPass;
     private Button logBtn;
 
+    private static ARView arViewStatic;
+
     private Controller controller;
+
+    public static ARView getView() {
+        return arViewStatic;
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,6 +64,7 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
         Helpers.dir = getFilesDir();
         textureView = (TextureView) findViewById(preview);
         arView = (ARView) findViewById(R.id.arview);
+        arViewStatic = arView;
         orientationView = (TextView) findViewById(R.id.orientation);
         locationView = (TextView) findViewById(R.id.pos);
         stateView = (TextView) findViewById(R.id.state);

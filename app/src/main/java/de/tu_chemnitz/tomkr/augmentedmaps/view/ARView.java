@@ -6,9 +6,12 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import org.opencv.core.Point;
+
 import java.util.Iterator;
 import java.util.List;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
 
@@ -21,6 +24,7 @@ public class ARView extends View {
     private static final String TAG = ARView.class.getName();
 
     private List<Marker> markerDrawables;
+    private Point[] points;
 
     public ARView(Context context) {
         super(context);
@@ -46,9 +50,13 @@ public class ARView extends View {
         super.onDraw(canvas);
 //        Log.d(TAG, "onDraw");
 
+
+
         int width = getWidth();
         int height = getHeight();
 //        Log.d(TAG, "Size: " + width + "___" + height);
+
+        canvas.drawCircle(960, 540, 20, Constants.paintStroke);
 
         if(markerDrawables != null) {
             synchronized (Controller.listLock) {
@@ -57,6 +65,14 @@ public class ARView extends View {
                     md.setSize(width, height);
                     md.draw(canvas);
                 }
+            }
+        }
+
+        if (points != null ){
+            for( Point p : points){
+//                canvas.drawCircle((float)p.x, (float)p.y, 10, Constants.paintStroke);
+                canvas.drawCircle(1920-(float)p.x, 1080-(float)p.y, 10, Constants.paintFill); // TODO: correct coordinate system orientation
+//                canvas.drawCircle((float)p.x, (float)p.y, 10, Constants.paintStroke);
             }
         }
     }
@@ -68,5 +84,9 @@ public class ARView extends View {
 //    public void setFeaturesToDraw(List<FeatureDrawable> featuresToDraw){
 //        // TODO: debug drawing of Features for OpenCV FeatureDetection
 //    }
+
+    public void setDebugArray(Point[] points){
+        this.points = points;
+    }
 
 }

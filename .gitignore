@@ -10,3 +10,4 @@
 .idea
 /app/proguard-rules.pro
 /openCVLibrary330/build
+/openCVLibrary330/src/main/jniLibs

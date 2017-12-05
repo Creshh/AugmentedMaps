@@ -6,6 +6,8 @@ import android.util.Log;
 
 import org.opencv.core.Point;
 
+import java.util.Arrays;
+
 import de.tu_chemnitz.tomkr.augmentedmaps.core.OpenCVHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
@@ -25,10 +27,12 @@ public class MotionAnalyzerA implements MotionAnalyzer {
             Point[] points = openCVHandler.calculateOpticalFlowPyrLK(current);
             if(points != null) {
                 for (Point p : points) {
-                    Log.d(TAG, "Point: " + p.x + "|" + p.y);
+//                    Log.d(TAG, "Point: " + p.x + "|" + p.y);
                 }
+                if(ARActivity.getView() != null)
+                    ARActivity.getView().setDebugArray(points.clone());
             }
-            Log.d(TAG, "__________________________________________________________");
+//            Log.d(TAG, "__________________________________________________________");
             return new Vec2f(0,0);
         }
         else{

@@ -130,8 +130,11 @@ public class Controller extends Thread implements OrientationListener, LocationL
                 }
             }
 
-
-//            Vec2f motionVector = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+            try {
+                Vec2f motionVector = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
 
             if (!fetching) {
@@ -340,7 +343,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
     /**
-     * Low-pass filter, which smoothes the newValue values.
+     * Low-pass filter, which smoothes the newValue values. TODO: Move to separate Module
      */
     private float lowPass(float newValue, float oldValue) {
         float output = newValue;
@@ -355,6 +358,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
     public void log() {
+        // TODO: maybe Log defined Point, not Orientation values. Evaluate correct calculated position. maybe use image analysation for new position estimation, and measure the correctness using distance between closest points (maybe with only 1 point)
         logStart = System.currentTimeMillis();
         if(dataLog == null){
             dataLog = new ArrayList<>();
