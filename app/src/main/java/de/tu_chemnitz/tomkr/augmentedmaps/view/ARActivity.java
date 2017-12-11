@@ -24,6 +24,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.arview;
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_FPS_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
@@ -42,6 +43,7 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     private TextView orientationView;
     private TextView locationView;
     private TextView stateView;
+    private TextView fpsView;
     private TextureView textureView;
     private ARView arView;
     private CheckBox toggleLowPass;
@@ -69,6 +71,7 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
         orientationView = (TextView) findViewById(R.id.orientation);
         locationView = (TextView) findViewById(R.id.pos);
         stateView = (TextView) findViewById(R.id.state);
+        fpsView = (TextView) findViewById(R.id.fpsView);
         toggleLowPass = (CheckBox) findViewById(R.id.toggleLP);
         toggleLowPass.setOnCheckedChangeListener(this);
         toggleMotion = (CheckBox) findViewById(R.id.toggleBA);
@@ -93,6 +96,9 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
                 }
                 if (message.what == MSG_UPDATE_STATE_VIEW) {
                     stateView.setText((String) message.obj);
+                }
+                if (message.what == MSG_UPDATE_FPS_VIEW) {
+                    fpsView.setText((String) message.obj);
                 }
                 return true;
             }

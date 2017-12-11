@@ -37,6 +37,7 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.DIST_THRESHOLD;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FACTOR;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MAX_DISTANCE;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_PROCESS_DATA;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_FPS_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_MAPNODES;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_NODE_HEIGHT;
@@ -45,6 +46,7 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_OWN_H
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TICKS_PER_SECOND;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.
@@ -190,13 +192,16 @@ public class Controller extends Thread implements OrientationListener, LocationL
             mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
 
             long frametime = (System.currentTimeMillis() - starttime);
+            int fps = frametime != 0 ? (int) (1000/frametime) : TARGET_FRAMETIME;
             if (frametime < TARGET_FRAMETIME) {
                 try {
                     sleep(TARGET_FRAMETIME - frametime);
+                    fps = TICKS_PER_SECOND;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_FPS_VIEW, frametime + " | " + fps));
         }
     }
 

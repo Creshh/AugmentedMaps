@@ -44,6 +44,7 @@ public class OpenCVHandler {
         }
     }
 
+    private Mat color = new Mat();
     private Mat oldImage;
     private MatOfPoint2f featurePoints;
     private MatOfByte status;
@@ -71,9 +72,13 @@ public class OpenCVHandler {
 //        Utils.bitmapToMat(bmp, color);
 
         Utils.bitmapToMat(bmp, colorX);
-        Mat color = colorX.t();
+
+//        Size targetSize = new Size(colorX.width()/2f, colorX.height()/2f);
+
+        Size targetSize = new Size(colorX.width(), colorX.height());
+
         Core.flip(colorX.t(), color, 1);
-        Imgproc.resize(color, color, colorX.size());
+        Imgproc.resize(color, color, targetSize);
 
 
         Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
@@ -100,10 +105,10 @@ public class OpenCVHandler {
             MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
 
             Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
-            Point[] points = featurePoints.toArray();
-            float[] error = err.toArray();
+//            Point[] points = featurePoints.toArray();
+//            float[] error = err.toArray();
 
-            Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y + " Err: " + error[0]);
+//            Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y + " Err: " + error[0]);
 
             this.featurePoints = newFeaturePoints;
             this.oldImage = current;

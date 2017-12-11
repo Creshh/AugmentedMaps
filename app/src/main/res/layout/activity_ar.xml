@@ -17,7 +17,9 @@
     <de.tu_chemnitz.tomkr.augmentedmaps.view.ARView
         android:id="@+id/arview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"/>
 
     <TextView
         android:id="@+id/pos"
@@ -77,4 +79,13 @@
         android:layout_alignEnd="@+id/toggleLP"
         android:layout_below="@+id/toggleSensor"
         android:text="Log Data"/>
+
+    <TextView
+        android:id="@+id/fpsView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:text="FPS"
+        android:textColor="@android:color/holo_red_light"/>
 </RelativeLayout>

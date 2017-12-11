@@ -60,6 +60,7 @@ public class Constants {
     public static final int MSG_UPDATE_OWN_HEIGHT = 6;
     public static final int MSG_UPDATE_NODE_HEIGHT = 7;
     public static final int MSG_UPDATE_STATE_VIEW = 8;
+    public static final int MSG_UPDATE_FPS_VIEW = 9;
 
     /**
      * Factor for lowPass Filter in OrientationService
