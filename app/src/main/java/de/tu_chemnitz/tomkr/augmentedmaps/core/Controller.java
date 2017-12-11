@@ -133,10 +133,21 @@ public class Controller extends Thread implements OrientationListener, LocationL
                 }
             }
 
-            try {
-                motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
-            } catch (Exception e){
-                e.printStackTrace();
+            if(motion) {
+                try {
+
+                    motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+                    Orientation temp = new Orientation();
+                    if (motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
+                        temp.setX(motion(-1, this.orientation.getX(), motionVec.getX(), fovH));
+//                    temp.setY(motion(values.getY(), this.orientation.getY(), motionVec.getY()));
+                        temp.setY(orientation.getY());
+                        orientation = temp;
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
 
@@ -342,39 +353,48 @@ public class Controller extends Thread implements OrientationListener, LocationL
             temp.setX(lowPass(values.getX(), this.orientation.getX()));
             temp.setY(lowPass(values.getY(), this.orientation.getY()));
             temp.setZ(lowPass(values.getZ(), this.orientation.getZ()));
-        } else if(motion) {
-
-//            Vec2f motionVec = null;
-//            try {
-//                motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
-//            } catch (Exception e){
-//                e.printStackTrace();
+            this.orientation = temp;
+//        } else if(motion) {
+//
+////            Vec2f motionVec = null;
+////            try {
+////                motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+////            } catch (Exception e){
+////                e.printStackTrace();
+////            }
+//            if(motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
+//                temp.setX(motion(values.getX(), this.orientation.getX(), motionVec.getX(), fovH));
+////                temp.setY(motion(values.getY(), this.orientation.getY(), motionVec.getY()));
+//                temp.setY(values.getY());
+//            } else {
+//                temp.setX(values.getX());
+//                temp.setY(values.getY());
 //            }
-            if(motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
-                temp.setX(motion(values.getX(), this.orientation.getX(), motionVec.getX(), fovH));
-//                temp.setY(motion(values.getY(), this.orientation.getY(), motionVec.getY()));
-                temp.setY(values.getY());
-            } else {
-                temp.setX(values.getX());
-                temp.setY(values.getY());
-            }
-        } else {
+        } else if (!motion){
             temp = values;
+            this.orientation = temp;
         }
-        this.orientation = temp;
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + temp.toString()));
     }
 
-
+    /**
+     * IMPORTANT: Don't call multiple times for the same motion value, or result will be wrong. Has to be called each time a new motionValue is obtained from MotionAnalyzer
+     *
+     * @param newValue
+     * @param oldValue
+     * @param motionValue
+     * @param fov
+     * @return
+     */
     private float motion(float newValue, float oldValue, float motionValue, float fov){
         // TODO: calculate angular motion from vector in display coordinates.
         // TODO: move to separate module
         // TODO: or calculate estimated Marker movement, and take it to consideration when updating all markers -> then the marker position must be evaluated, and not the orientation values!!!
 
 
-        float diff = newValue-oldValue;
-        float angle = motionValue * fov/2f; // motionValue is in [0..1]
-        Log.d(TAG, "sensorAngle: " + diff + " motionAngle: " + angle + " from value: " + motionValue);
+//        float diff = newValue-oldValue;
+        float angle = motionValue * fov; // motionValue is in [0..1]
+        Log.d(TAG, "sensorAngle: " + /*diff*/ 0 + " motionAngle: " + angle + " from value: " + motionValue + " with fov: " + fov);
 
 
         float intervalTest = 0; // TODO: calculate the motion in 0..1 like in dataprocessor to test correctness
