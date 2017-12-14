@@ -2,11 +2,12 @@ package de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing;
 
 import android.graphics.Bitmap;
 import android.media.Image;
+import android.media.ImageReader;
 import android.util.Log;
 
 import org.opencv.core.Point;
 
-import java.util.Arrays;
+import java.nio.ByteBuffer;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.OpenCVHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
@@ -17,14 +18,16 @@ import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
  *
  */
 
-public class MotionAnalyzerA implements MotionAnalyzer {
+public class MotionAnalyzerA implements MotionAnalyzer{
 
     private static final String TAG = MotionAnalyzerA.class.getName();
 
     private Point[] prevPts;
 
+    private byte[] current;
+
     @Override
-    public Vec2f getRelativeMotionVector(Bitmap current, OpenCVHandler openCVHandler) {
+    public Vec2f getRelativeMotionVector(OpenCVHandler openCVHandler) {
         if(current != null) {
             Point[] points = openCVHandler.calculateOpticalFlowPyrLK(current);
             if(points != null) {
@@ -66,5 +69,17 @@ public class MotionAnalyzerA implements MotionAnalyzer {
             Log.d(TAG, "Bitmap NULL!");
             return null;
         }
+    }
+
+    @Override
+    public void onImageAvailable(ImageReader imageReader) {
+        Log.d(TAG, "onImageAvailable");
+        Image image = imageReader.acquireLatestImage();
+        ByteBuffer buffer = image.getPlanes()[0].getBuffer(); // get luminance plane from YUV_420_888 image
+        synchronized (this) {
+            current = new byte[buffer.remaining()];
+            buffer.get(current);
+        }
+        image.close();
     }
 }

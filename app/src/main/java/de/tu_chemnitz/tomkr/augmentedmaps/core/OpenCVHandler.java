@@ -28,7 +28,6 @@ import static android.os.Build.VERSION_CODES.M;
 
 /**
  * Created by Tom Kretzschmar on 18.10.2017.
- *
  */
 
 public class OpenCVHandler {
@@ -36,7 +35,7 @@ public class OpenCVHandler {
     private static final String TAG = OpenCVHandler.class.getName();
 
     static {
-        if(!OpenCVLoader.initDebug()){
+        if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "OpenCV not loaded");
             System.exit(1);
         } else {
@@ -51,11 +50,11 @@ public class OpenCVHandler {
     private MatOfFloat err;
     private boolean init = false;
 
-    public OpenCVHandler(){
+    public OpenCVHandler() {
         featurePoints = new MatOfPoint2f();
     }
 
-    private MatOfPoint calculateFeatureSet(Mat current){
+    private MatOfPoint calculateFeatureSet(Mat current) {
         double quality = 1;
         double minDist = 10;
         MatOfPoint corners = new MatOfPoint();
@@ -63,27 +62,26 @@ public class OpenCVHandler {
         return corners;
     }
 
-    public Point[] calculateOpticalFlowPyrLK(Bitmap bmp){// below is working
+    public Point[] calculateOpticalFlowPyrLK(Bitmap bmp) {// below is working
         Mat current = new Mat();
         Mat resized = new Mat();
         Utils.bitmapToMat(bmp, color);
 
 //        Size targetSize = color.size();
-        Size targetSize = new Size(color.width()/6f, color.height()/6f); // calculate with half size
+        Size targetSize = new Size(color.width() / 6f, color.height() / 6f); // calculate with half size
         Imgproc.resize(color, resized, targetSize);
 
         Imgproc.cvtColor(resized, current, Imgproc.COLOR_RGBA2GRAY);
 
 
-
         boolean resetFeatures = false;
-        for(Point p : featurePoints.toArray()){
-            if(p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0){
+        for (Point p : featurePoints.toArray()) {
+            if (p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0) {
                 resetFeatures = true;
             }
         }
 
-        if(oldImage == null || resetFeatures || featurePoints.empty()) {
+        if (oldImage == null || resetFeatures || featurePoints.empty()) {
             init = true;
             Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
             MatOfPoint initial = new MatOfPoint();
@@ -105,19 +103,68 @@ public class OpenCVHandler {
         Point[] points = featurePoints.toArray();
         Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
 
-        for(Point p : points){
+        for (Point p : points) {
             p.x = p.x * 6;
             p.y = p.y * 6;
         }
 
-        return points; // TODO: remap coordinate system!!! correct now, but slow. wrong initially because of transform of textureView preview. maybe get bitmap / data directly from bytes, better features?
+        return points;
     }
 
-    public boolean getInit(){
+
+    public Point[] calculateOpticalFlowPyrLK(byte[] bytes) {// below is working
+        Mat current = new Mat();
+        Mat resized = new Mat();
+
+        color  = new Mat(1080, 1920, CvType.CV_8UC1);
+        color.put(0,0, bytes);
+
+//        Size targetSize = color.size();
+        Size targetSize = new Size(color.width() / 6f, color.height() / 6f); // calculate with half size
+        Imgproc.resize(color, current, targetSize);
+
+        boolean resetFeatures = false;
+        for (Point p : featurePoints.toArray()) {
+            if (p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0) {
+                resetFeatures = true;
+            }
+        }
+
+        if (oldImage == null || resetFeatures || featurePoints.empty()) {
+            init = true;
+            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
+            MatOfPoint initial = new MatOfPoint();
+            Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 30);
+            initial.convertTo(featurePoints, CvType.CV_32F);
+            this.oldImage = current;
+        } else {
+            init = false;
+            status = new MatOfByte();
+            err = new MatOfFloat();
+            MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
+
+            Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
+
+            this.featurePoints = newFeaturePoints;
+            this.oldImage = current;
+        }
+
+        Point[] points = featurePoints.toArray();
+        Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
+
+        for (Point p : points) {
+            p.x = p.x * 6;
+            p.y = p.y * 6;
+        }
+
+        return points;
+    }
+
+    public boolean getInit() {
         return init;
     }
 
-    public Vec2f calculateOpticalFlow(Bitmap bmp, int w, int h){
+    public Vec2f calculateOpticalFlow(Bitmap bmp, int w, int h) {
 //        Mat current = new Mat();
 //        Mat color = new Mat();
 //        Utils.bitmapToMat(bmp, color);
@@ -186,16 +233,16 @@ public class OpenCVHandler {
         int sumLastRow = 0;
         int maxDiff = 0;
         int maxDiffRow = 0;
-        for(int row = 0; row<grayscale.rows(); row++){
+        for (int row = 0; row < grayscale.rows(); row++) {
             int sumCurrentRow = 0;
-            for(int col = 0; col<grayscale.cols(); col++){
+            for (int col = 0; col < grayscale.cols(); col++) {
                 double dot = grayscale.get(row, col)[0];
-                sumCurrentRow += (int)dot;
+                sumCurrentRow += (int) dot;
             }
 
-            if(row != 0){
+            if (row != 0) {
                 int currentDiff = Math.abs(sumLastRow - sumCurrentRow);
-                if(currentDiff > maxDiff){
+                if (currentDiff > maxDiff) {
                     maxDiff = currentDiff;
                     maxDiffRow = row;
                 }
@@ -203,10 +250,9 @@ public class OpenCVHandler {
             sumLastRow = sumCurrentRow;
         }
 
-        for(int col = 0; col < rgba_small.cols(); col++){
-            rgba_small.put(maxDiffRow, col, 255,0,0, 255);
+        for (int col = 0; col < rgba_small.cols(); col++) {
+            rgba_small.put(maxDiffRow, col, 255, 0, 0, 255);
         }
-
 
 
         // Don't do that at home or work it's for visualization purpose.
@@ -238,17 +284,17 @@ public class OpenCVHandler {
         int sumLastRows = 0;
         int maxDiff = 0;
         int maxDiffRowStart = 0;
-        for(int row = 0; row<grayscale.rows(); row+=interval){
+        for (int row = 0; row < grayscale.rows(); row += interval) {
             int sumCurrentRows = 0;
-            for(int k = 0; k<interval; k++){
-                for(int col = 0; col<grayscale.cols(); col++){
+            for (int k = 0; k < interval; k++) {
+                for (int col = 0; col < grayscale.cols(); col++) {
                     double dot = grayscale.get(row, col)[0];
-                    sumCurrentRows += (int)dot;
+                    sumCurrentRows += (int) dot;
                 }
             }
-            if(row != 0){
+            if (row != 0) {
                 int currentDiff = Math.abs(sumLastRows - sumCurrentRows);
-                if(currentDiff > maxDiff){
+                if (currentDiff > maxDiff) {
                     maxDiff = currentDiff;
                     maxDiffRowStart = row;
                 }
@@ -256,10 +302,9 @@ public class OpenCVHandler {
             sumLastRows = sumCurrentRows;
         }
 
-        for(int col = 0; col < rgba_small.cols(); col++){
-            rgba_small.put(maxDiffRowStart > 0 ? maxDiffRowStart - 1 : 0, col, 255,0,0, 255);
+        for (int col = 0; col < rgba_small.cols(); col++) {
+            rgba_small.put(maxDiffRowStart > 0 ? maxDiffRowStart - 1 : 0, col, 255, 0, 0, 255);
         }
-
 
 
         // Don't do that at home or work it's for visualization purpose.

@@ -88,12 +88,11 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public static final Object listLock = new Object();
     private OpenCVHandler openCVHandler;
     public boolean lowPass;
-    public boolean logData = false;
-    public long logStart;
+    private boolean logData = false;
+    private long logStart;
     private ArrayList<Vec2f> dataLog;
     public boolean motion;
     private float fovH = 10;
-    private Vec2f motionVec;
 
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
         tags = Helpers.getTagsFromConfig(context);
@@ -107,6 +106,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
         openCVHandler = new OpenCVHandler();
 
         this.camera = camera;
+        camera.registerImageAvailableListener(motionAnalyzer);
 
         state = ApplicationState.INITIALIZED;
         pauseLock = new Object();
@@ -138,7 +138,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
             if(motion) {
                 try {
 
-                    motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+//                    Vec2f motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
+                    Vec2f motionVec = motionAnalyzer.getRelativeMotionVector(openCVHandler);
                     Orientation temp = new Orientation();
                     if (motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
                         temp.setX(motion(-1, this.orientation.getX(), motionVec.getX(), fovH));
@@ -359,22 +360,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
             temp.setY(lowPass(values.getY(), this.orientation.getY()));
             temp.setZ(lowPass(values.getZ(), this.orientation.getZ()));
             this.orientation = temp;
-//        } else if(motion) {
-//
-////            Vec2f motionVec = null;
-////            try {
-////                motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
-////            } catch (Exception e){
-////                e.printStackTrace();
-////            }
-//            if(motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
-//                temp.setX(motion(values.getX(), this.orientation.getX(), motionVec.getX(), fovH));
-////                temp.setY(motion(values.getY(), this.orientation.getY(), motionVec.getY()));
-//                temp.setY(values.getY());
-//            } else {
-//                temp.setX(values.getX());
-//                temp.setY(values.getY());
-//            }
         } else if (!motion){
             temp = values;
             this.orientation = temp;
@@ -384,12 +369,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     /**
      * IMPORTANT: Don't call multiple times for the same motion value, or result will be wrong. Has to be called each time a new motionValue is obtained from MotionAnalyzer
-     *
-     * @param newValue
-     * @param oldValue
-     * @param motionValue
-     * @param fov
-     * @return
      */
     private float motion(float newValue, float oldValue, float motionValue, float fov){
         // TODO: calculate angular motion from vector in display coordinates.
@@ -400,9 +379,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
 //        float diff = newValue-oldValue;
         float angle = motionValue * fov; // motionValue is in [0..1]
         Log.d(TAG, "sensorAngle: " + /*diff*/ 0 + " motionAngle: " + angle + " from value: " + motionValue + " with fov: " + fov);
-
-
-        float intervalTest = 0; // TODO: calculate the motion in 0..1 like in dataprocessor to test correctness
 
         return oldValue - angle;
     }

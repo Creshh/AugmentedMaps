@@ -50,13 +50,8 @@ public class ARView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-//        Log.d(TAG, "onDraw");
-
-
-
         int width = getWidth();
         int height = getHeight();
-//        Log.d(TAG, "Size: " + width + "___" + height);
 
         canvas.drawCircle(960, 540, 20, Constants.paintStroke);
 
@@ -73,10 +68,6 @@ public class ARView extends View {
         if (points != null ){
             for( Point p : points){
                 canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintStroke);
-//                canvas.drawCircle((float)p.x, (float)(1080-p.y), 10, Constants.paintStroke);
-//                canvas.drawCircle((float)(p.y), (float)(1080-p.x), 10, Constants.paintStroke);
-//                canvas.drawCircle(1920-(float)p.x, 1080-(float)p.y, 10, Constants.paintFill); // TODO: correct coordinate system orientation
-//                canvas.drawCircle((float)p.x, (float)p.y, 10, Constants.paintStroke);
             }
         }
         if(debugVec != null){

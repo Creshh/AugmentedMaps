@@ -2,7 +2,6 @@ package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -322,7 +321,7 @@ public class Camera2 {
                 return;
             }
 
-            mImageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 2);
+            mImageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 3);
             mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
@@ -404,12 +403,12 @@ public class Camera2 {
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
-            //mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
+            mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-//            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()), new CameraCaptureSession.StateCallback() {
             List<Surface> targets = new ArrayList<>();
             targets.add(surface);
+            targets.add(mImageReader.getSurface());
             mCameraDevice.createCaptureSession(targets, new CameraCaptureSession.StateCallback() {
 
                 @Override
