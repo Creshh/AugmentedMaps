@@ -5,7 +5,6 @@ import android.util.Log;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
@@ -14,20 +13,16 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
-import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.video.SparsePyrLKOpticalFlow;
 import org.opencv.video.Video;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
-
-import static android.R.attr.maxLevel;
-import static android.R.attr.width;
-import static android.os.Build.VERSION_CODES.M;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 
 
 /**
  * Created by Tom Kretzschmar on 18.10.2017.
+ *
  */
 
 public class OpenCVHandler {
@@ -49,92 +44,30 @@ public class OpenCVHandler {
     private MatOfByte status;
     private MatOfFloat err;
     private boolean init = false;
+    private boolean reset = false;
 
     public OpenCVHandler() {
         featurePoints = new MatOfPoint2f();
     }
 
-    private MatOfPoint calculateFeatureSet(Mat current) {
-        double quality = 1;
-        double minDist = 10;
-        MatOfPoint corners = new MatOfPoint();
-        Imgproc.goodFeaturesToTrack(current, corners, 5 /*max Corners*/, quality, minDist);
-        return corners;
-    }
-
-    public Point[] calculateOpticalFlowPyrLK(Bitmap bmp) {// below is working
+    public Point[] calculateOpticalFlowPyrLK(byte[] bytes, int width, int height) {// below is working
         Mat current = new Mat();
-        Mat resized = new Mat();
-        Utils.bitmapToMat(bmp, color);
 
-//        Size targetSize = color.size();
-        Size targetSize = new Size(color.width() / 6f, color.height() / 6f); // calculate with half size
-        Imgproc.resize(color, resized, targetSize);
-
-        Imgproc.cvtColor(resized, current, Imgproc.COLOR_RGBA2GRAY);
-
-
-        boolean resetFeatures = false;
-        for (Point p : featurePoints.toArray()) {
-            if (p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0) {
-                resetFeatures = true;
-            }
-        }
-
-        if (oldImage == null || resetFeatures || featurePoints.empty()) {
-            init = true;
-            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
-            MatOfPoint initial = new MatOfPoint();
-            Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 30);
-            initial.convertTo(featurePoints, CvType.CV_32F);
-            this.oldImage = current;
-        } else {
-            init = false;
-            status = new MatOfByte();
-            err = new MatOfFloat();
-            MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
-
-            Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
-
-            this.featurePoints = newFeaturePoints;
-            this.oldImage = current;
-        }
-
-        Point[] points = featurePoints.toArray();
-        Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
-
-        for (Point p : points) {
-            p.x = p.x * 6;
-            p.y = p.y * 6;
-        }
-
-        return points;
-    }
-
-
-    public Point[] calculateOpticalFlowPyrLK(byte[] bytes) {// below is working
-        Mat current = new Mat();
-        Mat resized = new Mat();
-
-        color  = new Mat(1080, 1920, CvType.CV_8UC1);
+        color  = new Mat(height, width, CvType.CV_8UC1);
         color.put(0,0, bytes);
 
 //        Size targetSize = color.size();
-        Size targetSize = new Size(color.width() / 6f, color.height() / 6f); // calculate with half size
+        Size targetSize = new Size(color.width() / Constants.IMAGE_SCALING_FACTOR, color.height() / Constants.IMAGE_SCALING_FACTOR); // calculate with half size
         Imgproc.resize(color, current, targetSize);
 
-        boolean resetFeatures = false;
-        for (Point p : featurePoints.toArray()) {
-            if (p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0) {
-                resetFeatures = true;
-            }
-        }
 
-        if (oldImage == null || resetFeatures || featurePoints.empty()) {
-            init = true;
-            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
+
+
+        if (oldImage == null || reset || featurePoints.empty()) {
+            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + reset + " or empty points: " + (featurePoints.empty()));
+            reset = false;
             MatOfPoint initial = new MatOfPoint();
-            Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 30);
+            Imgproc.goodFeaturesToTrack(current, initial, Constants.MAX_TRACKING_POINTS, 0.1, 30);
             initial.convertTo(featurePoints, CvType.CV_32F);
             this.oldImage = current;
         } else {
@@ -145,16 +78,24 @@ public class OpenCVHandler {
 
             Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
 
+
+            for (Point p : featurePoints.toArray()) {
+                if (p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0) {
+                    init = true;
+                    reset = true;
+                }
+            }
+
             this.featurePoints = newFeaturePoints;
             this.oldImage = current;
         }
 
         Point[] points = featurePoints.toArray();
-        Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
+//        Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
 
         for (Point p : points) {
-            p.x = p.x * 6;
-            p.y = p.y * 6;
+            p.x = p.x * Constants.IMAGE_SCALING_FACTOR;
+            p.y = p.y * Constants.IMAGE_SCALING_FACTOR;
         }
 
         return points;
@@ -164,57 +105,8 @@ public class OpenCVHandler {
         return init;
     }
 
-    public Vec2f calculateOpticalFlow(Bitmap bmp, int w, int h) {
-//        Mat current = new Mat();
-//        Mat color = new Mat();
-//        Utils.bitmapToMat(bmp, color);
-//        Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
-////        if(old != null) {
-////            Size winSize = new Size(w, h);
-////            int maxLevel = 3;
-////            TermCriteria crit = new TermCriteria();
-////            int flags = 0;
-////            double minEigThreshold = 1;
-////
-////
-////            Mat nextPts = new Mat();
-////
-////
-//////        SparsePyrLKOpticalFlow.create(winSize, maxLevel, crit, flags, minEigThreshold);
-////            SparsePyrLKOpticalFlow sparsePyrLKOpticalFlow = SparsePyrLKOpticalFlow.create();
-////            sparsePyrLKOpticalFlow.calc(old, current, pts, nextPts, status);
-////
-////            this.old = current;
-//////            this.pts = nextPts;
-////
-////            return null;
-////        } else {
-//            this.pts = calculateFeatureSet(current);
-//            this.old = current;
-//            return new Vec2f(0,0);
-////        }
-        return null;
-    }
 
 
-    private void detectEdges(Bitmap bitmap) {
-        Mat rgba = new Mat();
-        Utils.bitmapToMat(bitmap, rgba);
-
-        Mat edges = new Mat(rgba.size(), CvType.CV_8UC1);
-        Imgproc.cvtColor(rgba, edges, Imgproc.COLOR_RGB2GRAY, 4);
-        Imgproc.Canny(edges, edges, 80, 100);
-
-        // Don't do that at home or work it's for visualization purpose.
-//        BitmapHelper.showBitmap(this, bitmap, imageView);
-        Bitmap resultBitmap = Bitmap.createBitmap(edges.cols(), edges.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(edges, resultBitmap);
-//        BitmapHelper.showBitmap(this, resultBitmap, detectEdgesImageView);
-//        ImageView img = (ImageView) findViewById(R.id.imageView);
-////        Canvas canvas = new Canvas(resultBitmap);
-//        img.setImageBitmap(resultBitmap);
-//        img.invalidate();
-    }
 
     private void detectHorizon(Bitmap bitmap) {
         Mat rgba = new Mat();

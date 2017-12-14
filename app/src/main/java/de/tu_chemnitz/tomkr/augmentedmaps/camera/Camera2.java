@@ -491,14 +491,4 @@ public class Camera2 {
         Log.d(TAG, "FOV => " + horizontalAngle + "x" + verticalAngle);
         return new float[]{horizontalAngle, verticalAngle};
     }
-
-    /**
-     * get Bitmap from preview target. transform must be applied, because otherwise bitmap is in wrong orientation
-     * @return
-     */
-    public Bitmap getCurrentImage(){
-        Bitmap bitmap = previewTarget.getBitmap();
-        bitmap = Bitmap.createBitmap( bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), previewTarget.getTransform( null ), true );
-        return bitmap;
-    }
 }

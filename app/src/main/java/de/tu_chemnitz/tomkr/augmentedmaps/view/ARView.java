@@ -67,7 +67,7 @@ public class ARView extends View {
 
         if (points != null ){
             for( Point p : points){
-                canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintStroke);
+                canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintFill);
             }
         }
         if(debugVec != null){

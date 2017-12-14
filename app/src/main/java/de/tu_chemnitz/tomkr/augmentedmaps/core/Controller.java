@@ -56,7 +56,6 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TICKS_PER_SECOND
 public class Controller extends Thread implements OrientationListener, LocationListener, Handler.Callback {
 
     private static final String TAG = Controller.class.getName();
-    private final Camera2 camera;
     private MotionAnalyzer motionAnalyzer;
     private ApplicationState state;
     private boolean smallLocationUpdate;
@@ -92,7 +91,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     private long logStart;
     private ArrayList<Vec2f> dataLog;
     public boolean motion;
-    private float fovH = 10;
+    private float fov[];
 
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
         tags = Helpers.getTagsFromConfig(context);
@@ -105,7 +104,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
         motionAnalyzer = MotionAnalyzerProvider.getMotionAnalyzer(MotionAnalyzerProvider.MotionAnalyzerType.A);
         openCVHandler = new OpenCVHandler();
 
-        this.camera = camera;
         camera.registerImageAvailableListener(motionAnalyzer);
 
         state = ApplicationState.INITIALIZED;
@@ -138,13 +136,11 @@ public class Controller extends Thread implements OrientationListener, LocationL
             if(motion) {
                 try {
 
-//                    Vec2f motionVec = motionAnalyzer.getRelativeMotionVector(camera.getCurrentImage(), openCVHandler);
                     Vec2f motionVec = motionAnalyzer.getRelativeMotionVector(openCVHandler);
                     Orientation temp = new Orientation();
-                    if (motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
-                        temp.setX(motion(-1, this.orientation.getX(), motionVec.getX(), fovH));
-//                    temp.setY(motion(values.getY(), this.orientation.getY(), motionVec.getY()));
-                        temp.setY(orientation.getY());
+                    if (orientation != null && motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
+                        temp.setX(motion(-1, this.orientation.getX(), motionVec.getX(), fov[0]));
+                        temp.setY(motion(-1, this.orientation.getY(), motionVec.getY(), fov[1]));
                         orientation = temp;
                     }
 
@@ -335,7 +331,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
             dataProcessor.setCameraViewAngleV(fov[1]);
         }
 
-        this.fovH = fov[0];
+        this.fov = fov;
     }
 
 
@@ -364,7 +360,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
             temp = values;
             this.orientation = temp;
         }
-        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + temp.toString()));
+        if(values != null && orientation != null)
+            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + orientation.toString()));
     }
 
     /**
@@ -378,9 +375,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
 //        float diff = newValue-oldValue;
         float angle = motionValue * fov; // motionValue is in [0..1]
-        Log.d(TAG, "sensorAngle: " + /*diff*/ 0 + " motionAngle: " + angle + " from value: " + motionValue + " with fov: " + fov);
+//        Log.d(TAG, "sensorAngle: " + /*diff*/ 0 + " motionAngle: " + angle + " from value: " + motionValue + " with fov: " + fov);
 
-        return oldValue - angle;
+        return oldValue + angle;
     }
 
     /**

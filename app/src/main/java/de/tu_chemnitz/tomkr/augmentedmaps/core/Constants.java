@@ -76,4 +76,14 @@ public class Constants {
      *
      */
     public static final float LOCATION_UPDATE_DISTANCE = 10f;
+
+    /**
+     *
+     */
+    public static final float IMAGE_SCALING_FACTOR = 4f;
+
+    /**
+     *
+     */
+    public static final int MAX_TRACKING_POINTS = 3;
 }
