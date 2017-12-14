@@ -64,28 +64,21 @@ public class OpenCVHandler {
     }
 
     public Point[] calculateOpticalFlowPyrLK(Bitmap bmp){// below is working
-//        Log.d(TAG, " " + bmp.getWidth() + " x " + bmp.getHeight());
         Mat current = new Mat();
-        Mat colorX = new Mat();
-
-//        Mat color = new Mat();
-//        Utils.bitmapToMat(bmp, color);
-
+        Mat resized = new Mat();
         Utils.bitmapToMat(bmp, color);
 
-//        Size targetSize = new Size(colorX.width()/2f, colorX.height()/2f); // TODO: calculate with half size
+//        Size targetSize = color.size();
+        Size targetSize = new Size(color.width()/6f, color.height()/6f); // calculate with half size
+        Imgproc.resize(color, resized, targetSize);
 
-        Size targetSize = new Size(colorX.width(), colorX.height());
+        Imgproc.cvtColor(resized, current, Imgproc.COLOR_RGBA2GRAY);
 
-//        Core.flip(colorX.t(), color, 1);
-//        Imgproc.resize(color, color, targetSize);
-//        Imgproc.resize(colorX.t(), color, targetSize);
 
-        Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
 
         boolean resetFeatures = false;
         for(Point p : featurePoints.toArray()){
-            if(p.x > color.size().width || p.y > color.size().height || p.x < 0 || p.y < 0){
+            if(p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0){
                 resetFeatures = true;
             }
         }
@@ -94,7 +87,6 @@ public class OpenCVHandler {
             init = true;
             Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
             MatOfPoint initial = new MatOfPoint();
-//            initial.fromArray(new Point(960,540));
             Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 30);
             initial.convertTo(featurePoints, CvType.CV_32F);
             this.oldImage = current;
@@ -105,15 +97,20 @@ public class OpenCVHandler {
             MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
 
             Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
-            Point[] points = featurePoints.toArray();
-//            float[] error = err.toArray();
-
-            Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
 
             this.featurePoints = newFeaturePoints;
             this.oldImage = current;
         }
-        return featurePoints.toArray(); // TODO: remap coordinate system!!! correct now, but slow. wrong initially because of transform of textureView preview. maybe get bitmap / data directly from bytes, better features?
+
+        Point[] points = featurePoints.toArray();
+        Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
+
+        for(Point p : points){
+            p.x = p.x * 6;
+            p.y = p.y * 6;
+        }
+
+        return points; // TODO: remap coordinate system!!! correct now, but slow. wrong initially because of transform of textureView preview. maybe get bitmap / data directly from bytes, better features?
     }
 
     public boolean getInit(){
