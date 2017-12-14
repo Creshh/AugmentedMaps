@@ -71,15 +71,15 @@ public class OpenCVHandler {
 //        Mat color = new Mat();
 //        Utils.bitmapToMat(bmp, color);
 
-        Utils.bitmapToMat(bmp, colorX);
+        Utils.bitmapToMat(bmp, color);
 
-//        Size targetSize = new Size(colorX.width()/2f, colorX.height()/2f);
+//        Size targetSize = new Size(colorX.width()/2f, colorX.height()/2f); // TODO: calculate with half size
 
         Size targetSize = new Size(colorX.width(), colorX.height());
 
-        Core.flip(colorX.t(), color, 1);
-        Imgproc.resize(color, color, targetSize);
-
+//        Core.flip(colorX.t(), color, 1);
+//        Imgproc.resize(color, color, targetSize);
+//        Imgproc.resize(colorX.t(), color, targetSize);
 
         Imgproc.cvtColor(color, current, Imgproc.COLOR_RGBA2GRAY);
 
@@ -95,7 +95,7 @@ public class OpenCVHandler {
             Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + resetFeatures + " or empty points: " + (featurePoints.empty()));
             MatOfPoint initial = new MatOfPoint();
 //            initial.fromArray(new Point(960,540));
-            Imgproc.goodFeaturesToTrack(current, initial, 5, 0.1, 30);
+            Imgproc.goodFeaturesToTrack(current, initial, 1, 0.1, 30);
             initial.convertTo(featurePoints, CvType.CV_32F);
             this.oldImage = current;
         } else {
@@ -105,10 +105,10 @@ public class OpenCVHandler {
             MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
 
             Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
-//            Point[] points = featurePoints.toArray();
+            Point[] points = featurePoints.toArray();
 //            float[] error = err.toArray();
 
-//            Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y + " Err: " + error[0]);
+            Log.d(TAG, "Point1: " + points[0].x + "|" + points[0].y);
 
             this.featurePoints = newFeaturePoints;
             this.oldImage = current;

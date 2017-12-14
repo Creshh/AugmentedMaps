@@ -2,6 +2,7 @@ package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -492,7 +493,13 @@ public class Camera2 {
         return new float[]{horizontalAngle, verticalAngle};
     }
 
+    /**
+     * get Bitmap from preview target. transform must be applied, because otherwise bitmap is in wrong orientation
+     * @return
+     */
     public Bitmap getCurrentImage(){
-        return previewTarget.getBitmap();
+        Bitmap bitmap = previewTarget.getBitmap();
+        bitmap = Bitmap.createBitmap( bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), previewTarget.getTransform( null ), true );
+        return bitmap;
     }
 }
