@@ -79,10 +79,6 @@ public class ARView extends View {
         this.markerDrawables = markerDrawables;
     }
 
-//    public void setFeaturesToDraw(List<FeatureDrawable> featuresToDraw){
-//        // TODO: debug drawing of Features for OpenCV FeatureDetection
-//    }
-
     public void setDebugArray(Point[] points){
         this.points = points;
     }

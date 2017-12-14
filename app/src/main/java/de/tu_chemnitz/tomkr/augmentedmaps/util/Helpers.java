@@ -133,7 +133,7 @@ public class Helpers {
     }
 
     public static void saveLogToFile(ArrayList<Vec2f> dataLog) {
-        String filename = "sensor" + createTimeStamp(System.currentTimeMillis()) + ".log";
+        String filename = "sensor" + createTimeStamp(System.currentTimeMillis()) + ".logToFile";
         StringBuilder builder = new StringBuilder();
         for(Vec2f p : dataLog){
             builder.append(p.getX());

@@ -22,14 +22,15 @@ import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.MotionAnalyzer;
-import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.MotionAnalyzerProvider;
+import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.ImageProcessor;
+import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.ImageProcessorProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
+import de.tu_chemnitz.tomkr.augmentedmaps.sensor.SensorFilter;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
@@ -56,7 +57,7 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TICKS_PER_SECOND
 public class Controller extends Thread implements OrientationListener, LocationListener, Handler.Callback {
 
     private static final String TAG = Controller.class.getName();
-    private MotionAnalyzer motionAnalyzer;
+    private ImageProcessor imageProcessor;
     private ApplicationState state;
     private boolean smallLocationUpdate;
 
@@ -85,7 +86,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
     private boolean pause;
     private final Object pauseLock;
     public static final Object listLock = new Object();
-    private OpenCVHandler openCVHandler;
     public boolean lowPass;
     private boolean logData = false;
     private long logStart;
@@ -101,10 +101,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
         elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
         locationService = new LocationService(context);
         orientationService = new OrientationService(context);
-        motionAnalyzer = MotionAnalyzerProvider.getMotionAnalyzer(MotionAnalyzerProvider.MotionAnalyzerType.A);
-        openCVHandler = new OpenCVHandler();
+        imageProcessor = ImageProcessorProvider.getMotionAnalyzer(ImageProcessorProvider.MotionAnalyzerType.OPTICAL_FLOW);
 
-        camera.registerImageAvailableListener(motionAnalyzer);
+        camera.registerImageAvailableListener(imageProcessor);
 
         state = ApplicationState.INITIALIZED;
         pauseLock = new Object();
@@ -112,7 +111,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     @Override
     public void run() {
-        Log.d(TAG, "run");
         while (!stop) {
             long starttime = System.currentTimeMillis();
             if(logData) {
@@ -136,11 +134,11 @@ public class Controller extends Thread implements OrientationListener, LocationL
             if(motion) {
                 try {
 
-                    Vec2f motionVec = motionAnalyzer.getRelativeMotionVector(openCVHandler);
+                    Vec2f motionVec = imageProcessor.getRelativeMotionVector();
                     Orientation temp = new Orientation();
                     if (orientation != null && motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
-                        temp.setX(motion(-1, this.orientation.getX(), motionVec.getX(), fov[0]));
-                        temp.setY(motion(-1, this.orientation.getY(), motionVec.getY(), fov[1]));
+                        temp.setX(SensorFilter.fusion(-1, this.orientation.getX(), motionVec.getX(), fov[0]));
+                        temp.setY(SensorFilter.fusion(-1, this.orientation.getY(), motionVec.getY(), fov[1]));
                         orientation = temp;
                     }
 
@@ -335,7 +333,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
 
-    @Override // TODO after onResume, no nodes will be displayed
+    @Override // TODO: Fix: after onResume, no nodes will be displayed
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
             smallLocationUpdate = true;
@@ -352,9 +350,9 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public void onOrientationChange(Orientation values) {
         Orientation temp = new Orientation();
         if(lowPass){
-            temp.setX(lowPass(values.getX(), this.orientation.getX()));
-            temp.setY(lowPass(values.getY(), this.orientation.getY()));
-            temp.setZ(lowPass(values.getZ(), this.orientation.getZ()));
+            temp.setX(SensorFilter.lowPass(values.getX(), this.orientation.getX()));
+            temp.setY(SensorFilter.lowPass(values.getY(), this.orientation.getY()));
+            temp.setZ(SensorFilter.lowPass(values.getZ(), this.orientation.getZ()));
             this.orientation = temp;
         } else if (!motion){
             temp = values;
@@ -364,39 +362,10 @@ public class Controller extends Thread implements OrientationListener, LocationL
             mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + orientation.toString()));
     }
 
-    /**
-     * IMPORTANT: Don't call multiple times for the same motion value, or result will be wrong. Has to be called each time a new motionValue is obtained from MotionAnalyzer
-     */
-    private float motion(float newValue, float oldValue, float motionValue, float fov){
-        // TODO: calculate angular motion from vector in display coordinates.
-        // TODO: move to separate module
-        // TODO: or calculate estimated Marker movement, and take it to consideration when updating all markers -> then the marker position must be evaluated, and not the orientation values!!!
 
-
-//        float diff = newValue-oldValue;
-        float angle = motionValue * fov; // motionValue is in [0..1]
-//        Log.d(TAG, "sensorAngle: " + /*diff*/ 0 + " motionAngle: " + angle + " from value: " + motionValue + " with fov: " + fov);
-
-        return oldValue + angle;
-    }
-
-    /**
-     * Low-pass filter, which smoothes the newValue values. TODO: Move to separate Module
-     */
-    private float lowPass(float newValue, float oldValue) {
-        float output = newValue;
-        if (oldValue != 0) {
-            float diff = newValue - oldValue;
-            if(Math.abs(diff) < 180) {
-                output = oldValue + (LOW_PASS_FACTOR * diff);
-//            Log.d(TAG, "old:" + oldValue + " new:" + newValue + " out:" + output);
-            }
-        }
-        return output;
-    }
-
-    public void log() { // TODO: separate button for debugging -> start from actual orientation and then log orientation and with motionanalyzer estimated orientation separaetely -> move -> check how much these values differ
-        // TODO: maybe Log defined Point, not Orientation values. Evaluate correct calculated position. maybe use image analysation for new position estimation, and measure the correctness using distance between closest points (maybe with only 1 point)
+    // TODO: separate button for debugging -> start from actual orientation and then logToFile orientation and with motionanalyzer estimated orientation separaetely -> move -> check how much these values differ
+    // TODO: maybe Log defined Point, not Orientation values. Evaluate correct calculated position. maybe use image analysation for new position estimation, and measure the correctness using distance between closest points (maybe with only 1 point)
+    public void logToFile() {
         logStart = System.currentTimeMillis();
         if(dataLog == null){
             dataLog = new ArrayList<>();

@@ -1,7 +1,6 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -14,7 +13,6 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
 import android.os.Handler;
@@ -68,8 +66,6 @@ public class Camera2 {
 
     private TextureView previewTarget;
 
-    private int orientation;
-
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -77,7 +73,6 @@ public class Camera2 {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    private Integer mSensorOrientation;
     private Display display;
 
     private CameraManager manager;
@@ -96,7 +91,6 @@ public class Camera2 {
     private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing) {
         this.previewTarget = previewTarget;
         this.display = display;
-        orientation = context.getResources().getConfiguration().orientation;
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         CameraCharacteristics characteristics;
         try {
@@ -160,64 +154,6 @@ public class Camera2 {
         }
     }
 
-
-    public void takePicture() {
-        try {
-            final CaptureRequest.Builder captureBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(mImageReader.getSurface());
-
-            // Use the same AE and AF modes as the preview.
-            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
-            // Flash disabled
-            captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-            captureBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
-
-            // Orientation
-            int rotation = display.getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
-
-            CameraCaptureSession.CaptureCallback CaptureCallback = new CameraCaptureSession.CaptureCallback() {
-
-                @Override
-                public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                    finishedPicture();
-                }
-            };
-
-
-            mCaptureSession.stopRepeating();
-            mCaptureSession.capture(captureBuilder.build(), CaptureCallback, null);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void finishedPicture() {
-        try {
-            Log.d(TAG, "FINISHED PICTURE");
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), null, mBackgroundHandler);
-            // After this, the camera will go back to the normal state of preview.
-            mCaptureSession.setRepeatingRequest(mPreviewRequest, null, mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Retrieves the JPEG orientation from the specified screen rotation.
-     *
-     * @param rotation The screen rotation.
-     * @return The JPEG orientation (one of 0, 90, 270, and 360)
-     */
-    private int getOrientation(int rotation) {
-        // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
-        // We have to take that into account and rotate JPEG properly.
-        // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
-        // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
-        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
-    }
-
-
     private void setupCamera() {
         // When the screen is turned off and turned back on, the SurfaceTexture is already
         // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
@@ -231,9 +167,7 @@ public class Camera2 {
         }
     }
 
-
     private void openCamera(int width, int height) {
-
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
         try {
@@ -327,7 +261,7 @@ public class Camera2 {
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
             int displayRotation = display.getRotation();
             //noinspection ConstantConditions
-            mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            Integer mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             boolean swappedDimensions = false;
             switch (displayRotation) {
                 case Surface.ROTATION_0:

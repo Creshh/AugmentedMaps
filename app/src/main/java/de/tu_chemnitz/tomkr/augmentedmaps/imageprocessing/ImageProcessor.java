@@ -1,10 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing;
 
-import android.graphics.Bitmap;
-import android.media.Image;
 import android.media.ImageReader;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.OpenCVHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 /**
@@ -12,9 +9,9 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
  *
  */
 
-public interface MotionAnalyzer extends ImageReader.OnImageAvailableListener {
+public interface ImageProcessor extends ImageReader.OnImageAvailableListener {
 
-    Vec2f getRelativeMotionVector(OpenCVHandler openCVHandler);
+    Vec2f getRelativeMotionVector();
 
 
     @Override

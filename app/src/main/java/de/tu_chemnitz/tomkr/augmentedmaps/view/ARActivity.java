@@ -1,7 +1,6 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.view;
 
 import android.app.Activity;
-import android.app.Application;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -22,7 +21,6 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 
-import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.arview;
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_FPS_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
@@ -146,7 +144,7 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
                 controller.lowPass = b;
                 break;
             case R.id.toggleBA:
-                Log.d(TAG, "toogle MotionAnalyzer");
+                Log.d(TAG, "toogle ImageProcessor");
                 controller.motion = b;
                 break;
         }
@@ -154,6 +152,6 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
 
     @Override
     public void onClick(View view) {
-        controller.log();
+        controller.logToFile();
     }
 }
