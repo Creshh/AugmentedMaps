@@ -37,6 +37,7 @@ public class OpticalFlow implements ImageProcessor {
     private boolean init = false;
     private boolean reset = false;
 
+    // TODO: output deg/sec
     @Override
     public Vec2f getRelativeMotionAngles(float[] fov) {
         if (current != null) {
@@ -64,7 +65,7 @@ public class OpticalFlow implements ImageProcessor {
 
                     vec.setX(((sumX / count) / width)*fov[0]);
                     vec.setY(((sumY / count) / height)*fov[1]);
-                    if (vec.getY() > 15 || vec.getX() > 15) {
+                    if (vec.getY() > 3 || vec.getX() > 3) {
                         Log.e(TAG, "-------------- MOTION VECTOR TOO BIG ------------");
                     }
                     ARActivity.getView().setDebugVec(new Vec2f((sumX / count), (sumY / count)));
@@ -80,6 +81,7 @@ public class OpticalFlow implements ImageProcessor {
         return new Vec2f(0, 0);
     }
 
+    // TODO: dont move feature points but use a fixed amount of points -> calulate a vector field and return that instead of new points. this way no new initalisation has to be done!
     private Point[] calculateOpticalFlowPyrLK(byte[] bytes, int width, int height) {// below is working
         Mat current = new Mat();
         Mat color = new Mat(height, width, CvType.CV_8UC1);

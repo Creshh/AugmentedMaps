@@ -41,13 +41,16 @@ public class SensorFilter {
         return result;
     }
 
+    // TODO: Unscented Kalman filter, Particle Filter
+
+    // TODO: negative y values add up sometimes
     private static float fusionAxis(float old, float sens, float motion){
         float result;
         float sensDiff = old - sens;
-        if(motion < FUSION_THRESHOLD_LOW_X){
+        if(Math.abs(motion) < FUSION_THRESHOLD_LOW_X){
             Log.d(TAG, "motion");
             result = old + motion;
-        } else if (sensDiff < FUSION_THRESHOLD_LOW_X){
+        } else if (Math.abs(sensDiff) < FUSION_THRESHOLD_LOW_X){
             Log.d(TAG, "sensor1");
             result = sens;
         } else {
