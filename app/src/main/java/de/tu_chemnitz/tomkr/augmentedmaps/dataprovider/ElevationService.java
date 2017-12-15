@@ -8,5 +8,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
  */
 
 public interface ElevationService {
-    int[] getElevation(Location loc[]);
+    Location[] getElevation(Location[] loc);
+
+    Location getElevation(Location loc);
 }

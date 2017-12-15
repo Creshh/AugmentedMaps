@@ -29,7 +29,7 @@ public class DataProcessorA implements DataProcessor {
 
     @Override
     public Marker processData(MapNode node, Orientation orientation, Location location) {
-        return  new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]");
+        return new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]");
     }
 
     /**
@@ -66,7 +66,7 @@ public class DataProcessorA implements DataProcessor {
         float alphaV = (float) Math.toDegrees(Math.atan2(h,d));
         float diffV = betaV + alphaV;
         float offsetV = -1;
-        if(Math.abs(betaV) < (cameraViewAngleV/2f)){ // TODO -> diffV?????
+        if(Math.abs(diffV) < (cameraViewAngleV/2f)){
             offsetV = diffV / (cameraViewAngleV/2f);
             offsetV = ((offsetV + 1) /2f); // offsetH has to be in Range [0..1] to be drawn
         }

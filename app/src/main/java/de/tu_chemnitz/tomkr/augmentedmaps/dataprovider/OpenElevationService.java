@@ -24,7 +24,7 @@ public class OpenElevationService implements ElevationService {
     public static final String OPEN_ELEVATION = "https://api.open-elevation.com/api/v1/lookup";
 
     @Override
-    public int[] getElevation(Location locs[]) {
+    public Location[] getElevation(Location[] locs) {
 
         String query = "locations=";
         for (int i = 0; i < locs.length; i++) {
@@ -55,7 +55,6 @@ public class OpenElevationService implements ElevationService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        int results[] = new int[locs.length];
         try {
             JsonReader reader = new JsonReader(new InputStreamReader(response, "utf-8"));
             reader.beginObject();
@@ -69,8 +68,8 @@ public class OpenElevationService implements ElevationService {
                     String name = reader.nextName();
                     String log = name;
                     if (name.equals("elevation")) {
-                        results[i] = reader.nextInt();
-                        log += " -> " + results[i];
+                        locs[i].setHeight(reader.nextInt());
+                        log += " -> " + locs[i].getHeight();
                     } else {
                         reader.skipValue();
                         log += " -> skipped";
@@ -84,7 +83,12 @@ public class OpenElevationService implements ElevationService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return results;
+        return locs;
+    }
+
+    @Override
+    public Location getElevation(Location loc) {
+        return getElevation(new Location[]{loc})[0];
     }
 
 }

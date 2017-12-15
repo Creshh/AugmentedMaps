@@ -259,11 +259,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
         switch (message.what) {
             case MSG_UPDATE_OWN_HEIGHT:
                 if (loc != null) {
-                    int elevations[] = elevationService.getElevation(new Location[]{loc});
-                    for (int e : elevations) {
-                        Log.d(TAG, "Elevation -> " + e);
-                    }
-                    loc.setHeight(elevations[0]);
+                    loc = elevationService.getElevation(loc);
+                    Log.d(TAG, "Elevation -> " + loc.getHeight());
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
                     state = ApplicationState.OWN_HEIGHT_ACQUIRED;
                     fetching = false;
@@ -286,11 +283,14 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
             case MSG_UPDATE_NODE_HEIGHT:
                 if (mapNodes != null) {
-                    for (MapNode node : mapNodes) {
-                        Log.d(TAG, "acquired node " + node.getName());
-                        if (node.getLoc().getHeight() == -1) {
-                            node.getLoc().setHeight(elevationService.getElevation(new Location[]{node.getLoc()})[0]); // TODO: change to batch query
-                        }
+                    Location[] locs = new Location[mapNodes.size()];
+                    for (int i = 0; i< mapNodes.size(); i++) {
+                        locs[i] = mapNodes.get(i).getLoc();
+                    }
+                    locs = elevationService.getElevation(locs);
+                    for (int i = 0; i< mapNodes.size(); i++) {
+                        Log.d(TAG, "acquired node height " + mapNodes.get(i).getName());
+                        mapNodes.get(i).setLoc(locs[i]);
                     }
                     state = ApplicationState.NODES_HEIGHT_ACQUIRED;
                     fetching = false;

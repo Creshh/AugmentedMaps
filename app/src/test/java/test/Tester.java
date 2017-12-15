@@ -16,6 +16,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.OpenElevationService;
 
 
 /**
@@ -24,7 +25,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
  */
 public class Tester {
 
-    @Test
+//    @Test
     public void testHelpers(){
         Map<String, List<String>> tags = new HashMap<>();
         String configValue = "place:town,village,city|natural:peak,rock";
@@ -102,6 +103,23 @@ public class Tester {
         System.out.println("Bearing=" + locBase.getBearingTo(loc4));
         System.out.println("Bearing=" + locBase.getBearingTo(loc5));
         System.out.println("Bearing=" + locBase.getBearingTo(loc6));
+    }
+
+//    @Test
+    public void testOpenElevation(){
+        Location[] loc = new Location[4];
+        loc[0] = new Location(50.821428f, 12.945283f);
+        loc[1] = new Location(50.821428f, 12.945283f);
+        loc[2] = new Location(50.821428f, 12.945283f);
+        loc[3] = new Location(50.821428f, 12.945283f);
+
+        OpenElevationService elevationService = new OpenElevationService();
+        int[] elevations = elevationService.getElevation(loc);
+
+        for(int i = 0; i<= loc.length; i++){
+            System.out.println(loc[i] + " -> " + elevations[i]);
+        }
+
     }
 
 //    @Test
