@@ -1,6 +1,10 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.processing;
 
 import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
@@ -28,8 +32,12 @@ public class DataProcessorA implements DataProcessor {
     }
 
     @Override
-    public Marker processData(MapNode node, Orientation orientation, Location location) {
-        return new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]");
+    public List<Marker> processData(List<MapNode> nodes, Orientation orientation, Location location) {
+        List<Marker> markers = new ArrayList<>();
+        for (MapNode node : nodes) {
+            markers.add(new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]"));
+        }
+        return markers;
     }
 
     /**

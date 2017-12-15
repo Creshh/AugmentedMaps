@@ -1,5 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.processing;
 
+import java.util.List;
+
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
@@ -15,5 +17,5 @@ public interface DataProcessor {
 
     void setCameraViewAngleV(float cameraViewAngleV);
 
-    Marker processData(MapNode node, Orientation orientation, Location location);
+    List<Marker> processData(List<MapNode> nodes, Orientation orientation, Location location);
 }

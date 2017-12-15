@@ -69,7 +69,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     private boolean fetching;
 
-    private Orientation orientation;
+    private Orientation sensorOrientation;
+    private Orientation resultingOrientation;
     private Location loc;
 
     private Map<String, List<String>> tags;
@@ -113,12 +114,24 @@ public class Controller extends Thread implements OrientationListener, LocationL
     public void run() {
         while (!stop) {
             long starttime = System.currentTimeMillis();
+
+            if(sensorOrientation != null) {
+                if (motion && resultingOrientation != null) {
+                    Vec2f motionAngle = imageProcessor.getRelativeMotionAngles(fov);
+                    resultingOrientation = SensorFilter.fusion(sensorOrientation, resultingOrientation, motionAngle);
+                } else {
+                    resultingOrientation = sensorOrientation;
+                }
+            } else {
+                resultingOrientation = new Orientation();
+            }
+
             if(logData) {
                 if (logStart + Constants.LOG_TIME < starttime) {
                     logData = false;
                     Helpers.saveLogToFile(dataLog);
                 } else {
-                    dataLog.add(new Vec2f(this.orientation.getX(), this.orientation.getY()));
+                    dataLog.add(new Vec2f(this.resultingOrientation.getX(), this.resultingOrientation.getY()));
                 }
             }
             synchronized (pauseLock) {
@@ -130,23 +143,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
                     }
                 }
             }
-
-            if(motion) {
-                try {
-
-                    Vec2f motionVec = imageProcessor.getRelativeMotionVector();
-                    Orientation temp = new Orientation();
-                    if (orientation != null && motionVec != null && motionVec.getX() != 0 && motionVec.getY() != 0) {
-                        temp.setX(SensorFilter.fusion(-1, this.orientation.getX(), motionVec.getX(), fov[0]));
-                        temp.setY(SensorFilter.fusion(-1, this.orientation.getY(), motionVec.getY(), fov[1]));
-                        orientation = temp;
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
 
             if (!fetching) {
                 switch (state) {
@@ -301,12 +297,8 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
             case MSG_PROCESS_DATA:
                 if (mapNodes != null && mapNodes.size() > 0) {
-                    List<Marker> tempList = new ArrayList<>();
-                    for (MapNode node : mapNodes) {
-                        tempList.add(dataProcessor.processData(node, orientation, loc));
-                    }
                     synchronized (listLock) {
-                        markerList = tempList;
+                        markerList = dataProcessor.processData(mapNodes, resultingOrientation, loc);
                     }
                 }
                 if (state != ApplicationState.DATA_PROCESSING) {
@@ -348,18 +340,16 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     @Override
     public void onOrientationChange(Orientation values) {
-        Orientation temp = new Orientation();
-        if(lowPass){
-            temp.setX(SensorFilter.lowPass(values.getX(), this.orientation.getX()));
-            temp.setY(SensorFilter.lowPass(values.getY(), this.orientation.getY()));
-            temp.setZ(SensorFilter.lowPass(values.getZ(), this.orientation.getZ()));
-            this.orientation = temp;
-        } else if (!motion){
-            temp = values;
-            this.orientation = temp;
+        if(lowPass && sensorOrientation != null){
+            sensorOrientation.setX(SensorFilter.lowPass(values.getX(), sensorOrientation.getX()));
+            sensorOrientation.setY(SensorFilter.lowPass(values.getY(), sensorOrientation.getY()));
+            sensorOrientation.setZ(SensorFilter.lowPass(values.getZ(), sensorOrientation.getZ()));
+        } else {
+            sensorOrientation = values;
         }
-        if(values != null && orientation != null)
-            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + orientation.toString()));
+        if(values != null && resultingOrientation != null) {
+            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + resultingOrientation.toString()));
+        }
     }
 
 

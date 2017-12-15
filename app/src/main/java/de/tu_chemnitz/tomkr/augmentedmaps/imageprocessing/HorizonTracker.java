@@ -20,7 +20,7 @@ public class HorizonTracker implements ImageProcessor{
 
 
     @Override
-    public Vec2f getRelativeMotionVector() {
+    public Vec2f getRelativeMotionAngles(float[] fov) {
         return null;
     }
 

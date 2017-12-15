@@ -11,7 +11,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 public interface ImageProcessor extends ImageReader.OnImageAvailableListener {
 
-    Vec2f getRelativeMotionVector();
+    Vec2f getRelativeMotionAngles(float[] fov);
 
 
     @Override

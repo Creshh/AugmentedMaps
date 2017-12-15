@@ -33,18 +33,18 @@ public class OpticalFlow implements ImageProcessor {
     private int height;
     private byte[] current;
     private Mat oldImage;
-    private MatOfPoint2f featurePoints;
+    private MatOfPoint2f featurePoints = new MatOfPoint2f();
     private boolean init = false;
     private boolean reset = false;
 
     @Override
-    public Vec2f getRelativeMotionVector() {
+    public Vec2f getRelativeMotionAngles(float[] fov) {
         if (current != null) {
             Point[] points = calculateOpticalFlowPyrLK(current, width, height);
             if (points != null) {
                 if (ARActivity.getView() != null) ARActivity.getView().setDebugArray(points.clone());
 
-                Vec2f vec = null;
+                Vec2f vec = new Vec2f(0,0);
                 Vec2f[] vecs = new Vec2f[points.length];
                 if (!init && prevPts != null && prevPts.length > 0 && points.length > 0 && prevPts.length == points.length) {
                     for (int i = 0; i < points.length; i++) {
@@ -62,8 +62,9 @@ public class OpticalFlow implements ImageProcessor {
                         }
                     }
 
-                    vec = new Vec2f((sumX / count) / width, (sumY / count) / height);
-                    if (vec.getY() > 0.05f || vec.getX() > 0.05f) {
+                    vec.setX(((sumX / count) / width)*fov[0]);
+                    vec.setY(((sumY / count) / height)*fov[1]);
+                    if (vec.getY() > 15 || vec.getX() > 15) {
                         Log.e(TAG, "-------------- MOTION VECTOR TOO BIG ------------");
                     }
                     ARActivity.getView().setDebugVec(new Vec2f((sumX / count), (sumY / count)));
@@ -88,7 +89,7 @@ public class OpticalFlow implements ImageProcessor {
         Imgproc.resize(color, current, targetSize);
 
         if (oldImage == null || reset || featurePoints.empty()) {
-            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + reset + " or empty points: " + (featurePoints.empty()));
+//            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + reset + " or empty points: " + (featurePoints.empty()));
             reset = false;
             MatOfPoint initial = new MatOfPoint();
             Imgproc.goodFeaturesToTrack(current, initial, Constants.MAX_TRACKING_POINTS, 0.1, 30);

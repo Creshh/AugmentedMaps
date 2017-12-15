@@ -38,7 +38,7 @@ import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
 /**
  * Created by Tom Kretzschmar on 18.09.2017.
  *
- * TODO: wrong previewsize when starting in wrong orientation (fix: set always to landscape)
+ * Only Landscape Mode possible!
  */
 @SuppressWarnings("ConstantConditions")
 public class Camera2 {
