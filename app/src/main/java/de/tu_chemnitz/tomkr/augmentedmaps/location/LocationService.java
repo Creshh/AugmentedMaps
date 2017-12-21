@@ -1,4 +1,4 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
+package de.tu_chemnitz.tomkr.augmentedmaps.location;
 
 import android.content.Context;
 import android.location.Location;
@@ -29,19 +29,19 @@ public class LocationService {
     private Location currentBestEstimate;
 
     private Location lastLocation;
-    private List<de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener> listeners = new ArrayList<>();
+    private List<de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener> listeners = new ArrayList<>();
 
-    public void registerListener(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener){
+    public void registerListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener){
         this.listeners.add(listener);
     }
 
-    public void unregisterListener(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener){
+    public void unregisterListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener){
         this.listeners.remove(listener);
     }
 
     public void pushLocation(){
         Log.d(TAG, "pushLocation");
-        for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
+        for(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners){
             listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location((float)lastLocation.getLatitude(), (float)lastLocation.getLongitude(), (int)lastLocation.getAltitude()));
         }
     }
@@ -108,7 +108,7 @@ public class LocationService {
         public void onLocationChanged(Location location) {
             Log.d(TAG, "onLocationChanged: " + location);
             lastLocation.set(location);
-            for(de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener listener : listeners){
+            for(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners){
                 listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
             }
         }

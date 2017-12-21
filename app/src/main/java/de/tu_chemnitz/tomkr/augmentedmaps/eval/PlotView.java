@@ -11,7 +11,6 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -19,10 +18,6 @@ import java.util.Iterator;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
-
-import static android.R.attr.centerX;
-import static android.R.attr.centerY;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.paintStroke;
 
 /**
  * Created by Tom Kretzschmar on 14.11.2017.

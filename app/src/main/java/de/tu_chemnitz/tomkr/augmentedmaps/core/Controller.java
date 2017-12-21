@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
+import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.ApplicationState;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
@@ -22,20 +23,16 @@ import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.ImageProcessor;
-import de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing.ImageProcessorProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.processing.DataProcessorProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationListener;
-import de.tu_chemnitz.tomkr.augmentedmaps.sensor.LocationService;
+import de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener;
+import de.tu_chemnitz.tomkr.augmentedmaps.location.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
-import de.tu_chemnitz.tomkr.augmentedmaps.sensor.SensorFilter;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.DIST_THRESHOLD;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FACTOR;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MAX_DISTANCE;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_PROCESS_DATA;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_FPS_VIEW;
@@ -47,17 +44,15 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_OWN_H
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TICKS_PER_SECOND;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.
  * <p>
  * Main Application Controller
  */
-public class Controller extends Thread implements OrientationListener, LocationListener, Handler.Callback {
+public class Controller extends LooperThread implements OrientationListener, LocationListener, Handler.Callback {
 
     private static final String TAG = Controller.class.getName();
-    private ImageProcessor imageProcessor;
     private ApplicationState state;
     private boolean smallLocationUpdate;
 
@@ -69,8 +64,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
 
     private boolean fetching;
 
-    private Orientation sensorOrientation;
-    private Orientation resultingOrientation;
     private Location loc;
 
     private Map<String, List<String>> tags;
@@ -82,19 +75,16 @@ public class Controller extends Thread implements OrientationListener, LocationL
     private HandlerThread dataProcThread;
     private Handler dataProcHandler;
     private Handler mainHandler;
+    private final Camera2 camera;
 
-    private boolean stop;
-    private boolean pause;
-    private final Object pauseLock;
     public static final Object listLock = new Object();
-    public boolean lowPass;
     private boolean logData = false;
     private long logStart;
     private ArrayList<Vec2f> dataLog;
-    public boolean motion;
-    private float fov[];
+    private Orientation orientation;
 
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
+        super(TARGET_FRAMETIME);
         tags = Helpers.getTagsFromConfig(context);
         mainHandler = new Handler(Looper.getMainLooper(), activityCallback);
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
@@ -102,98 +92,60 @@ public class Controller extends Thread implements OrientationListener, LocationL
         elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
         locationService = new LocationService(context);
         orientationService = new OrientationService(context);
-        imageProcessor = ImageProcessorProvider.getMotionAnalyzer(ImageProcessorProvider.MotionAnalyzerType.OPTICAL_FLOW);
-
-        camera.registerImageAvailableListener(imageProcessor);
-
+        orientationService.registerListener(this);
         state = ApplicationState.INITIALIZED;
-        pauseLock = new Object();
+        this.camera = camera;
     }
 
     @Override
-    public void run() {
-        while (!stop) {
-            long starttime = System.currentTimeMillis();
-
-            if(sensorOrientation != null) {
-                if (motion && resultingOrientation != null) {
-                    Vec2f motionAngle = imageProcessor.getRelativeMotionAngles(fov);
-                    resultingOrientation = SensorFilter.fusion(sensorOrientation, resultingOrientation, motionAngle);
-                } else {
-                    resultingOrientation = sensorOrientation;
-                }
+    protected void loop() {
+        if(logData) {
+            if (logStart + Constants.LOG_TIME < System.currentTimeMillis()) {
+                logData = false;
+                Helpers.saveLogToFile(dataLog);
             } else {
-                resultingOrientation = new Orientation();
+                dataLog.add(new Vec2f(this.orientation.getX(), this.orientation.getY()));
             }
-
-            if(logData) {
-                if (logStart + Constants.LOG_TIME < starttime) {
-                    logData = false;
-                    Helpers.saveLogToFile(dataLog);
-                } else {
-                    dataLog.add(new Vec2f(this.resultingOrientation.getX(), this.resultingOrientation.getY()));
-                }
-            }
-            synchronized (pauseLock) {
-                while (pause) {
-                    try {
-                        pauseLock.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            if (!fetching) {
-                switch (state) {
-                    case INITIALIZED:
-                        // location will be acquired automatically or call pushLocation now
-                        fetching = true;
-                        Log.i(TAG, "fetching Location");
-                        locationService.pushLocation();
-                        break;
-                    case LOCATION_ACQUIRED:
-                        fetching = true;
-                        Log.i(TAG, "fetching own height");
-                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
-                        break;
-                    case OWN_HEIGHT_ACQUIRED:
-                        if (smallLocationUpdate) {
-                            smallLocationUpdate = false;
-                            state = ApplicationState.DATA_PROCESSING;
-                            Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at OWN_HEIGHT_ACQUIRED");
-                            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
-                        } else {
-                            fetching = true;
-                            Log.i(TAG, "fetching MapNodes");
-                            dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_MAPNODES));
-                        }
-                        break;
-                    case NODES_ACQUIRED:
-                        fetching = true;
-                        Log.i(TAG, "fetching Node Heights");
-                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_NODE_HEIGHT));
-                        break;
-                    case NODES_HEIGHT_ACQUIRED:
-                    case DATA_PROCESSING:
-                        dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
-                        break;
-                }
-            }
-            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
-
-            long frametime = (System.currentTimeMillis() - starttime);
-            int fps = frametime != 0 ? (int) (1000/frametime) : TARGET_FRAMETIME;
-            if (frametime < TARGET_FRAMETIME) {
-                try {
-                    sleep(TARGET_FRAMETIME - frametime);
-                    fps = TICKS_PER_SECOND;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_FPS_VIEW, frametime + " | " + fps));
         }
+
+        if (!fetching) {
+            switch (state) {
+                case INITIALIZED:
+                    // location will be acquired automatically or call pushLocation now
+                    fetching = true;
+                    Log.i(TAG, "fetching Location");
+                    locationService.pushLocation();
+                    break;
+                case LOCATION_ACQUIRED:
+                    fetching = true;
+                    Log.i(TAG, "fetching own height");
+                    dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
+                    break;
+                case OWN_HEIGHT_ACQUIRED:
+                    if (smallLocationUpdate) {
+                        smallLocationUpdate = false;
+                        state = ApplicationState.DATA_PROCESSING;
+                        Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at OWN_HEIGHT_ACQUIRED");
+                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
+                    } else {
+                        fetching = true;
+                        Log.i(TAG, "fetching MapNodes");
+                        dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_MAPNODES));
+                    }
+                    break;
+                case NODES_ACQUIRED:
+                    fetching = true;
+                    Log.i(TAG, "fetching Node Heights");
+                    dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_NODE_HEIGHT));
+                    break;
+                case NODES_HEIGHT_ACQUIRED:
+                case DATA_PROCESSING:
+                    dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
+                    break;
+            }
+        }
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_VIEW));
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_FPS_VIEW, super.getFrametime() + " | " + super.getFPS()));
     }
 
     public void startApplication() {
@@ -207,30 +159,22 @@ public class Controller extends Thread implements OrientationListener, LocationL
         dataProcThread.start();
         dataProcHandler = new Handler(dataProcThread.getLooper(), this);
 
+        camera.registerImageAvailableListener(orientationService.getImageProcessor());
         orientationService.start();
         locationService.start();
         orientationService.registerListener(this);
         locationService.registerListener(this);
 
-        stop = false;
         fetching = false;
-        synchronized (pauseLock) {
-            pause = false;
-            pauseLock.notifyAll();
-        }
 
-        if (!this.isAlive()) {
-            this.start();
-        }
+        super.start();
     }
 
     public void stopApplication() {
-        synchronized (pauseLock) {
-            pause = true;
-        }
+        super.pause();
         orientationService.unregisterListener(this);
         locationService.unregisterListener(this);
-        orientationService.stop();
+        orientationService.pause();
         locationService.stop();
 
         dataFetchHandler.removeCallbacksAndMessages(null);
@@ -246,7 +190,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
     public void quitApplication() {
-        stop = true;
+        super.quit();
     }
 
 
@@ -298,7 +242,7 @@ public class Controller extends Thread implements OrientationListener, LocationL
             case MSG_PROCESS_DATA:
                 if (mapNodes != null && mapNodes.size() > 0) {
                     synchronized (listLock) {
-                        markerList = dataProcessor.processData(mapNodes, resultingOrientation, loc);
+                        markerList = dataProcessor.processData(mapNodes, orientation, loc);
                     }
                 }
                 if (state != ApplicationState.DATA_PROCESSING) {
@@ -315,16 +259,6 @@ public class Controller extends Thread implements OrientationListener, LocationL
         return markerList;
     }
 
-    public void setFov(float[] fov) {
-        if (dataProcessor != null) {
-            dataProcessor.setCameraViewAngleH(fov[0]);
-            dataProcessor.setCameraViewAngleV(fov[1]);
-        }
-
-        this.fov = fov;
-    }
-
-
     @Override // TODO: Fix: after onResume, no nodes will be displayed
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
@@ -339,16 +273,14 @@ public class Controller extends Thread implements OrientationListener, LocationL
     }
 
     @Override
-    public void onOrientationChange(Orientation values) {
-        if(lowPass && sensorOrientation != null){
-            sensorOrientation.setX(SensorFilter.lowPass(values.getX(), sensorOrientation.getX()));
-            sensorOrientation.setY(SensorFilter.lowPass(values.getY(), sensorOrientation.getY()));
-            sensorOrientation.setZ(SensorFilter.lowPass(values.getZ(), sensorOrientation.getZ()));
-        } else {
-            sensorOrientation = values;
-        }
-        if(values != null && resultingOrientation != null) {
-            mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, values.toString() + System.lineSeparator() + resultingOrientation.toString()));
+    public void onOrientationChange(Orientation orientation) {
+        this.orientation = orientation;
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, orientation.toString()));
+    }
+
+    public void setFlag(OrientationService.Flag flag){
+        if(this.orientationService != null) {
+            this.orientationService.setFlag(flag);
         }
     }
 

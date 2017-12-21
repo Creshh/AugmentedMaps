@@ -1,4 +1,4 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.imageprocessing;
+package de.tu_chemnitz.tomkr.augmentedmaps.camera;
 
 import android.media.ImageReader;
 
@@ -10,10 +10,6 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
  */
 
 public interface ImageProcessor extends ImageReader.OnImageAvailableListener {
-
-    Vec2f getRelativeMotionAngles(float[] fov);
-
-
     @Override
     void onImageAvailable(ImageReader imageReader);
 }

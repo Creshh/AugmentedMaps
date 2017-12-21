@@ -1,74 +1,104 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
+import de.tu_chemnitz.tomkr.augmentedmaps.core.LooperThread;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
 
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FACTOR;
-
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
 
 /**
- * Created by Tom Kretzschmar on 01.09.2017.
+ * Created by Tom Kretzschmar on 21.12.2017.
  *
  */
 
-public class OrientationService implements SensorEventListener {
+public class OrientationService extends LooperThread {
+
+    public static final float GYRO_FAC = 0.80f;
+    public static final float ACCMAG_FAC = 0.2f;
+    public static final float OPTFLOW_FAC = 0.18f;
+
+    public enum Flag {RAW, LOW_PASS, GYRO, OPT_FLOW}
+
+    private Flag flag;
+    private boolean init;
 
     private static final String TAG = OrientationService.class.getName();
     private List<OrientationListener> listeners;
-    private SensorManager sensorManager;
+    private Sensor accMagSensor;
+    private Sensor gyroSensor;
+    private Sensor optFlowSensor;
 
-    private float[] accelerometerReading = new float[3];
-    private float[] magnetometerReading = new float[3];
-
-    private float[] rotationMatrix = new float[9];
-    private float[] orientationAngles = new float[3];
-
-    private Sensor acc;
-    private Sensor mag;
-
-    private Orientation orientation;
-//    private int defaultDisplayRotation;
+    private float[] rotation;
 
     public OrientationService(Context context) {
+        super(TARGET_FRAMETIME);
+        SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        accMagSensor = new AccMagSensor(sensorManager);
+        gyroSensor = new GyroSensor(sensorManager);
+        optFlowSensor = new OptFlowSensor(gyroSensor);
         listeners = new ArrayList<>();
-        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-
-        acc = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-        orientation = new Orientation();
-//        defaultDisplayRotation = ((WindowManager) context.getApplicationContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        init = true;
     }
 
-    private Orientation getOrientation() {
-        Orientation o = new Orientation();
 
-        // Rotation matrix based on current readings from accelerometer and magnetometer.
-        SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading);
+    @Override
+    protected void loop() {
+        float[] accMag;
+        float[] gyro;
+        float[] optFlow;
 
-        // Remap Coordinate System correctly
-        float[] remappedMatrix = new float[9];
+        if (init) {
+            rotation = accMagSensor.getRotation();
+            if (rotation != null) {
+                init = false;
+                gyroSensor.setRotationEstimate(rotation);
+                optFlowSensor.setRotationEstimate(rotation);
+            }
+        } else {
+            switch (flag) {
+                case RAW:
+                    accMag = accMagSensor.getRotation();
+                    rotation = accMag;
+                    break;
+                case LOW_PASS:
+                    accMag = accMagSensor.getRotation();
+                    for (int i = 0; i < 3; i++) {
+                        rotation[i] = (rotation[i] * (1 - ACCMAG_FAC)) + (accMag[i] * ACCMAG_FAC);
+                    }
+                    break;
+                case GYRO:
+                    gyro = gyroSensor.getRotation();
+                    accMag = accMagSensor.getRotation();
+                    for (int i = 0; i < 3; i++) {
+                        rotation[i] = (gyro[i] * (GYRO_FAC + OPTFLOW_FAC)) + (accMag[i] * ACCMAG_FAC);
+                    }
+                    break;
+                case OPT_FLOW:
+                    optFlow = optFlowSensor.getRotation();
+                    gyro = gyroSensor.getRotation();
+                    accMag = accMagSensor.getRotation();
+                    for (int i = 0; i < 3; i++) {
+                        rotation[i] = (gyro[i] * GYRO_FAC) + (accMag[i] * ACCMAG_FAC) + (optFlow[i] * OPTFLOW_FAC);
+                    }
+                    break;
+            }
+            gyroSensor.setRotationEstimate(rotation);
+            optFlowSensor.setRotationEstimate(rotation);
+            notifyListeners(new Orientation(rotation[0], rotation[1], rotation[2]));
+        }
+    }
 
-//        if (defaultDisplayRotation == 1) {
-        SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, remappedMatrix); // Correct mapping -> see Using the camera (Y axis along the camera's axis) for an augmented reality application where the rotation angles are neede remapCoordinateSystem(inR, AXIS_X, AXIS_Z, outR);
-//        } else {
-//            SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_Z, remappedMatrix);
-//        }
-
-        // Express the updated rotation matrix as three orientation angles.
-        SensorManager.getOrientation(remappedMatrix, orientationAngles);
-        o.setX((float) (Math.toDegrees(orientationAngles[0]) + 360) % 360);
-        o.setY((float) (Math.toDegrees(orientationAngles[1]) + 360) % 360);
-        o.setZ((float) (Math.toDegrees(orientationAngles[2]) + 360) % 360);
-        return o;
+    private void notifyListeners(Orientation orientation) {
+        for (OrientationListener listener : listeners) {
+            listener.onOrientationChange(orientation);
+        }
     }
 
     public void registerListener(OrientationListener listener) {
@@ -79,28 +109,12 @@ public class OrientationService implements SensorEventListener {
         listeners.remove(listener);
     }
 
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) accelerometerReading = sensorEvent.values;
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) magnetometerReading = sensorEvent.values;
-        orientation = getOrientation();
-        for (OrientationListener listener : listeners) {
-            listener.onOrientationChange(orientation);
-        }
+    public void setFlag(Flag flag) {
+        this.flag = flag;
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
+    public ImageProcessor getImageProcessor(){
+        return (ImageProcessor) optFlowSensor;
     }
 
-    public void stop() {
-        sensorManager.unregisterListener(this);
-    }
-
-    public void start() {
-        sensorManager.registerListener(this, acc, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_NORMAL);
-    }
 }

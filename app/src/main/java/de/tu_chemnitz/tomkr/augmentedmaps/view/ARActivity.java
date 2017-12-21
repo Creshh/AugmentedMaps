@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
+import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
@@ -45,7 +46,9 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     private TextureView textureView;
     private ARView arView;
     private CheckBox toggleLowPass;
-    private CheckBox toggleMotion;
+    private CheckBox toggleOptFlow;
+    private CheckBox toggleRaw;
+    private CheckBox toggleGyro;
     private Button logBtn;
 
     private static ARView arViewStatic;
@@ -70,10 +73,14 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
         locationView = (TextView) findViewById(R.id.pos);
         stateView = (TextView) findViewById(R.id.state);
         fpsView = (TextView) findViewById(R.id.fpsView);
-        toggleLowPass = (CheckBox) findViewById(R.id.toggleLP);
+        toggleLowPass = (CheckBox) findViewById(R.id.toggleLowPass);
         toggleLowPass.setOnCheckedChangeListener(this);
-        toggleMotion = (CheckBox) findViewById(R.id.toggleBA);
-        toggleMotion.setOnCheckedChangeListener(this);
+        toggleOptFlow = (CheckBox) findViewById(R.id.toggleOptFlow);
+        toggleOptFlow.setOnCheckedChangeListener(this);
+        toggleRaw = (CheckBox) findViewById(R.id.toggleRaw);
+        toggleRaw.setOnCheckedChangeListener(this);
+        toggleGyro = (CheckBox) findViewById(R.id.toggleGyro);
+        toggleGyro.setOnCheckedChangeListener(this);
         logBtn = (Button) findViewById(R.id.btnLog);
         logBtn.setOnClickListener(this);
 
@@ -103,7 +110,6 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
         };
         
         controller = new Controller(updateViewCallback, this, camera);
-        controller.setFov(camera.calculateFOV());
     }
 
     @Override
@@ -139,13 +145,22 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     @Override
     public void onCheckedChanged(CompoundButton box, boolean b) {
         switch (box.getId()){
-            case R.id.toggleLP:
-                Log.d(TAG, "toggle LowPass");
-                controller.lowPass = b;
+            case R.id.toggleRaw:
+                Log.d(TAG, "toggle Raw");
+                controller.setFlag(OrientationService.Flag.RAW);
                 break;
-            case R.id.toggleBA:
-                Log.d(TAG, "toogle ImageProcessor");
-                controller.motion = b;
+            case R.id.toggleLowPass:
+                Log.d(TAG, "toggle LowPass");
+                controller.setFlag(OrientationService.Flag.LOW_PASS);
+                break;
+            case R.id.toggleGyro:
+                Log.d(TAG, "toggle Gyro");
+                controller.setFlag(OrientationService.Flag.GYRO);
+                break;
+
+            case R.id.toggleOptFlow:
+                Log.d(TAG, "toogle OpticalFlow");
+                controller.setFlag(OrientationService.Flag.OPT_FLOW);
                 break;
         }
     }

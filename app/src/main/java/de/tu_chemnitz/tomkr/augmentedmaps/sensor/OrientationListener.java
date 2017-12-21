@@ -9,5 +9,5 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 
 public interface OrientationListener {
 
-    void onOrientationChange(Orientation values);
+    void onOrientationChange(Orientation orientation);
 }

@@ -48,6 +48,7 @@ public class Camera2 {
 
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
+    public static float[] fov;
 
     private String cameraId;
     private CameraCaptureSession mCaptureSession;
@@ -62,7 +63,6 @@ public class Camera2 {
     private CaptureRequest.Builder mPreviewRequestBuilder;
     private CaptureRequest mPreviewRequest;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-    private ImageReader.OnImageAvailableListener onImageAvailableListener;
 
     private TextureView previewTarget;
 
@@ -103,21 +103,21 @@ public class Camera2 {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+
+        calculateFOV();
     }
 
-    public void registerImageAvailableListener(ImageReader.OnImageAvailableListener listener) {
-        this.onImageAvailableListener = listener;
+    public void registerImageAvailableListener(ImageReader.OnImageAvailableListener onImageAvailableListener) {
+        mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
     }
 
 
     public void startService() {
-
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
         setupCamera();
-
     }
 
     public void stopService() {
@@ -256,7 +256,6 @@ public class Camera2 {
             }
 
             mImageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 3);
-            mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
             int displayRotation = display.getRotation();

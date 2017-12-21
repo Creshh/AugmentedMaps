@@ -5,6 +5,8 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
@@ -17,19 +19,6 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 public class DataProcessorA implements DataProcessor {
 
     private static final String TAG = DataProcessorA.class.getName();
-    private float cameraViewAngleH;
-    private float cameraViewAngleV;
-
-    @Override
-    public void setCameraViewAngleH(float cameraViewAngleH) {
-        this.cameraViewAngleH = cameraViewAngleH;
-        Log.d(TAG, "FOV=" + cameraViewAngleH);
-    }
-
-    @Override
-    public void setCameraViewAngleV(float cameraViewAngleV) {
-        this.cameraViewAngleV = cameraViewAngleV;
-    }
 
     @Override
     public List<Marker> processData(List<MapNode> nodes, Orientation orientation, Location location) {
@@ -52,8 +41,8 @@ public class DataProcessorA implements DataProcessor {
         float bearingH = location.getBearingTo(node.getLoc());
         float diffH = bearingH - orientation.getX();
         float offsetH = -1;
-        if(Math.abs(diffH) < (cameraViewAngleH/2f)) {
-            offsetH = diffH / (cameraViewAngleH/2f); // [-1..1]
+        if(Math.abs(diffH) < (Camera2.fov[0]/2f)) {
+            offsetH = diffH / (Camera2.fov[1]/2f); // [-1..1]
             offsetH = ((offsetH + 1) / 2f); // offsetH has to be in Range [0..1] to be drawn
         }
 //        Log.d(TAG, node.getName() + " " + orientation + " " + location + " " + diffH + " " + offsetH);
@@ -74,8 +63,8 @@ public class DataProcessorA implements DataProcessor {
         float alphaV = (float) Math.toDegrees(Math.atan2(h,d));
         float diffV = betaV + alphaV;
         float offsetV = -1;
-        if(Math.abs(diffV) < (cameraViewAngleV/2f)){
-            offsetV = diffV / (cameraViewAngleV/2f);
+        if(Math.abs(diffV) < (Camera2.fov[0]/2f)){
+            offsetV = diffV / (Camera2.fov[1]/2f);
             offsetV = ((offsetV + 1) /2f); // offsetH has to be in Range [0..1] to be drawn
         }
 //        Log.d(TAG, node.getName() + " " + orientation + " " + location + " " + diffV + " " + offsetV);

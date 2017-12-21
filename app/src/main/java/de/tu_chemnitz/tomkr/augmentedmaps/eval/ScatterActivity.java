@@ -10,13 +10,12 @@ import android.view.WindowManager;
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
-import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 
 public class ScatterActivity extends Activity implements OrientationListener, Handler.Callback{
     private static final String TAG = ScatterActivity.class.getName();
 
     private Orientation orientation;
-    private OrientationService orientationService;
+//    private OrientationService orientationService;
     private PlotView plotView;
 
     @Override
@@ -26,7 +25,7 @@ public class ScatterActivity extends Activity implements OrientationListener, Ha
 
         plotView = (PlotView) findViewById(R.id.plotview);
 
-        orientationService = new OrientationService(this);
+//        orientationService = new OrientationService(this);
     }
 
     @Override
@@ -34,16 +33,16 @@ public class ScatterActivity extends Activity implements OrientationListener, Ha
         super.onResume();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        orientationService.registerListener(plotView);
-        orientationService.start();
+//        orientationService.registerListener(plotView);
+//        orientationService.start();
     }
 
     @Override
     public void onPause() {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        orientationService.unregisterListener(plotView);
-        orientationService.stop();
+//        orientationService.unregisterListener(plotView);
+//        orientationService.stop();
 
         super.onPause();
     }
@@ -74,7 +73,7 @@ public class ScatterActivity extends Activity implements OrientationListener, Ha
 //        Handler mainHandler;
 //
 //        public BackgroundThread(Handler.Callback callback){
-//            mainHandler = new Handler(Looper.getMainLooper(), callback);
+//            mainHandler = new Handler(LooperThread.getMainLooper(), callback);
 //        }
 //
 //        @Override

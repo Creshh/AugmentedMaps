@@ -13,9 +13,5 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
  */
 
 public interface DataProcessor {
-    void setCameraViewAngleH(float cameraViewAngleH);
-
-    void setCameraViewAngleV(float cameraViewAngleV);
-
     List<Marker> processData(List<MapNode> nodes, Orientation orientation, Location location);
 }
