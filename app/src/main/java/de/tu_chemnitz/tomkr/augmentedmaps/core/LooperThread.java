@@ -5,7 +5,6 @@ package de.tu_chemnitz.tomkr.augmentedmaps.core;
  * Created by Tom Kretzschmar on 21.12.2017.
  *
  */
-// TODO: onpause, onstart, onquit callbacks for subclasses
 public abstract class LooperThread extends Thread{
     private static final String TAG = LooperThread.class.getName();
     private final Object pauseLock = new Object();
@@ -39,7 +38,7 @@ public abstract class LooperThread extends Thread{
             loop();
 
             frametime = (System.currentTimeMillis() - starttime);
-            fps = frametime != 0 ? (int) (1000 / frametime) : targetFrametime;
+            fps = (frametime > targetFrametime) ? (int) (1000 / frametime) : targetFrametime;
             if (frametime < targetFrametime) {
                 try {
                     sleep(targetFrametime - frametime);
@@ -50,7 +49,7 @@ public abstract class LooperThread extends Thread{
         }
     }
 
-    public void start(){
+    public void startLooper(){
         synchronized (pauseLock) {
             pause = false;
             pauseLock.notifyAll();
@@ -58,15 +57,30 @@ public abstract class LooperThread extends Thread{
         if (!this.isAlive()) {
             this.start();
         }
+        onStart();
     }
 
     public void pause(){
         synchronized (pauseLock) {
             pause = true;
-        }    }
+        }
+        onPause();
+    }
+
+    protected void onPause(){
+
+    }
+    protected void onStart(){
+
+    }
+
+    protected void onQuit(){
+
+    }
 
     public void quit(){
         stop = true;
+        onQuit();
     }
 
     public int getFPS(){

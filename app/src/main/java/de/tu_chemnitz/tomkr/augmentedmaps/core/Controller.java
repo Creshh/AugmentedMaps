@@ -160,14 +160,14 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         dataProcHandler = new Handler(dataProcThread.getLooper(), this);
 
         camera.registerImageAvailableListener(orientationService.getImageProcessor());
-        orientationService.start();
+        orientationService.startLooper();
         locationService.start();
         orientationService.registerListener(this);
         locationService.registerListener(this);
 
         fetching = false;
 
-        super.start();
+        super.startLooper();
     }
 
     public void stopApplication() {

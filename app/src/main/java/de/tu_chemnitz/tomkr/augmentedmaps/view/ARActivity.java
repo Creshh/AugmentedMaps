@@ -12,6 +12,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.RadioButton;
 import android.widget.TextView;
 
 
@@ -34,7 +35,7 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
  *
  */
 
-public class ARActivity extends Activity implements CompoundButton.OnCheckedChangeListener, View.OnClickListener{
+public class ARActivity extends Activity implements View.OnClickListener{
 
     private static final String TAG = ARActivity.class.getName();
 
@@ -45,11 +46,6 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     private TextView fpsView;
     private TextureView textureView;
     private ARView arView;
-    private CheckBox toggleLowPass;
-    private CheckBox toggleOptFlow;
-    private CheckBox toggleRaw;
-    private CheckBox toggleGyro;
-    private Button logBtn;
 
     private static ARView arViewStatic;
 
@@ -73,15 +69,16 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
         locationView = (TextView) findViewById(R.id.pos);
         stateView = (TextView) findViewById(R.id.state);
         fpsView = (TextView) findViewById(R.id.fpsView);
-        toggleLowPass = (CheckBox) findViewById(R.id.toggleLowPass);
-        toggleLowPass.setOnCheckedChangeListener(this);
-        toggleOptFlow = (CheckBox) findViewById(R.id.toggleOptFlow);
-        toggleOptFlow.setOnCheckedChangeListener(this);
-        toggleRaw = (CheckBox) findViewById(R.id.toggleRaw);
-        toggleRaw.setOnCheckedChangeListener(this);
-        toggleGyro = (CheckBox) findViewById(R.id.toggleGyro);
-        toggleGyro.setOnCheckedChangeListener(this);
-        logBtn = (Button) findViewById(R.id.btnLog);
+        RadioButton toggleLowPass = (RadioButton) findViewById(R.id.toggleLowPass);
+        toggleLowPass.setOnClickListener(this);
+        RadioButton toggleOptFlow = (RadioButton) findViewById(R.id.toggleOptFlow);
+        toggleOptFlow.setOnClickListener(this);
+        RadioButton toggleRaw = (RadioButton) findViewById(R.id.toggleRaw);
+        toggleRaw.setChecked(true);
+        toggleRaw.setOnClickListener(this);
+        RadioButton toggleGyro = (RadioButton) findViewById(R.id.toggleGyro);
+        toggleGyro.setOnClickListener(this);
+        Button logBtn = (Button) findViewById(R.id.btnLog);
         logBtn.setOnClickListener(this);
 
         camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
@@ -143,8 +140,8 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
     }
 
     @Override
-    public void onCheckedChanged(CompoundButton box, boolean b) {
-        switch (box.getId()){
+    public void onClick(View view) {
+        switch (view.getId()) {
             case R.id.toggleRaw:
                 Log.d(TAG, "toggle Raw");
                 controller.setFlag(OrientationService.Flag.RAW);
@@ -162,11 +159,9 @@ public class ARActivity extends Activity implements CompoundButton.OnCheckedChan
                 Log.d(TAG, "toogle OpticalFlow");
                 controller.setFlag(OrientationService.Flag.OPT_FLOW);
                 break;
+            case R.id.btnLog:
+                controller.logToFile();
+                break;
         }
-    }
-
-    @Override
-    public void onClick(View view) {
-        controller.logToFile();
     }
 }

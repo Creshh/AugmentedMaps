@@ -48,44 +48,46 @@
         android:text="State"
         android:textColor="@android:color/holo_red_light"/>
 
-    <CheckBox
-        android:id="@+id/toggleRaw"
+    <RadioGroup
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/state"
-        android:text="Raw"/>
+        android:id="@+id/radioGroup">
 
-    <CheckBox
-        android:id="@+id/toggleLowPass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/toggleRaw"
-        android:text="LowPass"/>
+        <RadioButton
+            android:id="@+id/toggleRaw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Raw"/>
 
-    <CheckBox
-        android:id="@+id/toggleGyro"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/toggleLowPass"
-        android:text="Gyro"/>
+        <RadioButton
+            android:id="@+id/toggleLowPass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LowPass"/>
 
-    <CheckBox
-        android:id="@+id/toggleOptFlow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/toggleGyro"
-        android:text="OptFlow"/>
+        <RadioButton
+            android:id="@+id/toggleGyro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gyro"/>
+
+        <RadioButton
+            android:id="@+id/toggleOptFlow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OptFlow"/>
+
+    </RadioGroup>
+
 
     <Button
         android:id="@+id/btnLog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/toggleOptFlow"
-        android:layout_below="@+id/toggleOptFlow"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/radioGroup"
         android:text="Log Data"/>
 
     <TextView

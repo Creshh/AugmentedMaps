@@ -11,4 +11,7 @@ public interface Sensor {
 
     void setRotationEstimate(float[] rotation);
 
+    void start();
+
+    void pause();
 }

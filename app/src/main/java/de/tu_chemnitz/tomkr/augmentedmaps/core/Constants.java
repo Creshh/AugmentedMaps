@@ -42,7 +42,7 @@ public class Constants {
     /**
      * Maximum distance in meters in which MapNodes are allocated.
      */
-    public static final int MAX_DISTANCE = 4000;
+    public static final int MAX_DISTANCE = 10000;
 
     /**
      * Distance in meters after which new MapNodes are allocated.
@@ -65,7 +65,7 @@ public class Constants {
     /**
      * Factor for lowPass Filter in OrientationService
      */
-    public static final float LOW_PASS_FACTOR = 0.20f;
+    public static final float LOW_PASS_FAC = 0.20f;
 
     /**
      *
@@ -85,5 +85,20 @@ public class Constants {
     /**
      *
      */
-    public static final int MAX_TRACKING_POINTS = 3;
+    public static final int MAX_TRACKING_POINTS = 5;
+
+    /**
+     *
+     */
+    public static final int MIN_TRACKING_POINTS = 2;
+
+    /**
+     *
+     */
+    public static final float RELIABILITY_FACTOR = 1.2f;
+
+    /**
+     *
+     */
+    public static final float AGGREGATION_THRESHOLD = 0.04f;
 }

@@ -2,8 +2,10 @@ package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 
 import android.content.Context;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -11,6 +13,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.LooperThread;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
 
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FAC;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
 
 /**
@@ -45,6 +48,7 @@ public class OrientationService extends LooperThread {
         optFlowSensor = new OptFlowSensor(gyroSensor);
         listeners = new ArrayList<>();
         init = true;
+        flag = Flag.RAW;
     }
 
 
@@ -55,44 +59,69 @@ public class OrientationService extends LooperThread {
         float[] optFlow;
 
         if (init) {
+            Log.d(TAG, "init");
             rotation = accMagSensor.getRotation();
             if (rotation != null) {
                 init = false;
-                gyroSensor.setRotationEstimate(rotation);
-                optFlowSensor.setRotationEstimate(rotation);
+                gyroSensor.setRotationEstimate(Arrays.copyOf(rotation, 3));
+                optFlowSensor.setRotationEstimate(Arrays.copyOf(rotation, 3));
             }
         } else {
+            Log.d(TAG, "_________________________ switch Flag _________________________");
+            accMag = Arrays.copyOf(accMagSensor.getRotation(), 3);
             switch (flag) {
                 case RAW:
-                    accMag = accMagSensor.getRotation();
+                    Log.d(TAG, "case RAW");
+                    gyroSensor.pause();
+                    optFlowSensor.pause();
                     rotation = accMag;
                     break;
                 case LOW_PASS:
-                    accMag = accMagSensor.getRotation();
+                    Log.d(TAG, "case LOW_PASS");
+                    gyroSensor.pause();
+                    optFlowSensor.pause();
                     for (int i = 0; i < 3; i++) {
-                        rotation[i] = (rotation[i] * (1 - ACCMAG_FAC)) + (accMag[i] * ACCMAG_FAC);
+                        // Complementary Filter with AccMagSensor
+                        rotation[i] = (rotation[i] * (1 - LOW_PASS_FAC)) + (accMag[i] * LOW_PASS_FAC);
                     }
                     break;
                 case GYRO:
+                    Log.d(TAG, "case GYRO");
+                    gyroSensor.start();
                     gyro = gyroSensor.getRotation();
-                    accMag = accMagSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
+                        // Complementary Filter with AccMagSensor and Gyroscope
                         rotation[i] = (gyro[i] * (GYRO_FAC + OPTFLOW_FAC)) + (accMag[i] * ACCMAG_FAC);
                     }
                     break;
                 case OPT_FLOW:
+                    Log.d(TAG, "case OPT_FLOW");
+                    gyroSensor.start();
+                    optFlowSensor.start();
                     optFlow = optFlowSensor.getRotation();
                     gyro = gyroSensor.getRotation();
-                    accMag = accMagSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
+                        // Complementary Filter with AccMagSensor, Gyroscope and Optical Flow
                         rotation[i] = (gyro[i] * GYRO_FAC) + (accMag[i] * ACCMAG_FAC) + (optFlow[i] * OPTFLOW_FAC);
                     }
                     break;
             }
-            gyroSensor.setRotationEstimate(rotation);
-            optFlowSensor.setRotationEstimate(rotation);
+            gyroSensor.setRotationEstimate(Arrays.copyOf(rotation, 3));
+            optFlowSensor.setRotationEstimate(Arrays.copyOf(rotation, 3));
             notifyListeners(new Orientation(rotation[0], rotation[1], rotation[2]));
         }
+    }
+
+    @Override
+    protected void onStart(){ // TODO: start and stop sensors according to flag
+        accMagSensor.start();
+    }
+
+    @Override
+    protected void onPause(){
+        accMagSensor.pause();
+        gyroSensor.pause();
+        optFlowSensor.pause();
     }
 
     private void notifyListeners(Orientation orientation) {

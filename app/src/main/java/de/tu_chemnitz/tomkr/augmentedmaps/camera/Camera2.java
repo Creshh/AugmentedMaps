@@ -76,6 +76,7 @@ public class Camera2 {
     private Display display;
 
     private CameraManager manager;
+    private ImageReader.OnImageAvailableListener onImageAvailableListener;
 
     /**
      * Default Camera2 Constructor attempts to use the backfacing camera.
@@ -108,7 +109,7 @@ public class Camera2 {
     }
 
     public void registerImageAvailableListener(ImageReader.OnImageAvailableListener onImageAvailableListener) {
-        mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
+        this.onImageAvailableListener = onImageAvailableListener;
     }
 
 
@@ -256,6 +257,7 @@ public class Camera2 {
             }
 
             mImageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 3);
+            mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
             int displayRotation = display.getRotation();
@@ -406,13 +408,13 @@ public class Camera2 {
         previewTarget.setTransform(matrix);
     }
 
-    public float[] calculateFOV() {
+    public void calculateFOV() {
         CameraCharacteristics characteristics;
         try {
             characteristics = manager.getCameraCharacteristics(cameraId);
         } catch (CameraAccessException e) {
             e.printStackTrace();
-            return null;
+            return;
         }
         float[] maxFocus = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
         SizeF size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
@@ -422,6 +424,6 @@ public class Camera2 {
         float verticalAngle = (float) Math.toDegrees(2 * Math.atan(h / (maxFocus[0] * 2)));
 
         Log.d(TAG, "FOV => " + horizontalAngle + "x" + verticalAngle);
-        return new float[]{horizontalAngle, verticalAngle};
+        fov = new float[]{horizontalAngle, verticalAngle};
     }
 }

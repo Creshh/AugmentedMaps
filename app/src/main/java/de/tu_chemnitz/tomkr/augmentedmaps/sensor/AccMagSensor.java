@@ -22,14 +22,14 @@ public class AccMagSensor implements Sensor, SensorEventListener{
     private android.hardware.Sensor acc;
     private android.hardware.Sensor mag;
 
+    private final SensorManager sensorManager;
+
     private float[] rotation;
 
     public AccMagSensor(SensorManager sensorManager) {
+        this.sensorManager = sensorManager;
         acc = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER);
         mag = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD);
-        sensorManager.registerListener(this, acc, SensorManager.SENSOR_DELAY_FASTEST); // TODO: unregister in pause
-        sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_FASTEST); // TODO: unregister in pause
-        rotation = new float[3];
     }
 
     @Override
@@ -40,6 +40,18 @@ public class AccMagSensor implements Sensor, SensorEventListener{
     @Override
     public void setRotationEstimate(float[] rotation) {}
 
+    @Override
+    public void start() {
+        sensorManager.registerListener(this, acc, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_FASTEST);
+        rotation = new float[3];
+    }
+
+    @Override
+    public void pause() {
+        sensorManager.unregisterListener(this);
+    }
+
     private void updateRotation() {
         SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading);
         float[] remappedMatrix = new float[9];
@@ -49,8 +61,8 @@ public class AccMagSensor implements Sensor, SensorEventListener{
         // Express the updated rotation matrix as three orientation angles.
         SensorManager.getOrientation(remappedMatrix, orientationAngles);
         rotation[0] = (float) (Math.toDegrees(orientationAngles[0]) + 360) % 360;
-        rotation[0] = (float) (Math.toDegrees(orientationAngles[1]) + 360) % 360;
-        rotation[0] = (float) (Math.toDegrees(orientationAngles[2]) + 360) % 360;
+        rotation[1] = (float) (Math.toDegrees(orientationAngles[1]) + 360) % 360;
+        rotation[2] = (float) (Math.toDegrees(orientationAngles[2]) + 360) % 360;
     }
 
     @Override

@@ -17,11 +17,13 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.video.Video;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
 
 /**
@@ -41,18 +43,20 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         }
     }
 
+    private Size targetSize;
+
     private Sensor gyroSensor;
     private float[] gyroRotation;
     private float[] rotation;
 
     private Point[] prevPts;
+    private Point[] currPts;
     private int width;
     private int height;
-    private byte[] current;
     private Mat oldImage;
-    private MatOfPoint2f featurePoints = new MatOfPoint2f();
-    private boolean init = false;
-    private boolean reset = false;
+    private Mat currentImage;
+    private boolean reset;
+    private boolean pause;
 
     public OptFlowSensor(Sensor gyroSensor) {
         this.gyroSensor = gyroSensor;
@@ -68,6 +72,16 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         this.rotation = rotation;
     }
 
+    @Override
+    public void start() {
+        pause = false;
+    }
+
+    @Override
+    public void pause() {
+        pause = true;
+    }
+
 
     @Override
     public void onImageAvailable(ImageReader imageReader) {
@@ -75,97 +89,134 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         width = image.getWidth();
         height = image.getHeight();
         ByteBuffer buffer = image.getPlanes()[0].getBuffer(); // get luminance plane from YUV_420_888 image; only greyscale needed for calculations
+        byte[] bytes;
         synchronized (this) {
-            current = new byte[buffer.remaining()];
-            buffer.get(current);
+            bytes = new byte[buffer.remaining()];
+            buffer.get(bytes);
         }
         image.close();
 
-        updateRotation();
-    }
+        if(rotation != null && !pause) {
+            currentImage = new Mat();
+            Mat color = new Mat(height, width, CvType.CV_8UC1);
+            color.put(0, 0, bytes);
 
-    private void updateRotation() {
-
-        if (current != null) {
-            Point[] points = calculateOpticalFlowPyrLK(current, width, height);
-            if (points != null) {
-                if (ARActivity.getView() != null) ARActivity.getView().setDebugArray(points.clone());
-
-                float[] vec = new float[2];
-                Vec2f[] vecs = new Vec2f[points.length];
-                if (!init && prevPts != null && prevPts.length > 0 && points.length > 0 && prevPts.length == points.length) {
-                    for (int i = 0; i < points.length; i++) {
-                        vecs[i] = new Vec2f((float) (prevPts[i].x - points[i].x), (float) (prevPts[i].y - points[i].y));
-                    }
-
-                    float sumX = 0;
-                    float sumY = 0;
-                    float count = 0;
-                    for (Vec2f v : vecs) {
-                        if (v.getX() < 200 && v.getY() < 200) { // define thresholds
-                            sumX += v.getX();
-                            sumY += v.getY();
-                            count++;
-                        }
-                    }
-
-                    vec[0] = ((sumX / count) / width) * Camera2.fov[0];
-                    vec[1] = ((sumY / count) / height) * Camera2.fov[1];
-                    if (vec[1] > 3 || vec[0] > 3) {
-                        Log.e(TAG, "-------------- MOTION VECTOR TOO BIG ------------");
-                    }
-                    ARActivity.getView().setDebugVec(new Vec2f((sumX / count), (sumY / count)));
-                }
-                prevPts = points;
-
-                if (init) {
-                    Log.e(TAG, "MOTION VECTOR -> INIT");
-                }
-                rotation[0] += vec[0];
-                rotation[1] += vec[1];
+            if (targetSize == null) {
+                targetSize = new Size(color.width() / Constants.IMAGE_SCALING_FACTOR, color.height() / Constants.IMAGE_SCALING_FACTOR); // calculate with half size
             }
+
+            Imgproc.resize(color, currentImage, targetSize);
+
+            float[] newGyroRotation = gyroSensor.getRotation();
+            if (gyroRotation != null) {
+                gyroRotation[0] = gyroRotation[0] - newGyroRotation[0];
+                gyroRotation[1] = gyroRotation[1] - newGyroRotation[1];
+            } else {
+                gyroRotation = newGyroRotation;
+            }
+
+            initFeaturePoints();
+            updateFeaturePoints();
+            if (!reset && prevPts != null && prevPts.length > 0 && currPts != null && currPts.length > 0 && prevPts.length == currPts.length) {
+                List<float[]> motionVecs = getMotionVecs();
+                motionVecs = reliabilityComp(motionVecs);
+                float[] deltaRotation = aggregateMotionVecs(motionVecs);
+                rotation[0] = rotation[0] + deltaRotation[0];
+                rotation[1] = rotation[1] + deltaRotation[1];
+            }
+            prevPts = currPts;
         }
     }
 
-
-    // TODO: dont move feature points but use a fixed amount of points -> calulate a vector field and return that instead of new points. this way no new initalisation has to be done!
-    // TODO: new initialization after 35% of points lost. - move points with "features"
-    private Point[] calculateOpticalFlowPyrLK(byte[] bytes, int width, int height) {// below is working
-        Mat current = new Mat();
-        Mat color = new Mat(height, width, CvType.CV_8UC1);
-        color.put(0, 0, bytes);
-
-        Size targetSize = new Size(color.width() / Constants.IMAGE_SCALING_FACTOR, color.height() / Constants.IMAGE_SCALING_FACTOR); // calculate with half size
-        Imgproc.resize(color, current, targetSize);
-
-        if (oldImage == null || reset || featurePoints.empty()) {
+    // Todo: test with fixed raster feature points
+    private void initFeaturePoints(){
+        if(prevPts == null || reset || oldImage == null) {
 //            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + reset + " or empty points: " + (featurePoints.empty()));
-            reset = false;
             MatOfPoint initial = new MatOfPoint();
-            Imgproc.goodFeaturesToTrack(current, initial, Constants.MAX_TRACKING_POINTS, 0.1, 30);
+            Imgproc.goodFeaturesToTrack(currentImage, initial, Constants.MAX_TRACKING_POINTS, 0.1, 30);
+            MatOfPoint2f featurePoints = new MatOfPoint2f();
             initial.convertTo(featurePoints, CvType.CV_32F);
-            this.oldImage = current;
-        } else {
-            init = false;
+            prevPts = featurePoints.toArray();
+        }
+    }
+
+    private void updateFeaturePoints(){
+        if(oldImage != null && !reset){
             MatOfByte status = new MatOfByte();
             MatOfFloat err = new MatOfFloat();
-            MatOfPoint2f newFeaturePoints = new MatOfPoint2f();
-            Video.calcOpticalFlowPyrLK(oldImage, current, featurePoints, newFeaturePoints, status, err);
-            for (Point p : featurePoints.toArray()) {
-                if (p.x > targetSize.width || p.y > targetSize.height || p.x < 0 || p.y < 0) {
-                    init = true;
-                    reset = true;
+            MatOfPoint2f newPoints = new MatOfPoint2f();
+
+            Video.calcOpticalFlowPyrLK(oldImage, currentImage, new MatOfPoint2f(prevPts), newPoints, status, err);
+            currPts = newPoints.toArray();
+            Point[] debugArray = currPts.clone();
+            for(Point p : debugArray){
+                p.x = p.x * Constants.IMAGE_SCALING_FACTOR;
+                p.y = p.y * Constants.IMAGE_SCALING_FACTOR;
+            }
+            if (ARActivity.getView() != null) ARActivity.getView().setDebugArray(debugArray);
+        }
+        oldImage = currentImage;
+        reset = false;
+    }
+
+    private List<float[]> getMotionVecs(){
+        List<float[]> vecs = new ArrayList<>();
+        for(int i = 0; i < currPts.length; i++){
+            Point c = currPts[i];
+            Point p = prevPts[i];
+            if (c.x < targetSize.width && c.y < targetSize.height && c.x > 0 && c.y > 0) {
+                vecs.add(new float[]{(float) (p.x - c.x), (float) (p.y - c.y)});
+            }
+        }
+        for (float[] v : vecs) {
+            v[0] = v[0] * Constants.IMAGE_SCALING_FACTOR * Camera2.fov[0] / width;
+            v[1] = v[1] * Constants.IMAGE_SCALING_FACTOR * Camera2.fov[1] / height;
+        }
+        if(vecs.size() < Constants.MIN_TRACKING_POINTS){
+            reset = true;
+        }
+        return vecs;
+    }
+
+    private List<float[]> reliabilityComp(List<float[]> vecs){
+        for(Iterator<float[]> it = vecs.iterator(); it.hasNext();){
+
+            float[] vec = it.next();
+            if(vec[0] > gyroRotation[0] * Constants.RELIABILITY_FACTOR || vec[1] > gyroRotation[1] * Constants.RELIABILITY_FACTOR){
+                it.remove();
+            }
+        }
+        return vecs;
+    }
+
+    /**
+     * Aggregate all motion vectors using a simple density function implementation.
+     * @return Resulting motion vector
+     */
+    private float[] aggregateMotionVecs(List<float[]> vecs){
+        float[] result = new float[]{0,0};
+        float[] max = new float[]{0,0};
+        for(float[] v : vecs){
+            float[] count = new float[]{0,0};
+            for(float[] w : vecs){
+                if((v[0] - w[0]) < Constants.AGGREGATION_THRESHOLD){
+                    count[0]++;
+                }
+                if((v[1] - w[1]) < Constants.AGGREGATION_THRESHOLD){
+                    count[1]++;
                 }
             }
-            this.featurePoints = newFeaturePoints;
-            this.oldImage = current;
+            if(count[0] > max[0]){
+                max[0] = count[0];
+                result[0] = v[0];
+            }
+            if(count[1] > max[1]){
+                max[1] = count[1];
+                result[1] = v[1];
+            }
         }
-        Point[] points = featurePoints.toArray();
-
-        for (Point p : points) {
-            p.x = p.x * Constants.IMAGE_SCALING_FACTOR;
-            p.y = p.y * Constants.IMAGE_SCALING_FACTOR;
-        }
-        return points;
+        ARActivity.getView().setDebugVec(result);
+        Log.d(TAG, "aggregatedMotionVec: " + result[0] + "|" + result[1]);
+        return result;
     }
 }
