@@ -18,6 +18,7 @@ import org.opencv.video.Video;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -115,48 +116,50 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
                 gyroRotation = newGyroRotation;
             }
 
-            initFeaturePoints();
-            updateFeaturePoints();
-            if (!reset && prevPts != null && prevPts.length > 0 && currPts != null && currPts.length > 0 && prevPts.length == currPts.length) {
+            reset = (prevPts == null || oldImage == null || reset);
+            if(reset) {
+                initFeaturePoints();
+                reset = false;
+            } else {
+                updateFeaturePoints();
                 List<float[]> motionVecs = getMotionVecs();
-                motionVecs = reliabilityComp(motionVecs);
+                if(motionVecs.size() < Constants.MIN_TRACKING_POINTS){
+                    reset = true;
+                }
+//                motionVecs = reliabilityComp(motionVecs); // TODO: uncomment
                 float[] deltaRotation = aggregateMotionVecs(motionVecs);
                 rotation[0] = rotation[0] + deltaRotation[0];
                 rotation[1] = rotation[1] + deltaRotation[1];
             }
+            oldImage = currentImage;
             prevPts = currPts;
         }
     }
 
     // Todo: test with fixed raster feature points
     private void initFeaturePoints(){
-        if(prevPts == null || reset || oldImage == null) {
-//            Log.d(TAG, "INIT FEATURE_POINTS because of img: " + (oldImage == null) + " reset: " + reset + " or empty points: " + (featurePoints.empty()));
-            MatOfPoint initial = new MatOfPoint();
-            Imgproc.goodFeaturesToTrack(currentImage, initial, Constants.MAX_TRACKING_POINTS, 0.1, 30);
-            MatOfPoint2f featurePoints = new MatOfPoint2f();
-            initial.convertTo(featurePoints, CvType.CV_32F);
-            prevPts = featurePoints.toArray();
-        }
+        Log.d(TAG, "initFeaturePoints");
+        MatOfPoint initial = new MatOfPoint();
+        Imgproc.goodFeaturesToTrack(currentImage, initial, Constants.MAX_TRACKING_POINTS, 0.1, 30);
+        MatOfPoint2f featurePoints = new MatOfPoint2f();
+        initial.convertTo(featurePoints, CvType.CV_32F);
+        currPts = featurePoints.toArray();
     }
 
     private void updateFeaturePoints(){
-        if(oldImage != null && !reset){
+            Log.d(TAG, "updateFeaturePoints");
             MatOfByte status = new MatOfByte();
             MatOfFloat err = new MatOfFloat();
             MatOfPoint2f newPoints = new MatOfPoint2f();
 
             Video.calcOpticalFlowPyrLK(oldImage, currentImage, new MatOfPoint2f(prevPts), newPoints, status, err);
             currPts = newPoints.toArray();
-            Point[] debugArray = currPts.clone();
-            for(Point p : debugArray){
-                p.x = p.x * Constants.IMAGE_SCALING_FACTOR;
-                p.y = p.y * Constants.IMAGE_SCALING_FACTOR;
+            Point[] debugArray = new Point[currPts.length];
+            for(int i = 0; i<debugArray.length; i++){
+                debugArray[i] = new Point(currPts[i].x * Constants.IMAGE_SCALING_FACTOR, currPts[i].y * Constants.IMAGE_SCALING_FACTOR);
             }
+            Log.d(TAG, "update Debug Points");
             if (ARActivity.getView() != null) ARActivity.getView().setDebugArray(debugArray);
-        }
-        oldImage = currentImage;
-        reset = false;
     }
 
     private List<float[]> getMotionVecs(){
@@ -171,9 +174,6 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         for (float[] v : vecs) {
             v[0] = v[0] * Constants.IMAGE_SCALING_FACTOR * Camera2.fov[0] / width;
             v[1] = v[1] * Constants.IMAGE_SCALING_FACTOR * Camera2.fov[1] / height;
-        }
-        if(vecs.size() < Constants.MIN_TRACKING_POINTS){
-            reset = true;
         }
         return vecs;
     }
@@ -199,10 +199,10 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         for(float[] v : vecs){
             float[] count = new float[]{0,0};
             for(float[] w : vecs){
-                if((v[0] - w[0]) < Constants.AGGREGATION_THRESHOLD){
+                if(Math.abs(v[0] - w[0]) < Constants.AGGREGATION_THRESHOLD){
                     count[0]++;
                 }
-                if((v[1] - w[1]) < Constants.AGGREGATION_THRESHOLD){
+                if(Math.abs(v[1] - w[1]) < Constants.AGGREGATION_THRESHOLD){
                     count[1]++;
                 }
             }

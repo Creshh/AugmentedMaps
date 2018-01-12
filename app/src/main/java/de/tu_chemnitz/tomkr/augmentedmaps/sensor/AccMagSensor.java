@@ -61,7 +61,7 @@ public class AccMagSensor implements Sensor, SensorEventListener{
         // Express the updated rotation matrix as three orientation angles.
         SensorManager.getOrientation(remappedMatrix, orientationAngles);
         rotation[0] = (float) (Math.toDegrees(orientationAngles[0]) + 360) % 360;
-        rotation[1] = (float) (Math.toDegrees(orientationAngles[1]) + 360) % 360;
+        rotation[1] = (float) (Math.toDegrees(orientationAngles[1]));
         rotation[2] = (float) (Math.toDegrees(orientationAngles[2]) + 360) % 360;
     }
 
