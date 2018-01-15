@@ -12,6 +12,7 @@ public class Constants {
 
     public static Paint paintStroke;
     public static Paint paintFill;
+    public static Paint paintFillRed;
 
     static {
         paintStroke = new Paint();
@@ -29,6 +30,11 @@ public class Constants {
         paintFill.setTextAlign(Paint.Align.LEFT);
         paintFill.setTextSize(40);
         paintFill.setAntiAlias(true);
+        paintStroke.setStrokeWidth(2);
+
+        paintFillRed = new Paint(paintFill);
+        paintFillRed.setColor(Color.RED);
+        paintStroke.setStrokeWidth(2);
     }
 
     /**
@@ -85,17 +91,17 @@ public class Constants {
     /**
      *
      */
-    public static final int MAX_TRACKING_POINTS = 5;
+    public static final int MAX_TRACKING_POINTS = 15;
 
     /**
      *
      */
-    public static final int MIN_TRACKING_POINTS = 2;
+    public static final int MIN_TRACKING_POINTS = 5;
 
     /**
      *
      */
-    public static final float RELIABILITY_FACTOR = 1.2f;
+    public static final float RELIABILITY_THRESHOLD = 5.0f;
 
     /**
      *

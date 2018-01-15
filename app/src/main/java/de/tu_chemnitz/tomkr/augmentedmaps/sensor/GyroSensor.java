@@ -102,7 +102,7 @@ public class GyroSensor implements Sensor, SensorEventListener{
 //        for(int i = 0; i<3; i++){
 //            rotation[i] += Math.toDegrees(deltaRotation[i]);
 //        }
-        Log.d(TAG, "deltaRotation: " + deltaRotation[0] + "|" + deltaRotation[1] + "|" + deltaRotation[2]);
+//        Log.d(TAG, "deltaRotation: " + deltaRotation[0] + "|" + deltaRotation[1] + "|" + deltaRotation[2]);
     }
 
 //    @Override

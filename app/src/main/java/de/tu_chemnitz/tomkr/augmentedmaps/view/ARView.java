@@ -12,6 +12,7 @@ import java.util.List;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.DebugPoint;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
@@ -22,7 +23,7 @@ public class ARView extends View {
     private static final String TAG = ARView.class.getName();
 
     private List<Marker> markerDrawables;
-    private Point[] points;
+    private DebugPoint[] points;
     private float[] debugVec;
 
     public ARView(Context context) {
@@ -63,8 +64,15 @@ public class ARView extends View {
         }
 
         if (points != null ){
-            for( Point p : points){
-                canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintFill);
+            for( DebugPoint p : points){
+                if(p.reliable){
+                    canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintFill);
+                    canvas.drawLine((float)p.ox, (float)p.oy, (float)p.x, (float)p.y, Constants.paintFill);
+                }
+                else {
+                    canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintFillRed);
+                    canvas.drawLine((float)p.ox, (float)p.oy, (float)p.x, (float)p.y, Constants.paintFillRed);
+                }
             }
         }
         if(debugVec != null){
@@ -76,7 +84,7 @@ public class ARView extends View {
         this.markerDrawables = markerDrawables;
     }
 
-    public void setDebugArray(Point[] points){
+    public void setDebugArray(DebugPoint[] points){
         this.points = points;
     }
 

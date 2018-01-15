@@ -23,9 +23,9 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME
 
 public class OrientationService extends LooperThread {
 
-    public static final float GYRO_FAC = 0.80f;
-    public static final float ACCMAG_FAC = 0.02f;
-    public static final float OPTFLOW_FAC = 0.18f;
+    public static final float GYRO_FAC = 0.99f;
+//    public static final float ACCMAG_FAC = 0.02f;
+    public static final float OPTFLOW_FAC = 0.99f;
 
     public enum Flag {RAW, LOW_PASS, GYRO, OPT_FLOW}
 
@@ -91,9 +91,9 @@ public class OrientationService extends LooperThread {
                     gyro = gyroSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
                         // Complementary Filter with AccMagSensor and Gyroscope
-//                        rotation[i] = (gyro[i] * (GYRO_FAC + OPTFLOW_FAC)) + (accMag[i] * ACCMAG_FAC);
-                        rotation[i] = gyro[i];
-                        Log.d(TAG, "rotation: " + rotation[0] + "|" + rotation[1] + "|" + rotation[2]);
+                        rotation[i] = (gyro[i] * (GYRO_FAC)) + (accMag[i] * (1-GYRO_FAC));
+//                        rotation[i] = gyro[i];
+//                        Log.d(TAG, "rotation: " + rotation[0] + "|" + rotation[1] + "|" + rotation[2]);
                     }
                     break;
                 case OPT_FLOW:
@@ -101,11 +101,11 @@ public class OrientationService extends LooperThread {
                     gyroSensor.start();
                     optFlowSensor.start();
                     optFlow = optFlowSensor.getRotation();
-                    gyro = gyroSensor.getRotation();
+//                    gyro = gyroSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
-                        // Complementary Filter with AccMagSensor, Gyroscope and Optical Flow
+                        // Complementary Filter with AccMagSensor and Optical Flow
 //                        rotation[i] = (gyro[i] * GYRO_FAC) + (accMag[i] * ACCMAG_FAC) + (optFlow[i] * OPTFLOW_FAC);
-                        rotation[i] = (accMag[i] * ACCMAG_FAC) + (optFlow[i] * (OPTFLOW_FAC+GYRO_FAC));
+                        rotation[i] = (accMag[i] * (1-OPTFLOW_FAC)) + (optFlow[i] * (OPTFLOW_FAC));
                     }
                     break;
             }

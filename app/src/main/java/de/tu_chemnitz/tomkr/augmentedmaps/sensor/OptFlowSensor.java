@@ -25,6 +25,7 @@ import java.util.List;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.DebugPoint;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
 
 /**
@@ -48,6 +49,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 
     private Sensor gyroSensor;
     private float[] gyroRotation;
+    private float[] gyroDelta;
     private float[] rotation;
 
     private Point[] prevPts;
@@ -58,6 +60,8 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     private Mat currentImage;
     private boolean reset;
     private boolean pause;
+
+    private DebugPoint[] debugArray;
 
     public OptFlowSensor(Sensor gyroSensor) {
         this.gyroSensor = gyroSensor;
@@ -81,6 +85,8 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     @Override
     public void pause() {
         pause = true;
+        debugArray = null;
+        reset = true;
     }
 
 
@@ -110,10 +116,12 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 
             float[] newGyroRotation = gyroSensor.getRotation();
             if (gyroRotation != null) {
-                gyroRotation[0] = gyroRotation[0] - newGyroRotation[0];
-                gyroRotation[1] = gyroRotation[1] - newGyroRotation[1];
+                gyroDelta[0] = gyroRotation[0] - newGyroRotation[0];
+                gyroDelta[1] = gyroRotation[1] - newGyroRotation[1];
+                gyroRotation = newGyroRotation;
             } else {
                 gyroRotation = newGyroRotation;
+                gyroDelta = new float[]{0,0};
             }
 
             reset = (prevPts == null || oldImage == null || reset);
@@ -126,7 +134,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
                 if(motionVecs.size() < Constants.MIN_TRACKING_POINTS){
                     reset = true;
                 }
-//                motionVecs = reliabilityComp(motionVecs); // TODO: uncomment
+                reliabilityComp(motionVecs);
                 float[] deltaRotation = aggregateMotionVecs(motionVecs);
                 rotation[0] = rotation[0] + deltaRotation[0];
                 rotation[1] = rotation[1] + deltaRotation[1];
@@ -134,6 +142,8 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
             oldImage = currentImage;
             prevPts = currPts;
         }
+//        Log.d(TAG, "update Debug Points");
+        if (ARActivity.getView() != null) ARActivity.getView().setDebugArray(debugArray);
     }
 
     // Todo: test with fixed raster feature points
@@ -147,19 +157,17 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     }
 
     private void updateFeaturePoints(){
-            Log.d(TAG, "updateFeaturePoints");
+//            Log.d(TAG, "updateFeaturePoints");
             MatOfByte status = new MatOfByte();
             MatOfFloat err = new MatOfFloat();
             MatOfPoint2f newPoints = new MatOfPoint2f();
 
             Video.calcOpticalFlowPyrLK(oldImage, currentImage, new MatOfPoint2f(prevPts), newPoints, status, err);
             currPts = newPoints.toArray();
-            Point[] debugArray = new Point[currPts.length];
+            debugArray = new DebugPoint[currPts.length];
             for(int i = 0; i<debugArray.length; i++){
-                debugArray[i] = new Point(currPts[i].x * Constants.IMAGE_SCALING_FACTOR, currPts[i].y * Constants.IMAGE_SCALING_FACTOR);
+                debugArray[i] = new DebugPoint(currPts[i].x * Constants.IMAGE_SCALING_FACTOR, currPts[i].y * Constants.IMAGE_SCALING_FACTOR, prevPts[i].x * Constants.IMAGE_SCALING_FACTOR, prevPts[i].y * Constants.IMAGE_SCALING_FACTOR);
             }
-            Log.d(TAG, "update Debug Points");
-            if (ARActivity.getView() != null) ARActivity.getView().setDebugArray(debugArray);
     }
 
     private List<float[]> getMotionVecs(){
@@ -178,15 +186,21 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         return vecs;
     }
 
-    private List<float[]> reliabilityComp(List<float[]> vecs){
+    private void reliabilityComp(List<float[]> vecs){
+        int i = 0;
         for(Iterator<float[]> it = vecs.iterator(); it.hasNext();){
 
             float[] vec = it.next();
-            if(vec[0] > gyroRotation[0] * Constants.RELIABILITY_FACTOR || vec[1] > gyroRotation[1] * Constants.RELIABILITY_FACTOR){
+//            Log.d(TAG, "reliability: " + vec[0] + "<>" + gyroDelta[0]);
+            if(Math.abs(vec[0] - gyroDelta[0]) > Constants.RELIABILITY_THRESHOLD || Math.abs(vec[1] - gyroDelta[1]) > Constants.RELIABILITY_THRESHOLD){
                 it.remove();
+                debugArray[i].reliable = false;
+                Log.d(TAG, "unreliable vector: " + vec[0] + " - " + gyroDelta[0]);
+            } else {
+                debugArray[i].reliable = true;
             }
+            i++;
         }
-        return vecs;
     }
 
     /**
@@ -216,7 +230,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
             }
         }
         ARActivity.getView().setDebugVec(result);
-        Log.d(TAG, "aggregatedMotionVec: " + result[0] + "|" + result[1]);
+        Log.d(TAG, "aggregatedMotionVecs: (" + vecs.size() + ") -> " + result[0] + "|" + result[1]);
         return result;
     }
 }

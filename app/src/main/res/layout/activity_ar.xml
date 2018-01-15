@@ -59,25 +59,33 @@
             android:id="@+id/toggleRaw"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Raw"/>
+            android:buttonTint="@android:color/holo_red_light"
+            android:text="Raw"
+            android:textColor="@android:color/holo_red_light"/>
 
         <RadioButton
             android:id="@+id/toggleLowPass"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LowPass"/>
+            android:buttonTint="@android:color/holo_red_light"
+            android:text="LowPass"
+            android:textColor="@android:color/holo_red_light"/>
 
         <RadioButton
             android:id="@+id/toggleGyro"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Gyro"/>
+            android:buttonTint="@android:color/holo_red_light"
+            android:text="Gyro"
+            android:textColor="@android:color/holo_red_light"/>
 
         <RadioButton
             android:id="@+id/toggleOptFlow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="OptFlow"/>
+            android:buttonTint="@android:color/holo_red_light"
+            android:text="OptFlow"
+            android:textColor="@android:color/holo_red_light"/>
 
     </RadioGroup>
 
