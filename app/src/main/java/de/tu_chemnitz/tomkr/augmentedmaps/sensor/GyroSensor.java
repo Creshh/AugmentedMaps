@@ -3,6 +3,11 @@ package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
+
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static java.lang.Math.sqrt;
 
 /**
  * Created by Tom Kretzschmar on 21.12.2017.
@@ -22,7 +27,7 @@ public class GyroSensor implements Sensor, SensorEventListener{
 
     public GyroSensor(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
-        gyro = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD);
+        gyro = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE);
     }
 
     @Override
@@ -43,54 +48,133 @@ public class GyroSensor implements Sensor, SensorEventListener{
     @Override
     public void pause() {
         sensorManager.unregisterListener(this);
+        timestamp = 0;
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(rotation != null) {
-            float[] gyroMatrix = getRotationMatrixFromOrientation(rotation);
-            // This timestep's delta rotation to be multiplied by the current rotation
-            // after computing it from the gyro sample data.
-            if (timestamp != 0) {
-                final float dT = (event.timestamp - timestamp) * NS2S;
-                // Axis of the rotation sample, not normalized yet.
-                float axisX = event.values[0];
-                float axisY = event.values[1];
-                float axisZ = event.values[2];
+        // This time step's delta rotation to be multiplied by the current rotation
+        // after computing it from the gyro sample data.
+        if (timestamp != 0) {
+            final float dT = (event.timestamp - timestamp) * NS2S;
+            // Axis of the rotation sample, not normalized yet.
+            float axisX = event.values[0];
+            float axisY = event.values[1];
+            float axisZ = event.values[2];
 
-                // Calculate the angular speed of the sample
-                float omegaMagnitude = (float) Math.sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
+            // Calculate the angular speed of the sample
+            float omegaMagnitude = (float) sqrt(axisX*axisX + axisY*axisY + axisZ*axisZ);
 
-                // Normalize the rotation vector if it's big enough to get the axis
-                // (that is, EPSILON should represent your maximum allowable margin of error)
-                if (omegaMagnitude > EPSILON) {
-                    axisX /= omegaMagnitude;
-                    axisY /= omegaMagnitude;
-                    axisZ /= omegaMagnitude;
-                }
-
-                // Integrate around this axis with the angular speed by the timestep
-                // in order to get a delta rotation from this sample over the timestep
-                // We will convert this axis-angle representation of the delta rotation
-                // into a quaternion before turning it into the rotation matrix.
-                float thetaOverTwo = omegaMagnitude * dT / 2.0f;
-                float sinThetaOverTwo = (float) Math.sin(thetaOverTwo);
-                float cosThetaOverTwo = (float) Math.cos(thetaOverTwo);
-                deltaRotationVector[0] = sinThetaOverTwo * axisX;
-                deltaRotationVector[1] = sinThetaOverTwo * axisY;
-                deltaRotationVector[2] = sinThetaOverTwo * axisZ;
-                deltaRotationVector[3] = cosThetaOverTwo;
+            // Normalize the rotation vector if it's big enough to get the axis
+            if (omegaMagnitude > EPSILON) {
+                axisX /= omegaMagnitude;
+                axisY /= omegaMagnitude;
+                axisZ /= omegaMagnitude;
             }
-            timestamp = event.timestamp;
-            float[] deltaRotationMatrix = new float[9];
-            SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
-            // apply the new rotation interval on the gyroscope based rotation matrix
-            gyroMatrix = matrixMultiplication(gyroMatrix, deltaRotationMatrix);
 
-            // get the gyroscope based orientation from the rotation matrix
-            SensorManager.getOrientation(gyroMatrix, rotation);
+            // Integrate around this axis with the angular speed by the time step
+            // in order to get a delta rotation from this sample over the time step
+            // We will convert this axis-angle representation of the delta rotation
+            // into a quaternion before turning it into the rotation matrix.
+            float thetaOverTwo = omegaMagnitude * dT / 2.0f;
+            float sinThetaOverTwo = (float) sin(thetaOverTwo);
+            float cosThetaOverTwo = (float) cos(thetaOverTwo);
+            deltaRotationVector[0] = sinThetaOverTwo * axisX;
+            deltaRotationVector[1] = sinThetaOverTwo * axisY;
+            deltaRotationVector[2] = sinThetaOverTwo * axisZ;
+            deltaRotationVector[3] = cosThetaOverTwo;
         }
+        timestamp = event.timestamp;
+        float[] deltaRotationMatrix = new float[9];
+//        float[] remappedDeltaMatrix = new float[9];
+
+        SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
+//        SensorManager.remapCoordinateSystem(deltaRotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, remappedDeltaMatrix); // Correct mapping -> see Using the camera (Y axis along the camera's axis) for an augmented reality application where the rotation angles are neede remapCoordinateSystem(inR, AXIS_X, AXIS_Z, outR);
+
+        float[] deltaRotation = new float[3];
+        SensorManager.getOrientation(deltaRotationMatrix, deltaRotation);
+        // concatenate the delta rotation we computed with the current rotation
+        // in order to get the updated rotation and remap Coordinates.
+        rotation[0] += Math.toDegrees(deltaRotation[1]);
+        rotation[1] += Math.toDegrees(deltaRotation[2]);
+        rotation[2] += Math.toDegrees(deltaRotation[0]);
+
+//        for(int i = 0; i<3; i++){
+//            rotation[i] += Math.toDegrees(deltaRotation[i]);
+//        }
+        Log.d(TAG, "deltaRotation: " + deltaRotation[0] + "|" + deltaRotation[1] + "|" + deltaRotation[2]);
     }
+
+//    @Override
+//    public void onSensorChanged(SensorEvent event) {
+//        if(rotation != null) {
+//            float[] gyroMatrix = getRotationMatrixFromOrientation(rotation);
+//            // This timestep's delta rotation to be multiplied by the current rotation
+//            // after computing it from the gyro sample data.
+//            if (timestamp != 0) {
+//                final float dT = (event.timestamp - timestamp) * NS2S;
+//                timestamp = event.timestamp;
+//                // Axis of the rotation sample, not normalized yet.
+//                float axisX = event.values[0];
+//                float axisY = event.values[1];
+//                float axisZ = event.values[2];
+//
+//                // Calculate the angular speed of the sample
+//                float omegaMagnitude = (float) Math.sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
+//
+//                // Normalize the rotation vector if it's big enough to get the axis
+//                // (that is, EPSILON should represent your maximum allowable margin of error)
+//                if (omegaMagnitude > EPSILON) {
+//                    axisX /= omegaMagnitude;
+//                    axisY /= omegaMagnitude;
+//                    axisZ /= omegaMagnitude;
+//                }
+//
+//                // Integrate around this axis with the angular speed by the timestep
+//                // in order to get a delta rotation from this sample over the timestep
+//                // We will convert this axis-angle representation of the delta rotation
+//                // into a quaternion before turning it into the rotation matrix.
+//                float thetaOverTwo = omegaMagnitude * dT / 2.0f;
+//                float sinThetaOverTwo = (float) Math.sin(thetaOverTwo);
+//                float cosThetaOverTwo = (float) Math.cos(thetaOverTwo);
+//                deltaRotationVector[0] = sinThetaOverTwo * axisX;
+//                deltaRotationVector[1] = sinThetaOverTwo * axisY;
+//                deltaRotationVector[2] = sinThetaOverTwo * axisZ;
+//                deltaRotationVector[3] = cosThetaOverTwo;
+//
+//                float[] deltaRotationMatrix = new float[9];
+////                float[] remappedDeltaMatrix = new float[9];
+//                SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
+////                SensorManager.remapCoordinateSystem(deltaRotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, remappedDeltaMatrix); // Correct mapping -> see Using the camera (Y axis along the camera's axis) for an augmented reality application where the rotation angles are neede remapCoordinateSystem(inR, AXIS_X, AXIS_Z, outR);
+//
+//                // apply the new rotation interval on the gyroscope based rotation matrix
+//                gyroMatrix = matrixMultiplication(gyroMatrix, deltaRotationMatrix);
+//
+//                // get the gyroscope based orientation from the rotation matrix
+//                float[] deltaRotation = new float[3];
+//
+//                SensorManager.getOrientation(gyroMatrix, deltaRotation);
+//
+////                rotation[0] = (float) Math.toDegrees(deltaRotation[0]);
+////                rotation[1] = (float) Math.toDegrees(deltaRotation[1]);
+////                rotation[2] = (float) Math.toDegrees(deltaRotation[2]);
+//
+//                rotation[0] = deltaRotation[0];
+//                rotation[1] = deltaRotation[1];
+//                rotation[2] = deltaRotation[2];
+////                rotation[0] = rotation[0] + deltaRotation[0];
+////                rotation[1] = rotation[1] + deltaRotation[1];
+////                rotation[2] = rotation[2] + deltaRotation[2];
+////                rotation[0] = (float) (rotation[0] + Math.toDegrees(deltaRotation[0]));
+////                rotation[1] = (float) (rotation[1] + Math.toDegrees(deltaRotation[1]));
+////                rotation[2] = (float) (rotation[2] + Math.toDegrees(deltaRotation[2]));
+//
+//            } else {
+//                timestamp = event.timestamp;
+//            }
+//            Log.d(TAG, "rotation: " + rotation[0] + "|" + rotation[1] + "|" + rotation[2]);
+//        }
+//    }
 
     @Override
     public void onAccuracyChanged(android.hardware.Sensor sensor, int i) {}
@@ -119,12 +203,12 @@ public class GyroSensor implements Sensor, SensorEventListener{
         float[] yM = new float[9];
         float[] zM = new float[9];
 
-        float sinX = (float)Math.sin(o[1]);
-        float cosX = (float)Math.cos(o[1]);
-        float sinY = (float)Math.sin(o[2]);
-        float cosY = (float)Math.cos(o[2]);
-        float sinZ = (float)Math.sin(o[0]);
-        float cosZ = (float)Math.cos(o[0]);
+        float sinX = (float) sin(o[1]);
+        float cosX = (float) cos(o[1]);
+        float sinY = (float) sin(o[2]);
+        float cosY = (float) cos(o[2]);
+        float sinZ = (float) sin(o[0]);
+        float cosZ = (float) cos(o[0]);
 
         // rotation about x-axis (pitch)
         xM[0] = 1.0f; xM[1] = 0.0f; xM[2] = 0.0f;

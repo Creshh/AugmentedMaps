@@ -91,7 +91,9 @@ public class OrientationService extends LooperThread {
                     gyro = gyroSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
                         // Complementary Filter with AccMagSensor and Gyroscope
-                        rotation[i] = (gyro[i] * (GYRO_FAC + OPTFLOW_FAC)) + (accMag[i] * ACCMAG_FAC);
+//                        rotation[i] = (gyro[i] * (GYRO_FAC + OPTFLOW_FAC)) + (accMag[i] * ACCMAG_FAC);
+                        rotation[i] = gyro[i];
+                        Log.d(TAG, "rotation: " + rotation[0] + "|" + rotation[1] + "|" + rotation[2]);
                     }
                     break;
                 case OPT_FLOW:
