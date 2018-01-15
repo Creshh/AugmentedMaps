@@ -30,6 +30,7 @@ import de.tu_chemnitz.tomkr.augmentedmaps.location.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
+import de.tu_chemnitz.tomkr.augmentedmaps.util.LogPoint;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.DIST_THRESHOLD;
@@ -80,7 +81,8 @@ public class Controller extends LooperThread implements OrientationListener, Loc
     public static final Object listLock = new Object();
     private boolean logData = false;
     private long logStart;
-    private ArrayList<Vec2f> dataLog;
+    private Vec2f initialLog;
+    private ArrayList<LogPoint> dataLog;
     private Orientation orientation;
 
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
@@ -101,10 +103,20 @@ public class Controller extends LooperThread implements OrientationListener, Loc
     protected void loop() {
         if(logData) {
             if (logStart + Constants.LOG_TIME < System.currentTimeMillis()) {
+                // save log to file when finished logging
                 logData = false;
+                initialLog = null;
                 Helpers.saveLogToFile(dataLog);
             } else {
-                dataLog.add(new Vec2f(this.orientation.getX(), this.orientation.getY()));
+                // apply continous data to log
+                Vec2f current = new Vec2f(this.orientation.getX(), this.orientation.getY());
+                if(initialLog == null){
+                    initialLog = current;
+                } else {
+                    current.substract(initialLog);
+                    long timestamp = System.currentTimeMillis() - logStart;
+                    dataLog.add(new LogPoint(timestamp, current));
+                }
             }
         }
 
@@ -259,7 +271,7 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         return markerList;
     }
 
-    @Override // TODO: Fix: after onResume, no nodes will be displayed
+    @Override // TODO: Fix: after onResume, no nodes will be displayed???????
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
             smallLocationUpdate = true;
@@ -284,10 +296,8 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         }
     }
 
-
-    // TODO: separate button for debugging -> start from actual orientation and then logToFile orientation and with motionanalyzer estimated orientation separaetely -> move -> check how much these values differ
-    // TODO: maybe Log defined Point, not Orientation values. Evaluate correct calculated position. maybe use image analysation for new position estimation, and measure the correctness using distance between closest points (maybe with only 1 point)
     public void logToFile() {
+        Log.d(TAG, "start Logging");
         logStart = System.currentTimeMillis();
         if(dataLog == null){
             dataLog = new ArrayList<>();

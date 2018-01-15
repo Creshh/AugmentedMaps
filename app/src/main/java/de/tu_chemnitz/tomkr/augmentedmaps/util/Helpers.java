@@ -41,15 +41,6 @@ public class Helpers {
         random = new Random();
     }
 
-    public static String createTimeStamp(long timestamp) {
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(timestamp);
-        Date d = c.getTime();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.GERMANY);
-        return sdf.format(d);
-    }
-
-
 //    public static List<Marker> createSampleMarker(int count, int maxWidth, int maxHeight){
 //        List<Marker> list = new ArrayList<>();
 //        for(int i = 0; i < count; i++){
@@ -132,13 +123,23 @@ public class Helpers {
         return tags;
     }
 
-    public static void saveLogToFile(ArrayList<Vec2f> dataLog) {
-        String filename = "sensor" + createTimeStamp(System.currentTimeMillis()) + ".logToFile";
+    public static String createTimeStamp(long timestamp) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(timestamp);
+        Date d = c.getTime();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.GERMANY);
+        return sdf.format(d);
+    }
+
+    public static void saveLogToFile(ArrayList<LogPoint> dataLog) {
+        String filename = "sensor" + createTimeStamp(System.currentTimeMillis()) + ".log";
         StringBuilder builder = new StringBuilder();
-        for(Vec2f p : dataLog){
-            builder.append(p.getX());
+        for(LogPoint p : dataLog){
+            builder.append(p.timestamp);
             builder.append(" ");
-            builder.append(p.getY());
+            builder.append(p.point.getX());
+            builder.append(" ");
+            builder.append(p.point.getY());
             builder.append(System.lineSeparator());
         }
         File fileDir = new File(Environment.getExternalStorageDirectory(), "AugmentedMapsLog");

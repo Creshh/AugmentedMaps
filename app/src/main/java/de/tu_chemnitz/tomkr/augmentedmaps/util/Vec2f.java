@@ -30,4 +30,9 @@ public class Vec2f {
     public void setY(float y) {
         this.y = y;
     }
+
+    public void substract(Vec2f vec) {
+        this.x = x - vec.getX();
+        this.y = y - vec.getY();
+    }
 }
