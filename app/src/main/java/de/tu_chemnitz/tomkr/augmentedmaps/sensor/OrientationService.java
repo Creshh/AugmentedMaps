@@ -9,23 +9,20 @@ import java.util.Arrays;
 import java.util.List;
 
 
+import de.tu_chemnitz.tomkr.augmentedmaps.core.Const;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.LooperThread;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
 
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOW_PASS_FAC;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOW_PASS_FAC;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.TARGET_FRAMETIME;
 
 /**
  * Created by Tom Kretzschmar on 21.12.2017.
- *
  */
 
 public class OrientationService extends LooperThread {
 
-    public static final float GYRO_FAC = 0.99f;
-//    public static final float ACCMAG_FAC = 0.02f;
-    public static final float OPTFLOW_FAC = 0.99f;
 
     public enum Flag {RAW, LOW_PASS, GYRO, OPT_FLOW}
 
@@ -61,51 +58,31 @@ public class OrientationService extends LooperThread {
         if (init) {
             Log.d(TAG, "init");
             rotation = accMagSensor.getRotation();
-            if (rotation != null) {
-                init = false;
-                gyroSensor.setRotationEstimate(Arrays.copyOf(rotation, 3));
-                optFlowSensor.setRotationEstimate(Arrays.copyOf(rotation, 3));
-            }
+            init = (rotation == null);
         } else {
-//            Log.d(TAG, "_________________________ switch Flag _________________________");
             accMag = Arrays.copyOf(accMagSensor.getRotation(), 3);
             switch (flag) {
                 case RAW:
-//                    Log.d(TAG, "case RAW");
-                    gyroSensor.pause();
-                    optFlowSensor.pause();
                     rotation = accMag;
                     break;
                 case LOW_PASS:
-//                    Log.d(TAG, "case LOW_PASS");
-                    gyroSensor.pause();
-                    optFlowSensor.pause();
                     for (int i = 0; i < 3; i++) {
                         // Complementary Filter with AccMagSensor
                         rotation[i] = (rotation[i] * (1 - LOW_PASS_FAC)) + (accMag[i] * LOW_PASS_FAC);
                     }
                     break;
                 case GYRO:
-//                    Log.d(TAG, "case GYRO");
-                    gyroSensor.start();
                     gyro = gyroSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
                         // Complementary Filter with AccMagSensor and Gyroscope
-                        rotation[i] = (gyro[i] * (GYRO_FAC)) + (accMag[i] * (1-GYRO_FAC));
-//                        rotation[i] = gyro[i];
-//                        Log.d(TAG, "rotation: " + rotation[0] + "|" + rotation[1] + "|" + rotation[2]);
+                        rotation[i] = (gyro[i] * Const.GYRO_FAC) + (accMag[i] * (1 - Const.GYRO_FAC));
                     }
                     break;
                 case OPT_FLOW:
-//                    Log.d(TAG, "case OPT_FLOW");
-                    gyroSensor.start();
-                    optFlowSensor.start();
                     optFlow = optFlowSensor.getRotation();
-//                    gyro = gyroSensor.getRotation();
                     for (int i = 0; i < 3; i++) {
                         // Complementary Filter with AccMagSensor and Optical Flow
-//                        rotation[i] = (gyro[i] * GYRO_FAC) + (accMag[i] * ACCMAG_FAC) + (optFlow[i] * OPTFLOW_FAC);
-                        rotation[i] = (accMag[i] * (1-OPTFLOW_FAC)) + (optFlow[i] * (OPTFLOW_FAC));
+                        rotation[i] = (optFlow[i] * Const.OPTFLOW_FAC) + (accMag[i] * (1 - Const.OPTFLOW_FAC));
                     }
                     break;
             }
@@ -116,12 +93,12 @@ public class OrientationService extends LooperThread {
     }
 
     @Override
-    protected void onStart(){ // TODO: start and stop sensors according to flag
-        accMagSensor.start();
+    protected void onStart() {
+        toggleSensors(flag);
     }
 
     @Override
-    protected void onPause(){
+    protected void onPause() {
         accMagSensor.pause();
         gyroSensor.pause();
         optFlowSensor.pause();
@@ -143,9 +120,39 @@ public class OrientationService extends LooperThread {
 
     public void setFlag(Flag flag) {
         this.flag = flag;
+        toggleSensors(flag);
     }
 
-    public ImageProcessor getImageProcessor(){
+    public Flag getFlag(){
+        return this.flag;
+    }
+
+    private void toggleSensors(Flag flag) {
+        switch (flag) {
+            case RAW:
+                accMagSensor.start();
+                gyroSensor.pause();
+                optFlowSensor.pause();
+                break;
+            case LOW_PASS:
+                accMagSensor.start();
+                gyroSensor.pause();
+                optFlowSensor.pause();
+                break;
+            case GYRO:
+                accMagSensor.start();
+                gyroSensor.start();
+                optFlowSensor.pause();
+                break;
+            case OPT_FLOW:
+                accMagSensor.start();
+                gyroSensor.start();
+                optFlowSensor.start();
+                break;
+        }
+    }
+
+    public ImageProcessor getImageProcessor() {
         return (ImageProcessor) optFlowSensor;
     }
 

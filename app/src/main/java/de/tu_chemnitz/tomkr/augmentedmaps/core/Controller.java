@@ -12,13 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
-import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.ApplicationState;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MissingParameterException;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.ApplicationState;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MissingParameterException;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Orientation;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.ElevationServiceProvider;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
@@ -30,21 +29,23 @@ import de.tu_chemnitz.tomkr.augmentedmaps.location.LocationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationListener;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.LogPoint;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.Vec2f;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.TimedVec2f;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Vec2f;
 
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.DIST_THRESHOLD;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MAX_DISTANCE;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_PROCESS_DATA;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_FPS_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_MAPNODES;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_NODE_HEIGHT;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_OWN_HEIGHT;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.TARGET_FRAMETIME;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.DIST_THRESHOLD;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOG_TIME;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MAX_DISTANCE;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_PROCESS_DATA;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_FPS_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_INFO_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_LOC_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_MAPNODES;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_NODE_HEIGHT;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_ORIENTATION_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_OWN_HEIGHT;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_STATE_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.TARGET_FRAMETIME;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.
@@ -82,7 +83,7 @@ public class Controller extends LooperThread implements OrientationListener, Loc
     private boolean logData = false;
     private long logStart;
     private Vec2f initialLog;
-    private ArrayList<LogPoint> dataLog;
+    private ArrayList<TimedVec2f> dataLog;
     private Orientation orientation;
 
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
@@ -101,21 +102,21 @@ public class Controller extends LooperThread implements OrientationListener, Loc
 
     @Override
     protected void loop() {
-        if(logData) {
-            if (logStart + Constants.LOG_TIME < System.currentTimeMillis()) {
+        if (logData) {
+            if (logStart + Const.LOG_TIME < System.currentTimeMillis()) {
                 // save log to file when finished logging
                 logData = false;
                 initialLog = null;
-                Helpers.saveLogToFile(dataLog);
+                String logFile = Helpers.saveLogToFile(dataLog, orientationService.getFlag().name());
+                mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_INFO_VIEW, "Logfile " + logFile + " written."));
             } else {
                 // apply continous data to log
-                Vec2f current = new Vec2f(this.orientation.getX(), this.orientation.getY());
-                if(initialLog == null){
+                TimedVec2f current = new TimedVec2f(System.currentTimeMillis() - logStart, this.orientation.getX(), this.orientation.getY());
+                if (initialLog == null) {
                     initialLog = current;
                 } else {
                     current.substract(initialLog);
-                    long timestamp = System.currentTimeMillis() - logStart;
-                    dataLog.add(new LogPoint(timestamp, current));
+                    dataLog.add(current);
                 }
             }
         }
@@ -236,11 +237,11 @@ public class Controller extends LooperThread implements OrientationListener, Loc
             case MSG_UPDATE_NODE_HEIGHT:
                 if (mapNodes != null) {
                     Location[] locs = new Location[mapNodes.size()];
-                    for (int i = 0; i< mapNodes.size(); i++) {
+                    for (int i = 0; i < mapNodes.size(); i++) {
                         locs[i] = mapNodes.get(i).getLoc();
                     }
                     locs = elevationService.getElevation(locs);
-                    for (int i = 0; i< mapNodes.size(); i++) {
+                    for (int i = 0; i < mapNodes.size(); i++) {
                         Log.d(TAG, "acquired node height " + mapNodes.get(i).getName());
                         mapNodes.get(i).setLoc(locs[i]);
                     }
@@ -290,16 +291,17 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, orientation.toString()));
     }
 
-    public void setFlag(OrientationService.Flag flag){
-        if(this.orientationService != null) {
+    public void setFlag(OrientationService.Flag flag) {
+        if (this.orientationService != null) {
             this.orientationService.setFlag(flag);
         }
     }
 
     public void logToFile() {
         Log.d(TAG, "start Logging");
+        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_INFO_VIEW, "started Logging for " + (LOG_TIME/1000) + "s."));
         logStart = System.currentTimeMillis();
-        if(dataLog == null){
+        if (dataLog == null) {
             dataLog = new ArrayList<>();
         } else {
             dataLog.clear();

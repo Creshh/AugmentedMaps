@@ -106,4 +106,14 @@
         android:layout_alignParentStart="true"
         android:text="FPS"
         android:textColor="@android:color/holo_red_light"/>
+
+    <TextView
+        android:id="@+id/infoView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/fpsView"
+        android:layout_alignBottom="@+id/fpsView"
+        android:layout_alignParentEnd="true"
+        android:text="Info"
+        android:textColor="@android:color/holo_red_light"/>
 </RelativeLayout>

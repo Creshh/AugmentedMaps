@@ -1,6 +1,5 @@
 package test;
 
-import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -11,11 +10,11 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MissingParameterException;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MissingParameterException;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeService;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MapNode;
 import de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.OpenElevationService;
 
 

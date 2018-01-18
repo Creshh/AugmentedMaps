@@ -27,7 +27,7 @@ public class PermissionHandler implements ActivityCompat.OnRequestPermissionsRes
         this.activityWeakReference = new WeakReference<>(activity);
     }
 
-    public void checkPermission() {
+    public void checkPermissions() {
         if (ContextCompat.checkSelfPermission(activityWeakReference.get(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(activityWeakReference.get(), Manifest.permission.CAMERA)) {
 //            showToast("Camerapermission needed");

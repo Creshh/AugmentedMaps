@@ -9,9 +9,6 @@ import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
@@ -24,18 +21,18 @@ import de.tu_chemnitz.tomkr.augmentedmaps.util.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.R.id.preview;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_FPS_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_LOC_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_ORIENTATION_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_STATE_VIEW;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.MSG_UPDATE_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_FPS_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_INFO_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_LOC_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_ORIENTATION_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_STATE_VIEW;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_VIEW;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
- *
  */
 
-public class ARActivity extends Activity implements View.OnClickListener{
+public class ARActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = ARActivity.class.getName();
 
@@ -44,6 +41,7 @@ public class ARActivity extends Activity implements View.OnClickListener{
     private TextView locationView;
     private TextView stateView;
     private TextView fpsView;
+    private TextView infoView;
     private TextureView textureView;
     private ARView arView;
 
@@ -60,8 +58,7 @@ public class ARActivity extends Activity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ar);
         PermissionHandler p = new PermissionHandler(this);
-        p.checkPermission();
-        Helpers.dir = getFilesDir();
+        p.checkPermissions();
         textureView = (TextureView) findViewById(preview);
         arView = (ARView) findViewById(R.id.arview);
         arViewStatic = arView;
@@ -69,17 +66,19 @@ public class ARActivity extends Activity implements View.OnClickListener{
         locationView = (TextView) findViewById(R.id.pos);
         stateView = (TextView) findViewById(R.id.state);
         fpsView = (TextView) findViewById(R.id.fpsView);
+        infoView = (TextView) findViewById(R.id.infoView);
+
         RadioButton toggleLowPass = (RadioButton) findViewById(R.id.toggleLowPass);
-        toggleLowPass.setOnClickListener(this);
         RadioButton toggleOptFlow = (RadioButton) findViewById(R.id.toggleOptFlow);
-        toggleOptFlow.setOnClickListener(this);
         RadioButton toggleRaw = (RadioButton) findViewById(R.id.toggleRaw);
-        toggleRaw.setChecked(true);
-        toggleRaw.setOnClickListener(this);
         RadioButton toggleGyro = (RadioButton) findViewById(R.id.toggleGyro);
+        toggleLowPass.setOnClickListener(this);
+        toggleOptFlow.setOnClickListener(this);
+        toggleRaw.setOnClickListener(this);
         toggleGyro.setOnClickListener(this);
-        Button logBtn = (Button) findViewById(R.id.btnLog);
-        logBtn.setOnClickListener(this);
+        toggleRaw.setChecked(true);
+
+        findViewById(R.id.btnLog).setOnClickListener(this);
 
         camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
 
@@ -87,7 +86,7 @@ public class ARActivity extends Activity implements View.OnClickListener{
             @Override
             public boolean handleMessage(Message message) {
                 if (message.what == MSG_UPDATE_VIEW) {
-                    arView.setMarkerListRef(controller.getMarkerList());
+                    arView.setMarkerList(controller.getMarkerList());
                     arView.invalidate();
                 }
                 if (message.what == MSG_UPDATE_ORIENTATION_VIEW) {
@@ -102,10 +101,13 @@ public class ARActivity extends Activity implements View.OnClickListener{
                 if (message.what == MSG_UPDATE_FPS_VIEW) {
                     fpsView.setText((String) message.obj);
                 }
+                if (message.what == MSG_UPDATE_INFO_VIEW) {
+                    infoView.setText((String) message.obj);
+                }
                 return true;
             }
         };
-        
+
         controller = new Controller(updateViewCallback, this, camera);
     }
 

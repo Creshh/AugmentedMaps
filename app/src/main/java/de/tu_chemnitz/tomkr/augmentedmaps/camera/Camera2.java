@@ -37,7 +37,7 @@ import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
 
 /**
  * Created by Tom Kretzschmar on 18.09.2017.
- *
+ * <p>
  * Only Landscape Mode possible!
  */
 @SuppressWarnings("ConstantConditions")
@@ -256,7 +256,7 @@ public class Camera2 {
                 return;
             }
 
-            mImageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 3);
+            mImageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 10);
             mImageReader.setOnImageAvailableListener(onImageAvailableListener, mBackgroundHandler);
 
             // Find out if we need to swap dimension to get the preview size relative to sensor coordinate.
@@ -309,8 +309,6 @@ public class Camera2 {
             }
 //                mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
             mPreviewSize = CameraHelpers.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, new Size(displaySize.x, displaySize.y));
-
-
 
 
         } catch (CameraAccessException e) {

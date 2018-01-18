@@ -2,29 +2,26 @@ package de.tu_chemnitz.tomkr.augmentedmaps.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import org.opencv.core.Point;
-
 import java.util.List;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.Const;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.DebugPoint;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.OptFlowFeature;
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
- *
  */
 
 public class ARView extends View {
     private static final String TAG = ARView.class.getName();
 
     private List<Marker> markerDrawables;
-    private DebugPoint[] points;
-    private float[] debugVec;
+    private OptFlowFeature[] features;
 
     public ARView(Context context) {
         super(context);
@@ -51,45 +48,36 @@ public class ARView extends View {
         int width = getWidth();
         int height = getHeight();
 
-        canvas.drawCircle(960, 540, 20, Constants.paintStroke);
+        canvas.drawCircle(960, 540, 20, Const.paintStroke);
 
-        if(markerDrawables != null) {
+        if (markerDrawables != null) {
             synchronized (Controller.listLock) {
                 for (Marker md : markerDrawables) {
-//            Log.d(TAG, "Draw Marker " + md);
                     md.setSize(width, height);
                     md.draw(canvas);
                 }
             }
         }
 
-        if (points != null ){
-            for( DebugPoint p : points){
-                if(p.reliable){
-                    canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintFill);
-                    canvas.drawLine((float)p.ox, (float)p.oy, (float)p.x, (float)p.y, Constants.paintFill);
+        if (features != null) {
+            for (OptFlowFeature f : features) {
+                Paint paint;
+                if (f.isReliable()) {
+                    paint = Const.paintFill;
+                } else {
+                    paint = Const.paintFillRed;
                 }
-                else {
-                    canvas.drawCircle((float)p.x, (float)(p.y), 10, Constants.paintFillRed);
-                    canvas.drawLine((float)p.ox, (float)p.oy, (float)p.x, (float)p.y, Constants.paintFillRed);
-                }
+                canvas.drawCircle((float) f.getX(), (float) (f.getY()), 10, paint);
+                canvas.drawLine((float) f.getOx(), (float) f.getOy(), (float) f.getX(), (float) f.getY(), paint);
             }
-        }
-        if(debugVec != null){
-            canvas.drawLine(width/2, height/2, (width/2) + debugVec[0], (height/2) + debugVec[1], Constants.paintStroke);
         }
     }
 
-    public void setMarkerListRef(List<Marker> markerDrawables){
+    public void setMarkerList(List<Marker> markerDrawables) {
         this.markerDrawables = markerDrawables;
     }
 
-    public void setDebugArray(DebugPoint[] points){
-        this.points = points;
-    }
-
-    public void setDebugVec(float[] debugVec) {
-        this.debugVec = debugVec;
-
+    public void setOptFlowFeaturesToDraw(OptFlowFeature[] features) {
+        this.features = features;
     }
 }

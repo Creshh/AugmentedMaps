@@ -1,16 +1,13 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.processing;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Marker;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Orientation;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Marker;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Orientation;
 
 /**
  * Created by Tom Kretzschmar on 31.08.2017.

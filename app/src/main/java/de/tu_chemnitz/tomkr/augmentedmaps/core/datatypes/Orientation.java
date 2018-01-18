@@ -1,4 +1,4 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.core.types;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes;
 
 /**
  * Created by Tom Kretzschmar on 01.09.2017.

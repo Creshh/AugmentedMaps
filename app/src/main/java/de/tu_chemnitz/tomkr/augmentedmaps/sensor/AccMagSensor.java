@@ -6,10 +6,9 @@ import android.hardware.SensorManager;
 
 /**
  * Created by Tom Kretzschmar on 21.12.2017.
- *
  */
 
-public class AccMagSensor implements Sensor, SensorEventListener{
+public class AccMagSensor implements Sensor, SensorEventListener {
     private static final String TAG = AccMagSensor.class.getName();
 
 
@@ -38,7 +37,8 @@ public class AccMagSensor implements Sensor, SensorEventListener{
     }
 
     @Override
-    public void setRotationEstimate(float[] rotation) {}
+    public void setRotationEstimate(float[] rotation) {
+    }
 
     @Override
     public void start() {
@@ -73,5 +73,6 @@ public class AccMagSensor implements Sensor, SensorEventListener{
     }
 
     @Override
-    public void onAccuracyChanged(android.hardware.Sensor sensor, int i) {}
+    public void onAccuracyChanged(android.hardware.Sensor sensor, int i) {
+    }
 }

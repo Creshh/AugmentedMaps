@@ -1,4 +1,4 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.core.types;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes;
 
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -7,9 +7,8 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.Constants;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.Const;
 
 
 /**
@@ -43,12 +42,12 @@ public class Marker extends Drawable {
             int yPx = (int) (y * h);
 
 //            Log.d(TAG, "draw " + key + " " + x + " " + y);
-            canvas.drawRect(xPx - (WIDTH / 2), yPx - (HEIGHT / 2), xPx + (WIDTH / 2), yPx + (HEIGHT / 2), Constants.paintStroke);
-            canvas.drawRect(xPx - (WIDTH / 4), yPx - (HEIGHT / 4), xPx + (WIDTH / 4), yPx + (HEIGHT / 4), Constants.paintFill);
+            canvas.drawRect(xPx - (WIDTH / 2), yPx - (HEIGHT / 2), xPx + (WIDTH / 2), yPx + (HEIGHT / 2), Const.paintStroke);
+            canvas.drawRect(xPx - (WIDTH / 4), yPx - (HEIGHT / 4), xPx + (WIDTH / 4), yPx + (HEIGHT / 4), Const.paintFill);
             if(key != null){
                 canvas.save();
                 canvas.rotate(-90f, xPx + (WIDTH/2), yPx - HEIGHT);
-                canvas.drawText(key, xPx + (WIDTH/2), yPx - HEIGHT, Constants.paintFill);
+                canvas.drawText(key, xPx + (WIDTH/2), yPx - HEIGHT, Const.paintFill);
                 canvas.restore();
             }
         }
@@ -59,8 +58,8 @@ public class Marker extends Drawable {
 
     @Override
     public void setColorFilter(@Nullable ColorFilter colorFilter) {
-        Constants.paintFill.setColorFilter(colorFilter);
-        Constants.paintStroke.setColorFilter(colorFilter);
+        Const.paintFill.setColorFilter(colorFilter);
+        Const.paintStroke.setColorFilter(colorFilter);
     }
 
     @Override

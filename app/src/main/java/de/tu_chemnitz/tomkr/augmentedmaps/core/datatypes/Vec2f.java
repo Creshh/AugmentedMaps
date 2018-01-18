@@ -1,8 +1,7 @@
-package de.tu_chemnitz.tomkr.augmentedmaps.util;
+package de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes;
 
 /**
  * Created by Tom Kretzschmar on 05.10.2017.
- *
  */
 
 public class Vec2f {

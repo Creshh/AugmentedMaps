@@ -22,9 +22,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MapNode;
-import de.tu_chemnitz.tomkr.augmentedmaps.core.types.MissingParameterException;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MapNode;
+import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MissingParameterException;
 
 
 /**

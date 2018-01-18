@@ -5,10 +5,9 @@ import android.graphics.Paint;
 
 /**
  * Created by Tom Kretzschmar on 26.10.2017.
- *
  */
 @SuppressWarnings("WeakerAccess")
-public class Constants {
+public class Const {
 
     public static Paint paintStroke;
     public static Paint paintFill;
@@ -18,7 +17,7 @@ public class Constants {
         paintStroke = new Paint();
         paintStroke.setColor(Color.GREEN);
         paintStroke.setStyle(Paint.Style.STROKE);
-        paintStroke.setStrokeWidth(3);
+        paintStroke.setStrokeWidth(2);
         paintStroke.setAntiAlias(true);
         paintStroke.setAlpha(255);
 
@@ -30,18 +29,16 @@ public class Constants {
         paintFill.setTextAlign(Paint.Align.LEFT);
         paintFill.setTextSize(40);
         paintFill.setAntiAlias(true);
-        paintStroke.setStrokeWidth(2);
 
         paintFillRed = new Paint(paintFill);
         paintFillRed.setColor(Color.RED);
-        paintStroke.setStrokeWidth(2);
     }
 
     /**
      * Maximum count of calculating and refreshing marker positions per second.
      */
     public static final int TICKS_PER_SECOND = 20;
-    public static final int TARGET_FRAMETIME = 1000/TICKS_PER_SECOND;
+    public static final int TARGET_FRAMETIME = 1000 / TICKS_PER_SECOND;
 
     public static final int LOG_TIME = 30 * 1000;
 
@@ -67,11 +64,7 @@ public class Constants {
     public static final int MSG_UPDATE_NODE_HEIGHT = 7;
     public static final int MSG_UPDATE_STATE_VIEW = 8;
     public static final int MSG_UPDATE_FPS_VIEW = 9;
-
-    /**
-     * Factor for lowPass Filter in OrientationService
-     */
-    public static final float LOW_PASS_FAC = 0.20f;
+    public static final int MSG_UPDATE_INFO_VIEW = 10;
 
     /**
      *
@@ -82,6 +75,21 @@ public class Constants {
      *
      */
     public static final float LOCATION_UPDATE_DISTANCE = 10f;
+
+    /**
+     * Factor for lowPass filter in OrientationService
+     */
+    public static final float LOW_PASS_FAC = 0.20f;
+
+    /**
+     *
+     */
+    public static final float GYRO_FAC = 0.99f;
+
+    /**
+     *
+     */
+    public static final float OPTFLOW_FAC = 0.99f;
 
     /**
      *

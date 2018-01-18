@@ -9,13 +9,12 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOCATION_UPDATE_DISTANCE;
-import static de.tu_chemnitz.tomkr.augmentedmaps.core.Constants.LOCATION_UPDATE_INTERVAL;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOCATION_UPDATE_DISTANCE;
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOCATION_UPDATE_INTERVAL;
 
 
 /**
  * Created by Tom Kretzschmar on 01.09.2017.
- *
  */
 
 public class LocationService {
@@ -31,18 +30,18 @@ public class LocationService {
     private Location lastLocation;
     private List<de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener> listeners = new ArrayList<>();
 
-    public void registerListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener){
+    public void registerListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener) {
         this.listeners.add(listener);
     }
 
-    public void unregisterListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener){
+    public void unregisterListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener) {
         this.listeners.remove(listener);
     }
 
-    public void pushLocation(){
+    public void pushLocation() {
         Log.d(TAG, "pushLocation");
-        for(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners){
-            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location((float)lastLocation.getLatitude(), (float)lastLocation.getLongitude(), (int)lastLocation.getAltitude()));
+        for (de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners) {
+            listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location((float) lastLocation.getLatitude(), (float) lastLocation.getLongitude(), (int) lastLocation.getAltitude()));
         }
     }
 
@@ -51,10 +50,7 @@ public class LocationService {
         if (locationManager == null) {
             locationManager = (LocationManager) context.getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         }
-        mLocationListeners = new LocationListener[] {
-                new LocationListener(LocationManager.GPS_PROVIDER),
-                new LocationListener(LocationManager.NETWORK_PROVIDER)
-        };
+        mLocationListeners = new LocationListener[]{new LocationListener(LocationManager.GPS_PROVIDER), new LocationListener(LocationManager.NETWORK_PROVIDER)};
     }
 
     public void start() {
@@ -96,8 +92,7 @@ public class LocationService {
             Log.d(TAG, "LocationListener " + provider + " Location: " + lastLocation);
             try {
                 Log.d(TAG, "LocationListener " + provider + " LastKnownLocation: " + locationManager.getLastKnownLocation(provider));
-                if(locationManager.getLastKnownLocation(provider) != null)
-                    lastLocation = locationManager.getLastKnownLocation(provider);
+                if (locationManager.getLastKnownLocation(provider) != null) lastLocation = locationManager.getLastKnownLocation(provider);
             } catch (SecurityException ex) {
 
             }
@@ -108,8 +103,8 @@ public class LocationService {
         public void onLocationChanged(Location location) {
             Log.d(TAG, "onLocationChanged: " + location);
             lastLocation.set(location);
-            for(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners){
-                listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.types.Location((float)location.getLatitude(), (float)location.getLongitude(), (int)location.getAltitude()));
+            for (de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners) {
+                listener.onLocationChange(new de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location((float) location.getLatitude(), (float) location.getLongitude(), (int) location.getAltitude()));
             }
         }
 
