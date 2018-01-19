@@ -74,9 +74,9 @@ public class LocationService {
     public void stop() {
         Log.d(TAG, "stopGPS");
         if (locationManager != null) {
-            for (int i = 0; i < mLocationListeners.length; i++) {
+            for (LocationListener listener : mLocationListeners) {
                 try {
-                    locationManager.removeUpdates(mLocationListeners[i]);
+                    locationManager.removeUpdates(listener);
                 } catch (Exception ex) {
                     Log.i(TAG, "fail to remove location listners, ignore", ex);
                 }
@@ -94,7 +94,7 @@ public class LocationService {
                 Log.d(TAG, "LocationListener " + provider + " LastKnownLocation: " + locationManager.getLastKnownLocation(provider));
                 if (locationManager.getLastKnownLocation(provider) != null) lastLocation = locationManager.getLastKnownLocation(provider);
             } catch (SecurityException ex) {
-
+                Log.e(TAG, ex.getMessage());
             }
         }
 

@@ -1,5 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes;
 
+import java.util.Locale;
+
 /**
  * Created by Tom Kretzschmar on 01.09.2017.<br>
  * <br>
@@ -78,9 +80,9 @@ public class Orientation {
     @Override
     public String toString() {
         return "Orientation{" +
-                "x=" + String.format("%.2f", x) +
-                ", y=" + String.format("%.2f", y) +
-                ", z=" + String.format("%.2f", z) +
+                "x=" + String.format(Locale.GERMANY,"%.2f", x) +
+                ", y=" + String.format(Locale.GERMANY,"%.2f", y) +
+                ", z=" + String.format(Locale.GERMANY,"%.2f", z) +
                 '}';
     }
 }

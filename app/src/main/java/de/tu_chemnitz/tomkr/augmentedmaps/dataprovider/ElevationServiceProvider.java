@@ -2,8 +2,6 @@ package de.tu_chemnitz.tomkr.augmentedmaps.dataprovider;
 
 import java.util.HashMap;
 
-import static de.tu_chemnitz.tomkr.augmentedmaps.dataprovider.MapNodeServiceProvider.MapPointServiceType.OVERPASS;
-
 /**
  * Created by Tom Kretzschmar on 06.10.2017.
  *

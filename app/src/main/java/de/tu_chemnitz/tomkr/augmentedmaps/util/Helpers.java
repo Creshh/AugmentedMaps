@@ -19,7 +19,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.TimedVec2f;
 
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.CONFIG_FILE_RESOURCE;

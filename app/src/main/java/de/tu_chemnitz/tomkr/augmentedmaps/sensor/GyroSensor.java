@@ -3,7 +3,6 @@ package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
 
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;

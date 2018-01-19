@@ -34,7 +34,7 @@ public class CameraHelpers {
      */
     public static Size chooseOptimalSize(Size[] choices, int textureViewWidth, int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 //        Log.d("SIZES", ">>>>>>>>>>>>>> " + textureViewWidth + " | " +  textureViewHeight + " | " + maxWidth  + " | " + maxHeight  + " | " + aspectRatio);
-        Size targetSize = null;
+        Size targetSize;
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
         // Collect the supported resolutions that are smaller than the preview Surface

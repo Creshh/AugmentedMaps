@@ -26,17 +26,17 @@ public class OpenElevationService implements ElevationService {
     @Override
     public Location[] getElevation(Location[] locs) {
 
-        String query = "locations=";
+        StringBuilder query = new StringBuilder("locations=");
         for (int i = 0; i < locs.length; i++) {
-            if (i != 0) query += "|";
-            query += locs[i].getLat() + "," + locs[i].getLon();
+            if (i != 0) query.append("|");
+            query.append(locs[i].getLat()).append(",").append(locs[i].getLon());
         }
-        Log.d(TAG, "Query:" + query);
+        Log.d(TAG, "Query:" + query.toString());
 
 
         URL url = null;
         try {
-            url = new URL(OPEN_ELEVATION + "?" + query);
+            url = new URL(OPEN_ELEVATION + "?" + query.toString());
             Log.d(TAG, "URL:" + url.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
