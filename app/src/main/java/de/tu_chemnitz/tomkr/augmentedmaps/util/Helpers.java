@@ -22,18 +22,31 @@ import java.util.Properties;
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.TimedVec2f;
 
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.CONFIG_FILE_RESOURCE;
+
 /**
- * Created by Tom Kretzschmar on 15.09.2017.
+ * Created by Tom Kretzschmar on 15.12.2017.<br>
+ * <br>
+ * A class implementing globally available helper functions.
  */
 
 public class Helpers {
+    /**
+     * Tag for logging
+     */
     private static final String TAG = Helpers.class.getName();
 
+    /**
+     * Get named value from given configFile. See {@link de.tu_chemnitz.tomkr.augmentedmaps.core.Const#CONFIG_FILE_RESOURCE}.
+     * @param context Application or Activity context.
+     * @param name Name of the value to read.
+     * @return The value which was read.
+     */
     public static String getConfigValue(Context context, String name) {
         Resources resources = context.getResources();
 
         try {
-            InputStream rawResource = resources.openRawResource(R.raw.config);
+            InputStream rawResource = resources.openRawResource(CONFIG_FILE_RESOURCE);
             Properties properties = new Properties();
             properties.load(rawResource);
             return properties.getProperty(name);
@@ -46,6 +59,11 @@ public class Helpers {
         return null;
     }
 
+    /**
+     * Read OSM tags from config file.
+     * @param context Application or Activity context.
+     * @return A Map of the OSM tags.
+     */
     public static Map<String, List<String>> getTagsFromConfig(Context context) {
         Map<String, List<String>> tags = new HashMap<>();
         String configValue = Helpers.getConfigValue(context, "tags");
@@ -63,6 +81,11 @@ public class Helpers {
         return tags;
     }
 
+    /**
+     * Crate a human readable String representation of a timestamp.
+     * @param timestamp The timestamp to format.
+     * @return The timestamp in the pattern yyyyMMdd_HHmm
+     */
     public static String createTimeStamp(long timestamp) {
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(timestamp);
@@ -71,6 +94,12 @@ public class Helpers {
         return sdf.format(d);
     }
 
+    /**
+     * Save a List of {@link TimedVec2f} to a file.
+     * @param dataLog The List to write.
+     * @param suffix A String suffix to append to the file name.
+     * @return The path to the written file.
+     */
     public static String saveLogToFile(ArrayList<TimedVec2f> dataLog, String suffix) {
         String filename = "sensor_" + createTimeStamp(System.currentTimeMillis()) + "_" + suffix + ".log";
         StringBuilder builder = new StringBuilder();

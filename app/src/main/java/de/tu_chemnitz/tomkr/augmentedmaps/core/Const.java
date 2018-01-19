@@ -48,6 +48,11 @@ public class Const {
     }
 
     /**
+     * Config resource file identifier.
+     */
+    public static final int CONFIG_FILE_RESOURCE = org.opencv.R.raw.config;
+
+    /**
      * Maximum frames/ticks per second. Used for {@link LooperThread} implementations.
      */
     public static final int FPS = 20;

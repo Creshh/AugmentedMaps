@@ -12,21 +12,39 @@ import android.support.v4.content.ContextCompat;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by Tom Kretzschmar on 18.09.2017.
- *
+ * Created by Tom Kretzschmar on 18.09.2017.<br>
+ * <br>
+ * A utility class to get Camera and Location permissions.
  */
 
 public class PermissionHandler implements ActivityCompat.OnRequestPermissionsResultCallback{
 
+    /**
+     * Constant for {@link #onRequestPermissionsResult(int, String[], int[])} Callback.
+     */
     private static final int REQUEST_CAMERA_PERMISSION = 1;
+
+    /**
+     * Constant for {@link #onRequestPermissionsResult(int, String[], int[])} Callback.
+     */
     private static final int REQUEST_LOCATION_PERMISSION = 2;
 
+    /**
+     * Weak reference to the Activity.
+     */
     private WeakReference<Activity> activityWeakReference;
 
+    /**
+     * Full constructor.
+     * @param activity The calling/ main activity of this application.
+     */
     public PermissionHandler(Activity activity){
         this.activityWeakReference = new WeakReference<>(activity);
     }
 
+    /**
+     * Check and request Camera and Location permission.
+     */
     public void checkPermissions() {
         if (ContextCompat.checkSelfPermission(activityWeakReference.get(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(activityWeakReference.get(), Manifest.permission.CAMERA)) {
@@ -43,7 +61,6 @@ public class PermissionHandler implements ActivityCompat.OnRequestPermissionsRes
             }
         }
     }
-
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
