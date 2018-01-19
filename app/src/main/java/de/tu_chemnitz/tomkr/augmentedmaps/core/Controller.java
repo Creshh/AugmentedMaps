@@ -48,44 +48,146 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_VIEW;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.TARGET_FRAMETIME;
 
 /**
- * Created by Tom Kretzschmar on 05.10.2017.
- * <p>
- * Main Application Controller
+ * Created by Tom Kretzschmar on 05.11.2017.<br>
+ * <br>
+ * The main application controller class.<br>
+ * This class holds the current {@link ApplicationState} and orchestrates all functions and services of the whole application.<br>
+ * It subclasses {@link LooperThread} and holds therefore the main application loop which is called continously. Further it maintains and controls the state of background threads using messages defined in {@link Const}.<br>
+ * Also it reacts to system callbacks from the origin activity.<br>
  */
 public class Controller extends LooperThread implements OrientationListener, LocationListener, Handler.Callback {
-
+    /**
+     * Tag for logging
+     */
     private static final String TAG = Controller.class.getName();
+
+    /**
+     * The current state of the application. Used mainly for continue processing after system callbacks.
+     */
     private ApplicationState state;
+
+    /**
+     * Flag used to differ between large and small location updates. On big location updates state will be reset to {@link ApplicationState#LOCATION_ACQUIRED}. See {@link Const#DIST_THRESHOLD} for decision threshold.
+     */
     private boolean smallLocationUpdate;
 
+    /**
+     * Service used for acquiring the location of the user device.
+     */
     private final LocationService locationService;
+
+    /**
+     * Service used for acquiring the orientation of the user device.
+     */
     private final OrientationService orientationService;
+
+    /**
+     * Processor used for calculating all {@link Marker} positions for the augmented reality level.
+     */
     private final DataProcessor dataProcessor;
+
+    /**
+     * Service used for acquiring the altitude of the user device and of all mapnodes.
+     */
     private final ElevationService elevationService;
+
+    /**
+     * Service for acquiring mapnodes around the current user device position.
+     */
     private final MapNodeService mapNodeService;
 
+    /**
+     *
+     */
     private boolean fetching;
 
+    /**
+     * The current user device location.
+     */
     private Location loc;
 
-    private Map<String, List<String>> tags;
-    private List<MapNode> mapNodes;
-    private List<Marker> markerList;
-
-    private HandlerThread dataFetchThread;
-    private Handler dataFetchHandler;
-    private HandlerThread dataProcThread;
-    private Handler dataProcHandler;
-    private Handler mainHandler;
-    private final Camera2 camera;
-
-    public static final Object listLock = new Object();
-    private boolean logData = false;
-    private long logStart;
-    private Vec2f initialLog;
-    private ArrayList<TimedVec2f> dataLog;
+    /**
+     * The current user device orienatation.
+     */
     private Orientation orientation;
 
+    /**
+     * Map of OSM tags for {@link MapNodeService}
+     */
+    private Map<String, List<String>> tags;
+
+    /**
+     * List of all MapNodes which will be processed.
+     */
+    private List<MapNode> mapNodes;
+
+    /**
+     * List of all Markers which are the result of the ongoing processing of MapNodes.
+     */
+    private List<Marker> markerList;
+
+    /**
+     * Thread for fetching data, including {@link MapNodeService} and {@link ElevationService}.
+     */
+    private HandlerThread dataFetchThread;
+
+    /**
+     * Handler, which sends messages to the {@link #dataFetchThread}.
+     */
+    private Handler dataFetchHandler;
+
+    /**
+     * Thread for processing data, including {@link DataProcessor}.
+     */
+    private HandlerThread dataProcThread;
+
+    /**
+     * Handler, which sends messages to the {@link #dataProcThread}.
+     */
+    private Handler dataProcHandler;
+
+    /**
+     * Handler, which sends messages to the main thread. Will call the activityCallback set in {@link #Controller(Handler.Callback, Context, Camera2)}.
+     */
+    private Handler mainHandler;
+
+    /**
+     * Camera2 implementation for setting {@link android.media.ImageReader.OnImageAvailableListener}
+     */
+    private final Camera2 camera;
+
+    /**
+     * Synchronization object for accessing {@link #markerList}
+     */
+    public static final Object listLock = new Object();
+
+    /**
+     * Flag, if set data is logged to file.
+     */
+    private boolean logData = false;
+
+    /**
+     * Timestamp indicating the start of the logging procedure.
+     */
+    private long logStart;
+
+    /**
+     * Initial Log value containing only the relevant x and y values to normalize the logged output.
+     */
+    private Vec2f initialLog;
+
+    /**
+     * List which contains the contiously logged values. Will be written to file after logging is finished.
+     */
+    private ArrayList<TimedVec2f> dataLog;
+
+    /**
+     * Full constructor. There must be only one Controller in the whole Application.<br>
+     * Acquires all services needed and sets the handler to the main thread.
+     * @param activityCallback Callback which handles messages to the main thread respectively the view classes.
+     * @param context The context of the calling activity.
+     * @param camera A Camera2 implementation for setting the {@link android.media.ImageReader.OnImageAvailableListener}
+     */
     public Controller(Handler.Callback activityCallback, Context context, Camera2 camera) {
         super(TARGET_FRAMETIME);
         tags = Helpers.getTagsFromConfig(context);
@@ -100,6 +202,9 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         this.camera = camera;
     }
 
+    /**
+     * Main application loop which involves all of the orchestration. No processing is done in this Thread.
+     */
     @Override
     protected void loop() {
         if (logData) {
@@ -134,11 +239,11 @@ public class Controller extends LooperThread implements OrientationListener, Loc
                     Log.i(TAG, "fetching own height");
                     dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_OWN_HEIGHT));
                     break;
-                case OWN_HEIGHT_ACQUIRED:
+                case OWN_ALTITUDE_ACQUIRED:
                     if (smallLocationUpdate) {
                         smallLocationUpdate = false;
                         state = ApplicationState.DATA_PROCESSING;
-                        Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at OWN_HEIGHT_ACQUIRED");
+                        Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at OWN_ALTITUDE_ACQUIRED");
                         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                     } else {
                         fetching = true;
@@ -151,7 +256,7 @@ public class Controller extends LooperThread implements OrientationListener, Loc
                     Log.i(TAG, "fetching Node Heights");
                     dataFetchHandler.sendMessage(dataFetchHandler.obtainMessage(MSG_UPDATE_NODE_HEIGHT));
                     break;
-                case NODES_HEIGHT_ACQUIRED:
+                case NODES_ALTITUDE_ACQUIRED:
                 case DATA_PROCESSING:
                     dataProcHandler.sendMessage(dataProcHandler.obtainMessage(MSG_PROCESS_DATA));
                     break;
@@ -161,6 +266,9 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_FPS_VIEW, super.getFrametime() + " | " + super.getFPS()));
     }
 
+    /**
+     * Start application main loop and all background threads. Further start all initially used services and register listeners for them.
+     */
     public void startApplication() {
         smallLocationUpdate = false;
 
@@ -183,6 +291,9 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         super.startLooper();
     }
 
+    /**
+     * Pause application main loop, unregister listeners, pause services. Further remove callbacks and stop background threads.
+     */
     public void stopApplication() {
         super.pause();
         orientationService.unregisterListener(this);
@@ -202,25 +313,33 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         }
     }
 
+    /**
+     * Quit Application. Can't be restarted after that. Before calling this make sure to call {@link #stopApplication()}.
+     */
     public void quitApplication() {
         super.quit();
     }
 
 
+    /**
+     * Callback method for {@link #dataFetchThread} and {@link #dataProcThread}. Handles all messages sent in main application loop and does the corresponding processing.
+     * @param message Message object which should be handled.
+     * @return true if message could be handled, false otherwise
+     */
     @Override
     public boolean handleMessage(Message message) {
         switch (message.what) {
             case MSG_UPDATE_OWN_HEIGHT:
                 if (loc != null) {
                     loc = elevationService.getElevation(loc);
-                    Log.d(TAG, "Elevation -> " + loc.getHeight());
+                    Log.d(TAG, "Elevation -> " + loc.getAlt());
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_LOC_VIEW, loc.toString()));
-                    state = ApplicationState.OWN_HEIGHT_ACQUIRED;
+                    state = ApplicationState.OWN_ALTITUDE_ACQUIRED;
                     fetching = false;
                     Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at MSG_UPDATE_OWN_HEIGHT");
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                 }
-                break;
+                return true;
 
             case MSG_UPDATE_MAPNODES:
                 try {
@@ -232,7 +351,7 @@ public class Controller extends LooperThread implements OrientationListener, Loc
                 } catch (MissingParameterException e) {
                     e.printStackTrace();
                 }
-                break;
+                return true;
 
             case MSG_UPDATE_NODE_HEIGHT:
                 if (mapNodes != null) {
@@ -245,12 +364,12 @@ public class Controller extends LooperThread implements OrientationListener, Loc
                         Log.d(TAG, "acquired node height " + mapNodes.get(i).getName());
                         mapNodes.get(i).setLoc(locs[i]);
                     }
-                    state = ApplicationState.NODES_HEIGHT_ACQUIRED;
+                    state = ApplicationState.NODES_ALTITUDE_ACQUIRED;
                     fetching = false;
                     Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at MSG_UPDATE_NODE_HEIGHT");
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                 }
-                break;
+                return true;
 
             case MSG_PROCESS_DATA:
                 if (mapNodes != null && mapNodes.size() > 0) {
@@ -263,15 +382,22 @@ public class Controller extends LooperThread implements OrientationListener, Loc
                     Log.i(TAG, "Controller ApplicationState changed to " + state.name() + " at MSG_PROCESS_DATA");
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
                 }
-                break;
+                return true;
+            default:
+                return false;
         }
-        return true;
     }
 
+    /**
+     * @return List of all processed markers.
+     */
     public List<Marker> getMarkerList() {
         return markerList;
     }
 
+    /**
+     * Callback for {@link LocationService}. Sets current location and notifies mainHandler to update debug views.
+     */
     @Override // TODO: Fix: after onResume, no nodes will be displayed???????
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
@@ -285,18 +411,29 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_STATE_VIEW, state.name()));
     }
 
+
+    /**
+     * Callback for {@link OrientationService}. Sets current orientation and notifies mainHandler to update debug view.
+     */
     @Override
     public void onOrientationChange(Orientation orientation) {
         this.orientation = orientation;
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_ORIENTATION_VIEW, orientation.toString()));
     }
 
-    public void setFlag(OrientationService.Flag flag) {
+    /**
+     * Set the currently activated setting in the {@link OrientationService}.
+     * @param flag OrientationFlag which should be set.
+     */
+    public void setOrientationFlag(OrientationService.Flag flag) {
         if (this.orientationService != null) {
             this.orientationService.setFlag(flag);
         }
     }
 
+    /**
+     * Start logging orientation values. After a defined time {@link Const#LOG_TIME} the results are written to file.
+     */
     public void logToFile() {
         Log.d(TAG, "start Logging");
         mainHandler.sendMessage(mainHandler.obtainMessage(MSG_UPDATE_INFO_VIEW, "started Logging for " + (LOG_TIME/1000) + "s."));

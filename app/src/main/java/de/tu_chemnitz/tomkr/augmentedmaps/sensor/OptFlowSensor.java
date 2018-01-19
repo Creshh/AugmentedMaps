@@ -194,7 +194,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 //            Log.d(TAG, "reliability: " + vec[0] + "<>" + gyroDelta[0]);
             if (Math.abs(vec[0] - gyroDelta[0]) > Const.RELIABILITY_THRESHOLD || Math.abs(vec[1] - gyroDelta[1]) > Const.RELIABILITY_THRESHOLD) {
                 it.remove();
-                optFlowFeaturesToDraw[i].setReliable(false);
+                optFlowFeaturesToDraw[i].setReliable(false);// TODO: use correct index when setting flag (feature array size > motion vec array size)
                 Log.d(TAG, "unreliable vector: " + vec[0] + " - " + gyroDelta[0]);
             } else {
                 optFlowFeaturesToDraw[i].setReliable(true);

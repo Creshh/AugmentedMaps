@@ -16,7 +16,6 @@ import android.widget.TextView;
 import de.tu_chemnitz.tomkr.augmentedmaps.R;
 import de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2;
 import de.tu_chemnitz.tomkr.augmentedmaps.sensor.OrientationService;
-import de.tu_chemnitz.tomkr.augmentedmaps.util.Helpers;
 import de.tu_chemnitz.tomkr.augmentedmaps.util.PermissionHandler;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 
@@ -146,20 +145,20 @@ public class ARActivity extends Activity implements View.OnClickListener {
         switch (view.getId()) {
             case R.id.toggleRaw:
                 Log.d(TAG, "toggle Raw");
-                controller.setFlag(OrientationService.Flag.RAW);
+                controller.setOrientationFlag(OrientationService.Flag.RAW);
                 break;
             case R.id.toggleLowPass:
                 Log.d(TAG, "toggle LowPass");
-                controller.setFlag(OrientationService.Flag.LOW_PASS);
+                controller.setOrientationFlag(OrientationService.Flag.LOW_PASS);
                 break;
             case R.id.toggleGyro:
                 Log.d(TAG, "toggle Gyro");
-                controller.setFlag(OrientationService.Flag.GYRO);
+                controller.setOrientationFlag(OrientationService.Flag.GYRO);
                 break;
 
             case R.id.toggleOptFlow:
                 Log.d(TAG, "toogle OpticalFlow");
-                controller.setFlag(OrientationService.Flag.OPT_FLOW);
+                controller.setOrientationFlag(OrientationService.Flag.OPT_FLOW);
                 break;
             case R.id.btnLog:
                 controller.logToFile();

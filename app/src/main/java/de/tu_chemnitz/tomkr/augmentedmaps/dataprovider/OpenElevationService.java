@@ -68,8 +68,8 @@ public class OpenElevationService implements ElevationService {
                     String name = reader.nextName();
                     String log = name;
                     if (name.equals("elevation")) {
-                        locs[i].setHeight(reader.nextInt());
-                        log += " -> " + locs[i].getHeight();
+                        locs[i].setAlt(reader.nextInt());
+                        log += " -> " + locs[i].getAlt();
                     } else {
                         reader.skipValue();
                         log += " -> skipped";

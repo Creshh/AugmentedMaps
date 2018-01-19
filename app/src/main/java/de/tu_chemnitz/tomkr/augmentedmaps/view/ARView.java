@@ -53,7 +53,7 @@ public class ARView extends View {
         if (markerDrawables != null) {
             synchronized (Controller.listLock) {
                 for (Marker md : markerDrawables) {
-                    md.setSize(width, height);
+                    md.setDisplaySize(width, height);
                     md.draw(canvas);
                 }
             }

@@ -21,7 +21,7 @@ public class DataProcessorA implements DataProcessor {
     public List<Marker> processData(List<MapNode> nodes, Orientation orientation, Location location) {
         List<Marker> markers = new ArrayList<>();
         for (MapNode node : nodes) {
-            markers.add(new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getHeight() + "]"));
+            markers.add(new Marker(getX(node, orientation, location), getY(node, orientation, location), node.getName() + " [" + node.getLoc().getAlt() + "]"));
         }
         return markers;
     }
@@ -55,7 +55,7 @@ public class DataProcessorA implements DataProcessor {
      */
     private float getY(MapNode node, Orientation orientation, Location location){
         float betaV = orientation.getY() > 180 ? 360 - orientation.getY() : - orientation.getY();
-        float h = location.getHeight() - node.getLoc().getHeight();
+        float h = location.getAlt() - node.getLoc().getAlt();
         float d = location.getDistanceCorr(node.getLoc());
         float alphaV = (float) Math.toDegrees(Math.atan2(h,d));
         float diffV = betaV + alphaV;
