@@ -10,13 +10,23 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Orientation;
 
 /**
- * Created by Tom Kretzschmar on 31.08.2017.
- *
+ * Created by Tom Kretzschmar on 31.10.2017.<br>
+ * <br>
+ * A {@link DataProcessor} which maps {@link MapNode} to {@link Marker} objects.
  */
 public class DataProcessorA implements DataProcessor {
-
+    /**
+     * Tag for logging
+     */
     private static final String TAG = DataProcessorA.class.getName();
 
+    /**
+     * Processes the given data to map the points to ar.
+     * @param nodes The MapNodes to map.
+     * @param orientation The current orienation of the device.
+     * @param location The current location of the device.
+     * @return A List of Marker representing the MapNodes in the ar level.
+     */
     @Override
     public List<Marker> processData(List<MapNode> nodes, Orientation orientation, Location location) {
         List<Marker> markers = new ArrayList<>();
@@ -31,7 +41,7 @@ public class DataProcessorA implements DataProcessor {
      * @param node MapNode which position should be calculated
      * @param orientation Current device orientation
      * @param location Current device position
-     * @return horizontal position of marker in pixel
+     * @return horizontal position of marker in the interval [0..1]
      */
     private float getX(MapNode node, Orientation orientation, Location location){
 
@@ -51,7 +61,7 @@ public class DataProcessorA implements DataProcessor {
      * @param node MapNode which position should be calculated
      * @param orientation Current device orientation
      * @param location Current device position
-     * @return vertical position of marker in pixel
+     * @return vertical position of marker in the interval [0..1]
      */
     private float getY(MapNode node, Orientation orientation, Location location){
         float betaV = orientation.getY() > 180 ? 360 - orientation.getY() : - orientation.getY();

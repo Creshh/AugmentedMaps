@@ -13,6 +13,9 @@ import static java.lang.Math.sqrt;
  */
 
 public class GyroSensor implements Sensor, SensorEventListener {
+    /**
+     * Tag for logging
+     */
     private static final String TAG = GyroSensor.class.getName();
 
     private static final float NS2S = 1.0f / 1000000000.0f;

@@ -32,6 +32,9 @@ import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
  */
 
 public class OptFlowSensor implements Sensor, ImageProcessor {
+    /**
+     * Tag for logging
+     */
     private static final String TAG = OptFlowSensor.class.getName();
 
     static {

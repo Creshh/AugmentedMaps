@@ -22,14 +22,16 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.TARGET_FRAMETIME;
  */
 
 public class OrientationService extends LooperThread {
-
+    /**
+     * Tag for logging
+     */
+    private static final String TAG = OrientationService.class.getName();
 
     public enum Flag {RAW, LOW_PASS, GYRO, OPT_FLOW}
 
     private Flag flag;
     private boolean init;
 
-    private static final String TAG = OrientationService.class.getName();
     private List<OrientationListener> listeners;
     private Sensor accMagSensor;
     private Sensor gyroSensor;

@@ -28,30 +28,79 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_STATE_VIE
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.MSG_UPDATE_VIEW;
 
 /**
- * Created by Tom Kretzschmar on 21.09.2017.
+ * Created by Tom Kretzschmar on 21.10.2017.<br>
+ * <br>
+ * The main activity for this augmented reality application. Holds all view objects and delegates system callbacks.<br>
+ * Implements the main thread handler callback to receive view update messages.
  */
-
 public class ARActivity extends Activity implements View.OnClickListener {
-
+    /**
+     * Tag for logging
+     */
     private static final String TAG = ARActivity.class.getName();
 
+    /**
+     * A Camera2 implementation for displaying the camera preview and contolling its state.
+     */
     private Camera2 camera;
+
+    /**
+     * A TextView to display the current device orientation. For testing/debug purpose.
+     */
     private TextView orientationView;
+
+    /**
+     * A TextView to display the current device location. For testing/debug purpose.
+     */
     private TextView locationView;
+
+    /**
+     * A TextView to display the current {@link de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.ApplicationState}. For testing/debug purpose.
+     */
     private TextView stateView;
+
+    /**
+     * A TextView to display the current fps of data processing. For testing/debug purpose.
+     */
     private TextView fpsView;
+
+    /**
+     * A TextView to display other currently available information. For testing/debug purpose.
+     */
     private TextView infoView;
+
+    /**
+     * The target for the camera preview.
+     */
     private TextureView textureView;
+
+    /**
+     * The augmented reality view layer which displays {@link de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Marker}.
+     */
     private ARView arView;
 
+    /**
+     * Static reference to the ar view for debug reasons.
+     */
     private static ARView arViewStatic;
 
+    /**
+     * The instance of the main application controller.
+     */
     private Controller controller;
 
+    /**
+     * Conveniance method for testing/debug reasons.<br>
+     * Used to set the OptFlowFeatures out of {@link de.tu_chemnitz.tomkr.augmentedmaps.sensor.OptFlowSensor}.
+     * @return The {@link ARView} object bound to this actitvity.
+     */
     public static ARView getView() {
         return arViewStatic;
     }
 
+    /**
+     * Inititalize the main Activity. System callback.
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -14,30 +14,58 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOCATION_UPDATE_INTE
 
 
 /**
- * Created by Tom Kretzschmar on 01.09.2017.
+ * Created by Tom Kretzschmar on 01.10.2017.<br>
+ * <br>
+ *
  */
-
 public class LocationService {
-
+    /**
+     * Tag for logging
+     */
     private static final String TAG = LocationService.class.getName();
 
+    /**
+     * The location manager system service to access the different location providers.
+     */
     private LocationManager locationManager;
+
+    /**
+     * An array of location listeners for the different location providers.
+     */
     private LocationListener[] mLocationListeners;
 
-
+    // TODO proper Location handling with usage of both providers and a current best estimate.
     private Location currentBestEstimate;
 
+    /**
+     * Last (known) location of the user device. Will be the one returned to the listeners.
+     */
     private Location lastLocation;
+
+    /**
+     * A List of {@link LocationListener} which are notified if location changes.
+     */
     private List<de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener> listeners = new ArrayList<>();
 
+    /**
+     * Register a {@link LocationListener} to get notified when the location of the user device changes.
+     * @param listener The listener instance to be registered.
+     */
     public void registerListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener) {
         this.listeners.add(listener);
     }
 
+    /**
+     * Remove a {@link LocationListener} from the Service.
+     * @param listener The listener instance to be unregistered.
+     */
     public void unregisterListener(de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener) {
         this.listeners.remove(listener);
     }
 
+    /**
+     * Conveniance method to get the current last known location pushed to all listeners, even if there wasn't a real location update in the past time.
+     */
     public void pushLocation() {
         Log.d(TAG, "pushLocation");
         for (de.tu_chemnitz.tomkr.augmentedmaps.location.LocationListener listener : listeners) {
@@ -45,6 +73,10 @@ public class LocationService {
         }
     }
 
+    /**
+     * Full constructor.
+     * @param context Application or activity context to initialize the service.
+     */
     public LocationService(Context context) {
         Log.d(TAG, "initializeLocationManager");
         if (locationManager == null) {
@@ -53,6 +85,9 @@ public class LocationService {
         mLocationListeners = new LocationListener[]{new LocationListener(LocationManager.GPS_PROVIDER), new LocationListener(LocationManager.NETWORK_PROVIDER)};
     }
 
+    /**
+     * Start service listening for location changes.
+     */
     public void start() {
         Log.d(TAG, "startGPS");
         try {
@@ -71,6 +106,9 @@ public class LocationService {
         }
     }
 
+    /**
+     * Stop service listening for location changes. Should be called when application gets paused or no location information are needed anymore to save battery and computational resources.
+     */
     public void stop() {
         Log.d(TAG, "stopGPS");
         if (locationManager != null) {
@@ -84,10 +122,16 @@ public class LocationService {
         }
     }
 
+    /**
+     * A private inner class implementing a LocationListener for the system location providers.
+     */
     private class LocationListener implements android.location.LocationListener {
 
-
-        public LocationListener(String provider) {
+        /**
+         * Full constructor.
+         * @param provider The provider this listener is targeted to.
+         */
+        private LocationListener(String provider) {
             lastLocation = new Location(provider);
             Log.d(TAG, "LocationListener " + provider + " Location: " + lastLocation);
             try {
@@ -98,7 +142,6 @@ public class LocationService {
             }
         }
 
-        // TODO proper Location handling with usage of both providers
         @Override
         public void onLocationChanged(Location location) {
             Log.d(TAG, "onLocationChanged: " + location);

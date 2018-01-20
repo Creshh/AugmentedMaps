@@ -9,6 +9,9 @@ import android.hardware.SensorManager;
  */
 
 public class AccMagSensor implements Sensor, SensorEventListener {
+    /**
+     * Tag for logging
+     */
     private static final String TAG = AccMagSensor.class.getName();
 
 
