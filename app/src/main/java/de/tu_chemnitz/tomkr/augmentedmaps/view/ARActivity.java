@@ -159,6 +159,9 @@ public class ARActivity extends Activity implements View.OnClickListener {
         controller = new Controller(updateViewCallback, this, camera);
     }
 
+    /**
+     * System callback. Will be delegated to camera and controller instances.
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -168,6 +171,9 @@ public class ARActivity extends Activity implements View.OnClickListener {
         controller.startApplication();
     }
 
+    /**
+     * System callback. Will be delegated to camera and controller instances.
+     */
     @Override
     public void onPause() {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -176,12 +182,18 @@ public class ARActivity extends Activity implements View.OnClickListener {
         super.onPause();
     }
 
+    /**
+     * System callback. Will be delegated to camera and controller instances.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
         controller.quitApplication();
     }
 
+    /**
+     * Helper function used to hide the system bars.
+     */
     private void hideSystemUI() {
         // Set the IMMERSIVE flag. Set the content to appear under the system bars so that the content doesn't resize when the system bars hide and show.
         textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
@@ -189,6 +201,9 @@ public class ARActivity extends Activity implements View.OnClickListener {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 
+    /**
+     * OnClick listener for debug RadioButtons in ARView. Used to change mode of {@link OrientationService}.
+     */
     @Override
     public void onClick(View view) {
         switch (view.getId()) {

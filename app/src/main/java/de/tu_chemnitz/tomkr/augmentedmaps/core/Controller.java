@@ -97,7 +97,7 @@ public class Controller extends LooperThread implements OrientationListener, Loc
     private final MapNodeService mapNodeService;
 
     /**
-     *
+     * Flag set if data is fetched currently
      */
     private boolean fetching;
 

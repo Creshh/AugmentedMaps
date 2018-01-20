@@ -18,27 +18,61 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOW_PASS_FAC;
 import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.TARGET_FRAMETIME;
 
 /**
- * Created by Tom Kretzschmar on 21.12.2017.
+ * Created by Tom Kretzschmar on 21.12.2017.<br>
+ * <br>
+ * Service which provides continous user device location updates using different configurable sensors.<br>
+ * Implements sensor fusion using {@link AccMagSensor}, {@link GyroSensor} and {@link OptFlowSensor}.
  */
-
 public class OrientationService extends LooperThread {
     /**
      * Tag for logging
      */
     private static final String TAG = OrientationService.class.getName();
 
+    /**
+     * Enum type which is used to define the sensors used in the actual sensor fusion.
+     */
     public enum Flag {RAW, LOW_PASS, GYRO, OPT_FLOW}
 
+    /**
+     * Actual {@link Flag} set and used by fusion.
+     */
     private Flag flag;
+
+    /**
+     * Flag set to true before first orientaiton value is acquired.
+     */
     private boolean init;
 
+    /**
+     * A List of {@link OrientationService} which are notified after each orientation update.
+     */
     private List<OrientationListener> listeners;
+
+    /**
+     * {@link AccMagSensor} instance.
+     */
     private Sensor accMagSensor;
+
+    /**
+     * {@link GyroSensor} instance.
+     */
     private Sensor gyroSensor;
+
+    /**
+     * {@link OptFlowSensor} instance.
+     */
     private Sensor optFlowSensor;
 
+    /**
+     * Current device rotation.
+     */
     private float[] rotation;
 
+    /**
+     * Full constructor. Initializes all used sensors and set {@link Flag} RAW.
+     * @param context Application or Activity context
+     */
     public OrientationService(Context context) {
         super(TARGET_FRAMETIME);
         SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -51,6 +85,9 @@ public class OrientationService extends LooperThread {
     }
 
 
+    /**
+     * Main orientation loop which accumulates all different sensor values and fuse the values according to the set flag.
+     */
     @Override
     protected void loop() {
         float[] accMag;
@@ -106,29 +143,53 @@ public class OrientationService extends LooperThread {
         optFlowSensor.pause();
     }
 
+    /**
+     * Call all registered listeners with current device orientation.
+     * @param orientation The current device orientation
+     */
     private void notifyListeners(Orientation orientation) {
         for (OrientationListener listener : listeners) {
             listener.onOrientationChange(orientation);
         }
     }
 
+    /**
+     * Register a {@link OrientationListener} to get continuous orientation updates.
+     * @param listener The listener instance to be registered.
+     */
     public void registerListener(OrientationListener listener) {
         this.listeners.add(listener);
     }
 
+    /**
+     * Remove a {@link OrientationListener} from the service.
+     * @param listener The listener instance to be unregistered.
+     */
     public void unregisterListener(OrientationListener listener) {
         listeners.remove(listener);
     }
 
+    /**
+     * Set the {@link Flag} for sensor fusion.
+     * @param flag The flag value to set.
+     */
     public void setFlag(Flag flag) {
         this.flag = flag;
         toggleSensors(flag);
     }
 
+    /**
+     * Get the current fusion characteristics
+     * @return The current set flag
+     */
     public Flag getFlag(){
         return this.flag;
     }
 
+    /**
+     * Start or pause sensors according to the flag.
+     * @param flag The flag which defines the current fusion characteristic.
+     */
     private void toggleSensors(Flag flag) {
         switch (flag) {
             case RAW:
@@ -154,8 +215,11 @@ public class OrientationService extends LooperThread {
         }
     }
 
+    /**
+     * Get an ImageProcessor instance used in {@link de.tu_chemnitz.tomkr.augmentedmaps.camera.Camera2}
+     * @return the ImageProcessor instance.
+     */
     public ImageProcessor getImageProcessor() {
         return (ImageProcessor) optFlowSensor;
     }
-
 }

@@ -7,7 +7,6 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
  * <br>
  * Interface which can be implemented, when an object has to receive callbacks on user device location changes from {@link LocationService}. Has to be registered at the service.
  */
-
 public interface LocationListener {
 
     /**
