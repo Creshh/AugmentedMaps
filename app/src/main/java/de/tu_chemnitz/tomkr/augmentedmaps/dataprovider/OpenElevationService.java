@@ -14,15 +14,27 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
 
 
 /**
- * Created by Tom Kretzschmar on 06.10.2017.
- *
+ * Created by Tom Kretzschmar on 06.10.2017.<br>
+ * <br>
+ * An {@link ElevationService} which uses the open elevation api to query altitude information for given location objects.<br>
+ * See: https://open-elevation.com/
  */
-
 public class OpenElevationService implements ElevationService {
-
+    /**
+     * Tag for logging
+     */
     private static final String TAG = OpenElevationService.class.getName();
-    public static final String OPEN_ELEVATION = "https://api.open-elevation.com/api/v1/lookup";
 
+    /**
+     * Target url for open elevation api
+     */
+    private static final String OPEN_ELEVATION = "https://api.open-elevation.com/api/v1/lookup";
+
+    /**
+     * Acquires and sets the altitude to the given locations using the open-elevation api.
+     * @param locs The geolocations whithout altitude information.
+     * @return The geolocations given with acquired altitude information.
+     */
     @Override
     public Location[] getElevation(Location[] locs) {
 
@@ -86,6 +98,11 @@ public class OpenElevationService implements ElevationService {
         return locs;
     }
 
+    /**
+     * Acquires and sets the altitude to the given location using the open-elevation api.
+     * @param loc The geolocation whithout altitude information.
+     * @return The geolocation given with acquired altitude information.
+     */
     @Override
     public Location getElevation(Location loc) {
         return getElevation(new Location[]{loc})[0];

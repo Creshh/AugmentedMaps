@@ -29,25 +29,76 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.MissingParameterExcepti
 
 /**
  * Created by Tom Kretzschmar on 21.09.2017.
- *
+ * <br>
+ * An {@link MapNodeService} which uses the overpass api to query mapnodes around the user device.<br>
+ * The acquired information is based on OpenStreetMap data.
+ * See: https://wiki.openstreetmap.org/wiki/Overpass_API
  */
-
 public class OverpassService implements MapNodeService {
+    /**
+     * Tag for logging
+     */
+    private static final String TAG = OverpassService.class.getName();
 
+    /**
+     * Target url for overpass api
+     */
     private static final String OVERPASS_API = "http://www.overpass-api.de/api/interpreter";
 
+    /**
+     * Constant for xml element name
+     */
     private static final String TAG_NAME = "name";
+
+    /**
+     * Constant for xml element elevation
+     */
     private static final String TAG_ELEVATION = "ele";
+
+    /**
+     * Constant for xml element place
+     */
     private static final String TAG_PLACE = "place";
+
+    /**
+     * Constant for xml element natural
+     */
     private static final String TAG_NATURAL = "natural";
 
+    /**
+     * Placeholder key for latitude in query template.
+     */
     private static final String __LAT__ = "__LAT__";
+
+    /**
+     * Placeholder key for longitude in query template.
+     */
     private static final String __LON__ = "__LON__";
+
+    /**
+     * Placeholder key for radius in query template.
+     */
     private static final String __RAD__ = "__RAD__";
+
+    /**
+     * Placeholder key for tag keys in query template.
+     */
     private static final String __KEY__ = "__KEY__";
+
+    /**
+     * Placeholder key for tag values in query template.
+     */
     private static final String __VALUES__ = "__VALUES__";
+
+    /**
+     * Placeholder key for query in script template.
+     */
     private static final String __QUERY__ = "__QUERY__";
 
+
+    /**
+     * Template for an overpass script. Can contain multiple queries at once. Will be filled with queries dynamically.
+     */
     private static final String SCRIPT_TEMPLATE  = "<osm-script>"
                                                 + "  <union into=\"_\">"
                                                 +     __QUERY__
@@ -55,12 +106,23 @@ public class OverpassService implements MapNodeService {
                                                 + "  <print e=\"\" from=\"_\" geometry=\"skeleton\" limit=\"\" mode=\"body\" n=\"\" order=\"id\" s=\"\" w=\"\"/>"
                                                 + "</osm-script>";
 
+    /**
+     * Template for an overpass query. Will be filled with information dynamically.
+     */
     private static final String QUERY_TEMPLATE  = "    <query into=\"_\" type=\"node\">"
                                                 + "      <around into=\"_\" lat=\"" + __LAT__ + "\" lon=\"" + __LON__ + "\" radius=\"" + __RAD__ + "\"/>"
                                                 + "      <has-kv k=\"" + __KEY__ + "\" modv=\"\" regv=\"" + __VALUES__ + "\"/>" // place --> (town)|(village)|(city)
                                                 + "    </query>";
 
 
+    /**
+     * Get a list of {@link MapNode} objects which represent geolocations corresponding to the given OpenStreetMap tags using overpass.
+     * @param loc Current user device location.
+     * @param tags Map of OSM tags, which define the type of the nodes which should be returned.
+     * @param maxDistance Maximum distance to the user device the points should have
+     * @return A list of geolocations corresponding to the given attributes
+     * @throws MissingParameterException An exception if parameters are missing or not suitable for the implementation.
+     */
     @Override
     public List<MapNode> getMapPointsInProximity(Location loc, Map<String, List<String>> tags, int maxDistance) throws MissingParameterException {
         String query;
@@ -90,8 +152,9 @@ public class OverpassService implements MapNodeService {
 
 
     /**
-     * @param query the overpass query string
-     * @return the nodes in the formulated query
+     * Helper function to build a connection and send the query to the target.
+     * @param query The overpass query string
+     * @return The xml document containing the nodes corresponding to the given query.
      */
     private Document getNodesViaOverpass(String query) throws IOException, ParserConfigurationException, SAXException {
         URL osm = new URL(OVERPASS_API);
@@ -111,9 +174,9 @@ public class OverpassService implements MapNodeService {
     }
 
     /**
-     *
-     * @param xmlDocument the xml document retrieved from the Overpass API
-     * @return a list of openstreetmap nodes extracted from xml
+     * Helper function to parse the xml document retrieved from the overpass query.
+     * @param xmlDocument The xml document retrieved from the Overpass API
+     * @return A list of MapNodes extracted from the retrieved xml document
      */
     @SuppressWarnings("nls")
     private List<MapNode> getNodes(Document xmlDocument) {
