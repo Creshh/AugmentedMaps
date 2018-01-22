@@ -6,8 +6,9 @@ import android.hardware.SensorManager;
 
 /**
  * Created by Tom Kretzschmar on 21.12.2017.
+ * <br>
+ * A Sensor implementation which uses the Accelerometer and Magnetometer sensors to get current orientation readings.
  */
-
 public class AccMagSensor implements Sensor, SensorEventListener {
     /**
      * Tag for logging
@@ -15,19 +16,51 @@ public class AccMagSensor implements Sensor, SensorEventListener {
     private static final String TAG = AccMagSensor.class.getName();
 
 
+    /**
+     * Array for raw accelerometer values
+     */
     private float[] accelerometerReading = new float[3];
+
+    /**
+     * Array for raw magnetometer values
+     */
     private float[] magnetometerReading = new float[3];
 
+    /**
+     * The rotation matrix, according to accelerometer and magnetometer readings
+     */
     private float[] rotationMatrix = new float[9];
+
+    /**
+     * The current orientation values in radians
+     */
     private float[] orientationAngles = new float[3];
 
-    private android.hardware.Sensor acc;
-    private android.hardware.Sensor mag;
-
-    private final SensorManager sensorManager;
-
+    /**
+     * The current normalized orientation values in degrees
+     */
     private float[] rotation;
 
+    /**
+     * The accelerometer sensor instance
+     */
+    private android.hardware.Sensor acc;
+
+    /**
+     * The magnetometer sensor instance
+     */
+    private android.hardware.Sensor mag;
+
+    /**
+     * The system sensormanager instance
+     */
+    private final SensorManager sensorManager;
+
+
+    /**
+     * Full constructor.
+     * @param sensorManager The sensorManager instance used to initialize the sensor.
+     */
     public AccMagSensor(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
         acc = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER);
@@ -55,6 +88,9 @@ public class AccMagSensor implements Sensor, SensorEventListener {
         sensorManager.unregisterListener(this);
     }
 
+    /**
+     * Calculate and update current rotation from sensor readings
+     */
     private void updateRotation() {
         SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading);
         float[] remappedMatrix = new float[9];
@@ -68,6 +104,9 @@ public class AccMagSensor implements Sensor, SensorEventListener {
         rotation[2] = (float) (Math.toDegrees(orientationAngles[2]) + 360) % 360;
     }
 
+    /**
+     * System sensor callback for retrieving accelerometer and magnetometer readings.
+     */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == android.hardware.Sensor.TYPE_ACCELEROMETER) accelerometerReading = sensorEvent.values;

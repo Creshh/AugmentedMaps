@@ -28,7 +28,11 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.OptFlowFeature;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
 
 /**
- * Created by Tom Kretzschmar on 21.12.2017.
+ * Created by Tom Kretzschmar on 21.12.2017.<br>
+ * <br>
+ * A Sensor implementation which doesn't use an internal system sensor but uses camera images and OpenCV image analysis to get current rotation readings.<br>
+ * Rotations are integrated to get the absolute orientation values resulting from an initial rotation estimate.<br>
+ * The Rotation is gained through extracted motion vectors which are checked for reliability against gyroscope readings.
  */
 
 public class OptFlowSensor implements Sensor, ImageProcessor {
@@ -46,24 +50,77 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         }
     }
 
+    /**
+     * The size of the downscaled image to process
+     */
     private Size targetSize;
 
+    /**
+     * The gyroscope sensor instance for reliablity check
+     */
     private Sensor gyroSensor;
+
+    /**
+     * The current gyro rotation
+     */
     private float[] gyroRotation;
+
+    /**
+     * The delta between the current and the last gyroscope reading
+     */
     private float[] gyroDelta;
+
+    /**
+     * Actual resulting rotation/orientation of the device
+     */
     private float[] rotation;
 
+    /**
+     * Extracted feature points with positions from the last update
+     */
     private Point[] prevPts;
+
+    /**
+     * Extracted feature points with positions from the current update
+     */
     private Point[] currPts;
+
+    /**
+     * Input image width
+     */
     private int width;
+
+    /**
+     * Input image height
+     */
     private int height;
+
+    /**
+     * The image from the last update
+     */
     private Mat oldImage;
+
+    /**
+     * The image from the current update
+     */
     private Mat currentImage;
+
+    /**
+     * Flag to reset the feature points
+     */
     private boolean reset;
+
+    /**
+     * Flag to pause the update loop
+     */
     private boolean pause;
 
     private OptFlowFeature[] optFlowFeaturesToDraw;
 
+    /**
+     * Full constructor.
+     * @param gyroSensor GyroSensor used for reliability check
+     */
     public OptFlowSensor(Sensor gyroSensor) {
         this.gyroSensor = gyroSensor;
     }
@@ -90,7 +147,10 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         reset = true;
     }
 
-
+    /**
+     * Callback function from ImageReader. Called when new image is available for processing.
+     * @param imageReader The imageReader instance providing the new image.
+     */
     @Override
     public void onImageAvailable(ImageReader imageReader) {
         Image image = imageReader.acquireLatestImage();
@@ -150,6 +210,9 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     }
 
     // Todo: test with fixed raster feature points
+    /**
+     * Use OpenCV Improc.goodFeaturesToTrack to acquire initial feature points which can be tracked afterwards.
+     */
     private void initFeaturePoints() {
         Log.d(TAG, "initFeaturePoints");
         MatOfPoint initial = new MatOfPoint();
@@ -159,6 +222,9 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         currPts = featurePoints.toArray();
     }
 
+    /**
+     * Use OpenCV Video.calcOpticalFlowPyrLK to track given feature points.
+     */
     private void updateFeaturePoints() {
 //            Log.d(TAG, "updateFeaturePoints");
         MatOfByte status = new MatOfByte();
@@ -173,6 +239,10 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         }
     }
 
+    /**
+     * Calculate motion vectors from previous and current feature point positions.
+     * @return Motion vectors with relative values in the interval [0..1]
+     */
     private List<float[]> getMotionVecs() {
         List<float[]> vecs = new ArrayList<>();
         for (int i = 0; i < currPts.length; i++) {
@@ -189,6 +259,10 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         return vecs;
     }
 
+    /**
+     * Check if motion vectors are reliable using the current gyroscope sensor readings. Removes unreliable vectors.
+     * @param vecs The motion vectors to check.
+     */
     private void reliabilityComp(List<float[]> vecs) {
         int i = 0;
         for (Iterator<float[]> it = vecs.iterator(); it.hasNext(); ) {
@@ -209,7 +283,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     /**
      * Aggregate all motion vectors using a simple density function implementation.
      *
-     * @return Resulting motion vector
+     * @return Resulting aggregated motion vector
      */
     private float[] aggregateMotionVecs(List<float[]> vecs) {
         float[] result = new float[]{0, 0};

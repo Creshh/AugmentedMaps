@@ -16,7 +16,8 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOCATION_UPDATE_INTE
 /**
  * Created by Tom Kretzschmar on 01.10.2017.<br>
  * <br>
- *
+ * Service which provides user device location changes.<br>
+ * Uses Network and GPS providers.
  */
 public class LocationService {
     /**

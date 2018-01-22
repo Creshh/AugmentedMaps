@@ -3,7 +3,7 @@ package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 /**
  * Created by Tom Kretzschmar on 21.12.2017.<br>
  * <br>
- * An Interface for sensor services which provide orientational information about the user device.
+ * An Interface for sensor services which provide orientation information about the user device.
  */
 public interface Sensor {
 

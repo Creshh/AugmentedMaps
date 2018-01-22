@@ -20,7 +20,7 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.TARGET_FRAMETIME;
 /**
  * Created by Tom Kretzschmar on 21.12.2017.<br>
  * <br>
- * Service which provides continous user device location updates using different configurable sensors.<br>
+ * Service which provides continous user device orientation updates using different configurable sensors.<br>
  * Implements sensor fusion using {@link AccMagSensor}, {@link GyroSensor} and {@link OptFlowSensor}.
  */
 public class OrientationService extends LooperThread {

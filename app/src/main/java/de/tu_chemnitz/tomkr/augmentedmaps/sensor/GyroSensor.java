@@ -9,7 +9,10 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
 /**
- * Created by Tom Kretzschmar on 21.12.2017.
+ * Created by Tom Kretzschmar on 21.12.2017.<br>
+ * <br>
+ * A Sensor implementation which uses the Gyroscope sensor to get current rotation readings.<br>
+ * Rotation is integrated to get the absolute orientation values resulting from an initial rotation estimate.
  */
 
 public class GyroSensor implements Sensor, SensorEventListener {
@@ -18,14 +21,45 @@ public class GyroSensor implements Sensor, SensorEventListener {
      */
     private static final String TAG = GyroSensor.class.getName();
 
+    /**
+     * Constant defining nanoseconds per second
+     */
     private static final float NS2S = 1.0f / 1000000000.0f;
+
+    /**
+     * Threshold constant which defines the lower bound of rotation values
+     */
     private static final float EPSILON = 0.000000001f;
+
+    /**
+     * Array holding the current rotation as quaternion
+     */
     private final float[] deltaRotationVector = new float[4];
+
+    /**
+     * The gyroscope sensor instance
+     */
     private final android.hardware.Sensor gyro;
+
+    /**
+     * The system sensormanager instance
+     */
     private final SensorManager sensorManager;
+
+    /**
+     * Last update timestamp to integrate the results
+     */
     private float timestamp;
+
+    /**
+     * Actual resulting rotation/orientation of the device
+     */
     private float[] rotation;
 
+    /**
+     * Full constructor.
+     * @param sensorManager The sensorManager instance used to initialize the sensor.
+     */
     public GyroSensor(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
         gyro = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE);
@@ -52,6 +86,9 @@ public class GyroSensor implements Sensor, SensorEventListener {
         timestamp = 0;
     }
 
+    /**
+     * System sensor callback for retrieving gyroscope readings. Values will be integrated and the current rotation will be updated.
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         // This time step's delta rotation to be multiplied by the current rotation
