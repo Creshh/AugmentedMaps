@@ -36,34 +36,88 @@ import static android.hardware.camera2.CameraCharacteristics.LENS_FACING;
 
 
 /**
- * Created by Tom Kretzschmar on 18.09.2017.
- * <p>
+ * Created by Tom Kretzschmar on 18.10.2017.<br>
+ * <br>
+ * A Camera2 implementation. Used for displaying a preview and sending images for processing using an image reader.<br>
  * Only Landscape Mode possible!
  */
 @SuppressWarnings("ConstantConditions")
 public class Camera2 {
+    /**
+     * Tag for logging
+     */
     private static final String TAG = Camera2.class.getName();
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
+    /**
+     * Constant for targeted preview width
+     */
     private static final int MAX_PREVIEW_WIDTH = 1920;
+
+    /**
+     * Constant for targeted preview height
+     */
     private static final int MAX_PREVIEW_HEIGHT = 1080;
+
+    /**
+     * FOV readings from camera instance
+     */
     public static float[] fov;
 
+    /**
+     * The id of the camera device used
+     */
     private String cameraId;
+
+    /**
+     * The current capture session
+     */
     private CameraCaptureSession mCaptureSession;
 
+    /**
+     * The camera device instance
+     */
     private CameraDevice mCameraDevice;
 
+    /**
+     * The acutal preview image size
+     */
     private Size mPreviewSize;
+
+    /**
+     * A background thread which handles the camera results
+     */
     private HandlerThread mBackgroundThread;
 
+    /**
+     * A message handler for the background thread
+     */
     private Handler mBackgroundHandler;
+
+    /**
+     * The Imagereader instance used for acquiring images for processing
+     */
     private ImageReader mImageReader;
+
+    /**
+     * The request builder used for the preview
+     */
     private CaptureRequest.Builder mPreviewRequestBuilder;
+
+    /**
+     * The preview request
+     */
     private CaptureRequest mPreviewRequest;
+
+    /**
+     * A Semaphore used for synchronizing the camera open and close sequences
+     */
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
 
+    /**
+     * A TextureView on which the preview will be displayed.
+     */
     private TextureView previewTarget;
 
     static {
@@ -73,9 +127,19 @@ public class Camera2 {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    /**
+     * The discplay of the user device, used for calculating sizes and fov
+     */
     private Display display;
 
+    /**
+     * The system camera manager instance
+     */
     private CameraManager manager;
+
+    /**
+     * A Listener instance which handles new images gained with imagereader
+     */
     private ImageReader.OnImageAvailableListener onImageAvailableListener;
 
     /**
@@ -89,6 +153,13 @@ public class Camera2 {
         this(previewTarget, context, display, CameraMetadata.LENS_FACING_BACK);
     }
 
+    /**
+     * Private Camera2 Constructor using the given lensFacing for acquiring the camera.
+     *
+     * @param previewTarget TextureView where the camera preview will be shown.
+     * @param context       The Activity Context, from where this is called.
+     * @param display       The Display of the device on which the preview will be shown.
+     */
     private Camera2(TextureView previewTarget, Context context, Display display, final int lensFacing) {
         this.previewTarget = previewTarget;
         this.display = display;
@@ -108,11 +179,18 @@ public class Camera2 {
         calculateFOV();
     }
 
+    /**
+     * Register the listener for he imageReader
+     * @param onImageAvailableListener The listener which gets notified on new available images
+     */
     public void registerImageAvailableListener(ImageReader.OnImageAvailableListener onImageAvailableListener) {
         this.onImageAvailableListener = onImageAvailableListener;
     }
 
 
+    /**
+     * Start the preview and acquisition of images
+     */
     public void startService() {
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
@@ -121,6 +199,9 @@ public class Camera2 {
         setupCamera();
     }
 
+    /**
+     * Stops the preview and acquisition of images
+     */
     public void stopService() {
         try {
             mCameraOpenCloseLock.acquire();
@@ -155,6 +236,9 @@ public class Camera2 {
         }
     }
 
+    /**
+     * Configure and open the camera depending on state of preview target
+     */
     private void setupCamera() {
         // When the screen is turned off and turned back on, the SurfaceTexture is already
         // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
@@ -168,6 +252,11 @@ public class Camera2 {
         }
     }
 
+    /**
+     * Configure and open the camera device.
+     * @param width the targeted width of the output
+     * @param height the targeted height of the output
+     */
     private void openCamera(int width, int height) {
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
@@ -406,6 +495,9 @@ public class Camera2 {
         previewTarget.setTransform(matrix);
     }
 
+    /**
+     * Calculates the field of view in degree of the currently used camera device
+     */
     public void calculateFOV() {
         CameraCharacteristics characteristics;
         try {
