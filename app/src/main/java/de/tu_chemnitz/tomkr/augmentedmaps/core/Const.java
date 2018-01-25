@@ -3,6 +3,8 @@ package de.tu_chemnitz.tomkr.augmentedmaps.core;
 import android.graphics.Color;
 import android.graphics.Paint;
 
+import de.tu_chemnitz.tomkr.augmentedmaps.R;
+
 /**
  * Created by Tom Kretzschmar on 26.10.2017.
  *
@@ -50,7 +52,7 @@ public class Const {
     /**
      * Config resource file identifier.
      */
-    public static final int CONFIG_FILE_RESOURCE = org.opencv.R.raw.config;
+    public static final int CONFIG_FILE_RESOURCE = R.raw.config;
 
     /**
      * Maximum frames/ticks per second. Used for {@link LooperThread} implementations.
