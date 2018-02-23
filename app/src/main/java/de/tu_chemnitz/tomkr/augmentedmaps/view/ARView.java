@@ -13,6 +13,8 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Marker;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.OptFlowFeature;
 
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.debug;
+
 /**
  * Created by Tom Kretzschmar on 21.10.2017.<br>
  * <br>
@@ -81,7 +83,7 @@ public class ARView extends View {
             }
         }
 
-        if (features != null) {
+        if (debug && features != null) {
             for (OptFlowFeature f : features) {
                 Paint paint;
                 if (f.isReliable()) {

@@ -178,4 +178,9 @@ public class Const {
      * Threshold for aggregation density function in {@link de.tu_chemnitz.tomkr.augmentedmaps.sensor.OptFlowSensor}.
      */
     public static final float AGGREGATION_THRESHOLD = 0.04f;
+
+    /**
+     * Flag for showing debug information
+     */
+    public static final boolean debug = true;
 }

@@ -27,6 +27,8 @@ import de.tu_chemnitz.tomkr.augmentedmaps.camera.ImageProcessor;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.OptFlowFeature;
 import de.tu_chemnitz.tomkr.augmentedmaps.view.ARActivity;
 
+import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.debug;
+
 /**
  * Created by Tom Kretzschmar on 21.12.2017.<br>
  * <br>
@@ -233,9 +235,11 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 
         Video.calcOpticalFlowPyrLK(oldImage, currentImage, new MatOfPoint2f(prevPts), newPoints, status, err);
         currPts = newPoints.toArray();
-        optFlowFeaturesToDraw = new OptFlowFeature[currPts.length];
-        for (int i = 0; i < optFlowFeaturesToDraw.length; i++) {
-            optFlowFeaturesToDraw[i] = new OptFlowFeature(currPts[i].x * Const.IMAGE_SCALING_FACTOR, currPts[i].y * Const.IMAGE_SCALING_FACTOR, prevPts[i].x * Const.IMAGE_SCALING_FACTOR, prevPts[i].y * Const.IMAGE_SCALING_FACTOR);
+        if(debug) {
+            optFlowFeaturesToDraw = new OptFlowFeature[currPts.length];
+            for (int i = 0; i < optFlowFeaturesToDraw.length; i++) {
+                optFlowFeaturesToDraw[i] = new OptFlowFeature(currPts[i].x * Const.IMAGE_SCALING_FACTOR, currPts[i].y * Const.IMAGE_SCALING_FACTOR, prevPts[i].x * Const.IMAGE_SCALING_FACTOR, prevPts[i].y * Const.IMAGE_SCALING_FACTOR);
+            }
         }
     }
 
@@ -271,9 +275,11 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 //            Log.d(TAG, "reliability: " + vec[0] + "<>" + gyroDelta[0]);
             if (Math.abs(vec[0] - gyroDelta[0]) > Const.RELIABILITY_THRESHOLD || Math.abs(vec[1] - gyroDelta[1]) > Const.RELIABILITY_THRESHOLD) {
                 it.remove();
-                optFlowFeaturesToDraw[i].setReliable(false);// TODO: use correct index when setting flag (feature array size > motion vec array size)
+                if(debug) {
+                    optFlowFeaturesToDraw[i].setReliable(false);// TODO: use correct index when setting flag (feature array size > motion vec array size)
+                }
                 Log.d(TAG, "unreliable vector: " + vec[0] + " - " + gyroDelta[0]);
-            } else {
+            } else if(debug){
                 optFlowFeaturesToDraw[i].setReliable(true);
             }
             i++;
