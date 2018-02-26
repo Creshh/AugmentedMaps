@@ -36,7 +36,7 @@ public class ARView extends View {
     /**
      * List of tracked features to be displayed.
      */
-    private OptFlowFeature[] features;
+    private List<OptFlowFeature> features;
 
     /**
      * Standard view constructor. Only call to super().<br>
@@ -109,7 +109,7 @@ public class ARView extends View {
      * Set the list of features which should be displayed.
      * @param features The features to display.
      */
-    public void setOptFlowFeaturesToDraw(OptFlowFeature[] features) {
+    public void setOptFlowFeaturesToDraw(List<OptFlowFeature> features) {
         this.features = features;
     }
 }

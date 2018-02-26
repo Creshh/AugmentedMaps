@@ -117,7 +117,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
      */
     private boolean pause;
 
-    private OptFlowFeature[] optFlowFeaturesToDraw;
+    private List<OptFlowFeature> optFlowFeaturesToDraw;
 
     /**
      * Full constructor.
@@ -125,6 +125,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
      */
     public OptFlowSensor(Sensor gyroSensor) {
         this.gyroSensor = gyroSensor;
+        optFlowFeaturesToDraw = new ArrayList<>();
     }
 
     @Override
@@ -211,7 +212,6 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
         if (ARActivity.getView() != null) ARActivity.getView().setOptFlowFeaturesToDraw(optFlowFeaturesToDraw);
     }
 
-    // Todo: test with fixed raster feature points
     /**
      * Use OpenCV Improc.goodFeaturesToTrack to acquire initial feature points which can be tracked afterwards.
      */
@@ -235,12 +235,6 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 
         Video.calcOpticalFlowPyrLK(oldImage, currentImage, new MatOfPoint2f(prevPts), newPoints, status, err);
         currPts = newPoints.toArray();
-        if(debug) {
-            optFlowFeaturesToDraw = new OptFlowFeature[currPts.length];
-            for (int i = 0; i < optFlowFeaturesToDraw.length; i++) {
-                optFlowFeaturesToDraw[i] = new OptFlowFeature(currPts[i].x * Const.IMAGE_SCALING_FACTOR, currPts[i].y * Const.IMAGE_SCALING_FACTOR, prevPts[i].x * Const.IMAGE_SCALING_FACTOR, prevPts[i].y * Const.IMAGE_SCALING_FACTOR);
-            }
-        }
     }
 
     /**
@@ -249,11 +243,17 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
      */
     private List<float[]> getMotionVecs() {
         List<float[]> vecs = new ArrayList<>();
+        if(debug) {
+            optFlowFeaturesToDraw.clear();
+        }
         for (int i = 0; i < currPts.length; i++) {
             Point c = currPts[i];
             Point p = prevPts[i];
             if (c.x < targetSize.width && c.y < targetSize.height && c.x > 0 && c.y > 0) {
                 vecs.add(new float[]{(float) (p.x - c.x), (float) (p.y - c.y)});
+                if(debug) {
+                    optFlowFeaturesToDraw.add(new OptFlowFeature(currPts[i].x * Const.IMAGE_SCALING_FACTOR, currPts[i].y * Const.IMAGE_SCALING_FACTOR, prevPts[i].x * Const.IMAGE_SCALING_FACTOR, prevPts[i].y * Const.IMAGE_SCALING_FACTOR));
+                }
             }
         }
         for (float[] v : vecs) {
@@ -276,11 +276,11 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
             if (Math.abs(vec[0] - gyroDelta[0]) > Const.RELIABILITY_THRESHOLD || Math.abs(vec[1] - gyroDelta[1]) > Const.RELIABILITY_THRESHOLD) {
                 it.remove();
                 if(debug) {
-                    optFlowFeaturesToDraw[i].setReliable(false);// TODO: use correct index when setting flag (feature array size > motion vec array size)
+                    optFlowFeaturesToDraw.get(i).setReliable(false);
                 }
                 Log.d(TAG, "unreliable vector: " + vec[0] + " - " + gyroDelta[0]);
             } else if(debug){
-                optFlowFeaturesToDraw[i].setReliable(true);
+                optFlowFeaturesToDraw.get(i).setReliable(true);
             }
             i++;
         }

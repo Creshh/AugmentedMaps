@@ -398,7 +398,7 @@ public class Controller extends LooperThread implements OrientationListener, Loc
     /**
      * Callback for {@link LocationService}. Sets current location and notifies mainHandler to update debug views.
      */
-    @Override // TODO: Fix: after onResume, no nodes will be displayed???????
+    @Override
     public void onLocationChange(Location loc) {
         if (this.loc != null && this.loc.getDistanceCorr(loc) < DIST_THRESHOLD) {
             smallLocationUpdate = true;

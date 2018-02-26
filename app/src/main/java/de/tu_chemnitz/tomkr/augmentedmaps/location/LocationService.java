@@ -18,6 +18,8 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.LOCATION_UPDATE_INTE
  * <br>
  * Service which provides user device location changes.<br>
  * Uses Network and GPS providers.
+ *
+ * Service can be improved further, using proper location handling with usage of both providers and a current best estimate.
  */
 public class LocationService {
     /**
@@ -34,9 +36,6 @@ public class LocationService {
      * An array of location listeners for the different location providers.
      */
     private LocationListener[] mLocationListeners;
-
-    // TODO proper Location handling with usage of both providers and a current best estimate.
-    private Location currentBestEstimate;
 
     /**
      * Last (known) location of the user device. Will be the one returned to the listeners.
