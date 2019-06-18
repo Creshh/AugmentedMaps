@@ -125,7 +125,6 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
      */
     public OptFlowSensor(Sensor gyroSensor) {
         this.gyroSensor = gyroSensor;
-        optFlowFeaturesToDraw = new ArrayList<>();
     }
 
     @Override
@@ -140,6 +139,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
 
     @Override
     public void start() {
+        optFlowFeaturesToDraw = new ArrayList<>();
         pause = false;
     }
 
@@ -243,7 +243,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
      */
     private List<float[]> getMotionVecs() {
         List<float[]> vecs = new ArrayList<>();
-        if(debug) {
+        if(debug && !optFlowFeaturesToDraw.isEmpty()) {
             optFlowFeaturesToDraw.clear();
         }
         for (int i = 0; i < currPts.length; i++) {

@@ -132,11 +132,14 @@ public class LocationService {
          * @param provider The provider this listener is targeted to.
          */
         private LocationListener(String provider) {
-            lastLocation = new Location(provider);
             Log.d(TAG, "LocationListener " + provider + " Location: " + lastLocation);
             try {
                 Log.d(TAG, "LocationListener " + provider + " LastKnownLocation: " + locationManager.getLastKnownLocation(provider));
-                if (locationManager.getLastKnownLocation(provider) != null) lastLocation = locationManager.getLastKnownLocation(provider);
+                if (locationManager.getLastKnownLocation(provider) != null && locationManager.getLastKnownLocation(provider).hasAccuracy()) {
+                    lastLocation = locationManager.getLastKnownLocation(provider);
+                } else if (lastLocation == null){
+                    lastLocation = new Location(provider);
+                }
             } catch (SecurityException ex) {
                 Log.e(TAG, ex.getMessage());
             }

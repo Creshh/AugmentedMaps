@@ -182,5 +182,5 @@ public class Const {
     /**
      * Flag for showing debug information
      */
-    public static final boolean debug = true;
+    public static final boolean debug = false;
 }

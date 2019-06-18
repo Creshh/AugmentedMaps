@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.util.Iterator;
 import java.util.List;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Const;
@@ -84,7 +85,9 @@ public class ARView extends View {
         }
 
         if (debug && features != null) {
-            for (OptFlowFeature f : features) {
+
+            for (Iterator<OptFlowFeature> it = features.iterator(); it.hasNext();) {
+                OptFlowFeature f = it.next();
                 Paint paint;
                 if (f.isReliable()) {
                     paint = Const.paintFill;
