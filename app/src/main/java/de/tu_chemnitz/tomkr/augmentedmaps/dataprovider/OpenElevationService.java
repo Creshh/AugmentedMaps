@@ -66,6 +66,7 @@ public class OpenElevationService implements ElevationService {
             response = connection.getInputStream();
         } catch (IOException e) {
             e.printStackTrace();
+            return locs;
         }
         try {
             JsonReader reader = new JsonReader(new InputStreamReader(response, "utf-8"));

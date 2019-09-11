@@ -158,7 +158,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     public void onImageAvailable(ImageReader imageReader) {
         Image image = imageReader.acquireLatestImage();
         byte[] bytes = null;
-        if(!pause) {
+        if(!pause && image != null) {
             width = image.getWidth();
             height = image.getHeight();
             ByteBuffer buffer = image.getPlanes()[0].getBuffer(); // get luminance plane from YUV_420_888 image; only greyscale needed for calculations
@@ -167,9 +167,12 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
                 buffer.get(bytes);
             }
         }
-        image.close();
 
-        if (rotation != null && !pause) {
+        if (image != null) {
+            image.close();
+        }
+
+        if (rotation != null && !pause && bytes != null) {
             currentImage = new Mat();
             Mat color = new Mat(height, width, CvType.CV_8UC1);
             color.put(0, 0, bytes);
