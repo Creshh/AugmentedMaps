@@ -1,13 +1,14 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Const;
 import de.tu_chemnitz.tomkr.augmentedmaps.core.Controller;
@@ -24,95 +25,106 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.debug;
  */
 
 public class ARView extends View {
-    /**
-     * Tag for logging
-     */
-    private static final String TAG = ARView.class.getName();
+	/**
+	 * Tag for logging
+	 */
+	private static final String TAG = ARView.class.getName();
 
-    /**
-     * List of markers representing MapNodes in ar, which are displayed.
-     */
-    private List<Marker> markerDrawables;
+	/**
+	 * List of markers representing MapNodes in ar, which are displayed.
+	 */
+	private List<Marker> markerDrawables;
 
-    /**
-     * List of tracked features to be displayed.
-     */
-    private List<OptFlowFeature> features;
+	/**
+	 * List of tracked features to be displayed.
+	 */
+	private List<OptFlowFeature> features;
 
-    /**
-     * Standard view constructor. Only call to super().<br>
-     * See {@link View}
-     */
-    public ARView(Context context) {
-        super(context);
-    }
+	/**
+	 * Standard view constructor. Only call to super().<br>
+	 * See {@link View}
+	 */
+	public ARView(Context context) {
+		super(context);
+	}
 
-    /**
-     * Standard view constructor. Only call to super().<br>
-     * See {@link View}
-     */
-    public ARView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+	/**
+	 * Standard view constructor. Only call to super().<br>
+	 * See {@link View}
+	 */
+	public ARView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+	}
 
-    /**
-     * Standard view constructor. Only call to super().<br>
-     * See {@link View}
-     */
-    public ARView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
+	/**
+	 * Standard view constructor. Only call to super().<br>
+	 * See {@link View}
+	 */
+	public ARView(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+	}
 
-    /**
-     * Draw Marker and OptFlowFeatures to given canvas.
-     * @param canvas The canvas to draw to.
-     */
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        int width = getWidth();
-        int height = getHeight();
+	/**
+	 * Draw Marker and OptFlowFeatures to given canvas.
+	 *
+	 * @param canvas The canvas to draw to.
+	 */
+    AtomicReference<Paint> paint = new AtomicReference<>();;
 
-        canvas.drawCircle(960, 540, 20, Const.paintStroke);
+	@SuppressLint("NewApi")
+	@Override
+	protected void onDraw(Canvas canvas) {
+		super.onDraw(canvas);
+		int width = getWidth();
+		int height = getHeight();
 
-        if (markerDrawables != null) {
-            synchronized (Controller.listLock) {
-                for (Marker md : markerDrawables) {
-                    md.setDisplaySize(width, height);
-                    md.draw(canvas);
-                }
-            }
-        }
+		canvas.drawCircle(960, 540, 20, Const.paintStroke);
 
-        if (debug && features != null) {
+		if (markerDrawables != null) {
+			synchronized (Controller.listLock) {
+				for (Marker md : markerDrawables) {
+					md.setDisplaySize(width, height);
+					md.draw(canvas);
+				}
+			}
+		}
 
-            for (Iterator<OptFlowFeature> it = features.iterator(); it.hasNext();) {
-                OptFlowFeature f = it.next();
-                Paint paint;
-                if (f.isReliable()) {
-                    paint = Const.paintFill;
-                } else {
-                    paint = Const.paintFillRed;
-                }
-                canvas.drawCircle((float) f.getX(), (float) (f.getY()), 10, paint);
-                canvas.drawLine((float) f.getOx(), (float) f.getOy(), (float) f.getX(), (float) f.getY(), paint);
-            }
-        }
-    }
+		if (debug && features != null) {
+			// use try or lambda
+			//          try {
+			//for (OptFlowFeature f : features) {
+			features.forEach(f -> {
+//				Paint paint = new Paint();
+				if (f.isReliable()) {
+					paint.set(Const.paintFill);
+				} else {
+					paint.set(Const.paintFillRed);
+				}
+				canvas.drawCircle((float) f.getX(), (float) (f.getY()), 10, paint.get());
+				canvas.drawLine((float) f.getOx(), (float) f.getOy(), (float) f.getX(), (float) f.getY(), paint.get());
+			});
 
-    /**
-     * Set the list of markers which should be displayed.
-     * @param markerDrawables The markers to display.
-     */
-    public void setMarkerList(List<Marker> markerDrawables) {
-        this.markerDrawables = markerDrawables;
-    }
+//            } catch (ConcurrentModificationException ignored) {
+			//e.printStackTrace();
+//            }
+		}
+	}
 
-    /**
-     * Set the list of features which should be displayed.
-     * @param features The features to display.
-     */
-    public void setOptFlowFeaturesToDraw(List<OptFlowFeature> features) {
-        this.features = features;
-    }
+	/**
+	 * Set the list of markers which should be displayed.
+	 *
+	 * @param markerDrawables The markers to display.
+	 */
+	public void setMarkerList(List<Marker> markerDrawables) {
+		this.markerDrawables = markerDrawables;
+	}
+
+	/**
+	 * Set the list of features which should be displayed.
+	 *
+	 * @param features The features to display.
+	 */
+	public void setOptFlowFeaturesToDraw(List<OptFlowFeature> features) {
+		this.features = features;
+	}
 }

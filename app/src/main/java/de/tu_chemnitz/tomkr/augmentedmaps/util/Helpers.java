@@ -72,7 +72,7 @@ public class Helpers {
             Log.d(TAG, "set: " + set);
             String key = set.split(":")[0];
             String[] values = set.split(":")[1].split(",");
-            tags.put(key, new ArrayList<String>());
+            tags.put(key, new ArrayList<>());
             for (String value : values) {
                 tags.get(key).add(value);
             }

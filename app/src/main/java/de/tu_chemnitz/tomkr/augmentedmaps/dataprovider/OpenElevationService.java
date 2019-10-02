@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
 
@@ -69,7 +70,7 @@ public class OpenElevationService implements ElevationService {
             return locs;
         }
         try {
-            JsonReader reader = new JsonReader(new InputStreamReader(response, "utf-8"));
+            JsonReader reader = new JsonReader(new InputStreamReader(response, StandardCharsets.UTF_8));
             reader.beginObject();
             reader.skipValue();
             reader.beginArray();

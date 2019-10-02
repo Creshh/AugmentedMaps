@@ -193,10 +193,6 @@ public class OrientationService extends LooperThread {
     private void toggleSensors(Flag flag) {
         switch (flag) {
             case RAW:
-                accMagSensor.start();
-                gyroSensor.pause();
-                optFlowSensor.pause();
-                break;
             case LOW_PASS:
                 accMagSensor.start();
                 gyroSensor.pause();
