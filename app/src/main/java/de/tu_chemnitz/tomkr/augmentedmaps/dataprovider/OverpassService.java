@@ -42,8 +42,9 @@ public class OverpassService implements MapNodeService {
 
     /**
      * Target url for overpass api
+     * PP Changed 02102019
      */
-    private static final String OVERPASS_API = "http://www.overpass-api.de/api/interpreter";
+    private static final String OVERPASS_API = "https://z.overpass-api.de/api/interpreter";
 
     /**
      * Constant for xml element name
