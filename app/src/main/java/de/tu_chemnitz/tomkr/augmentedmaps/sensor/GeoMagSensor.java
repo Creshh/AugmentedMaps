@@ -3,7 +3,11 @@ package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.hardware.TriggerEvent;
+import android.hardware.TriggerEventListener;
 import android.util.Log;
+
+import java.util.Arrays;
 
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
@@ -16,11 +20,11 @@ import static java.lang.Math.sqrt;
  * Rotation is integrated to get the absolute orientation values resulting from an initial rotation estimate.
  */
 
-public class GyroSensor implements iSensor, SensorEventListener {
+public class GeoMagSensor implements iSensor, SensorEventListener {
 	/**
 	 * Tag for logging
 	 */
-	private static final String TAG = GyroSensor.class.getName();
+	private static final String TAG = GeoMagSensor.class.getName();
 
 	/**
 	 * Constant defining nanoseconds per second
@@ -46,6 +50,7 @@ public class GyroSensor implements iSensor, SensorEventListener {
 	 * The system sensormanager instance
 	 */
 	private final SensorManager sensorManager;
+	private final TriggerEventListener triggerEventListener;
 
 	/**
 	 * Last update timestamp to integrate the results
@@ -62,10 +67,9 @@ public class GyroSensor implements iSensor, SensorEventListener {
 	 *
 	 * @param sensorManager The sensorManager instance used to initialize the sensor.
 	 */
-	public GyroSensor(SensorManager sensorManager) {
-		android.hardware.Sensor gyro1;
+	public GeoMagSensor(SensorManager sensorManager) {
 		this.sensorManager = sensorManager;
-		gyro1 = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE);
+		gyro = sensorManager.getDefaultSensor(17);
 //      2019-10-02 18:18:12.620 32057-32057/de.tu_chemnitz.tomkr.augmentedmaps I/System.out: {Sensor name="ACCELEROMETER", vendor="MTK", version=1, type=1, maxRange=39.2266, resolution=0.0012, power=0.001, minDelay=10000}
 //      2019-10-02 18:18:12.621 32057-32057/de.tu_chemnitz.tomkr.augmentedmaps I/System.out: {Sensor name="MAGNETOMETER", vendor="MTK", version=1, type=2, maxRange=4912.0, resolution=0.15, power=0.001, minDelay=20000}
 //      2019-10-02 18:18:12.622 32057-32057/de.tu_chemnitz.tomkr.augmentedmaps I/System.out: {Sensor name="ORIENTATION", vendor="MTK", version=1, type=3, maxRange=360.0, resolution=0.00390625, power=0.001, minDelay=20000}
@@ -79,12 +83,24 @@ public class GyroSensor implements iSensor, SensorEventListener {
 //      you may implement the rotation vector, linear acceleration, and gravity sensors without using the gyroscope.
 //		so use Geomagnetic rotation vector Low power sensor
 // 		Accelerometer, Magnetometer, MUST NOT USE Gyroscope
-		if (gyro1 == null) {
+		if (gyro != null) {
 			Log.e(TAG, "NO GYROSCOPE SENSOR !");
-			gyro1 = sensorManager.getDefaultSensor(17);
-			Log.e(TAG, "USING SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR (17) !");
+			Log.e(TAG, "USING SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR (Type 17) !");
+//			E/SensorManager: Trigger Sensors should use the requestTriggerSensor.
+			Log.e(TAG, "REPORTING MODE: " + gyro.getReportingMode());
+//REPORTING_MODE_CONTINUOUS			0
+//REPORTING_MODE_ON_CHANGE			1
+//REPORTING_MODE_ONE_SHOT			2
+//REPORTING_MODE_SPECIAL_TRIGGER	3
 		}
-		gyro = gyro1;
+		triggerEventListener = new TriggerEventListener() {
+			@Override
+			public void onTrigger(TriggerEvent event) {
+
+				float initialGeo = event.values[0];
+				Log.e(TAG, "initial geo: " + Arrays.toString(event.values));
+			}
+		};
 	}
 
 	@Override
@@ -99,12 +115,14 @@ public class GyroSensor implements iSensor, SensorEventListener {
 
 	@Override
 	public void start() {
-		sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
+		boolean triggered = sensorManager.requestTriggerSensor(triggerEventListener, gyro);
+//		sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
 	}
 
 	@Override
 	public void pause() {
-		sensorManager.unregisterListener(this);
+		sensorManager.cancelTriggerSensor(triggerEventListener, gyro);
+//		sensorManager.unregisterListener(this);
 		timestamp = 0;
 	}
 
@@ -116,6 +134,14 @@ public class GyroSensor implements iSensor, SensorEventListener {
 		// This time step's delta rotation to be multiplied by the current rotation
 		// after computing it from the gyro sample data.
 		if (timestamp != 0) {
+//sensors_event_t.data[0] = rot_axis.x*sin(theta/2)
+//sensors_event_t.data[1] = rot_axis.y*sin(theta/2)
+//sensors_event_t.data[2] = rot_axis.z*sin(theta/2)
+//sensors_event_t.data[3] = cos(theta/2)
+//sensors_event_t.data[4] = estimated_accuracy (in radians)
+//The heading error must be less than estimated_accuracy 95% of the time.
+// This sensor must use a gyroscope as the main orientation change input.
+
 			final float dT = (event.timestamp - timestamp) * NS2S;
 			// Axis of the rotation sample, not normalized yet.
 			float axisX = event.values[0];

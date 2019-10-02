@@ -3,18 +3,18 @@ package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 /**
  * Created by Tom Kretzschmar on 21.12.2017.
  * <br>
  * A Sensor implementation which uses the Accelerometer and Magnetometer sensors to get current orientation readings.
  */
-public class AccMagSensor implements Sensor, SensorEventListener {
+public class AccMagSensor implements iSensor, SensorEventListener {
     /**
      * Tag for logging
      */
     private static final String TAG = AccMagSensor.class.getName();
-
 
     /**
      * Array for raw accelerometer values
@@ -65,6 +65,9 @@ public class AccMagSensor implements Sensor, SensorEventListener {
         this.sensorManager = sensorManager;
         acc = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER);
         mag = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD);
+
+        if(acc == null) Log.e(TAG, "NO ACCELEROMETER SENSOR !");
+        if(mag == null) Log.e(TAG, "NO MAGNETIC FIELD SENSOR !");
     }
 
     @Override
