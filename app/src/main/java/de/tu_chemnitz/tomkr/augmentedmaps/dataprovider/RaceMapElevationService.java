@@ -18,8 +18,8 @@ import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
 /**
  * Created by Tom Kretzschmar on 06.10.2017.<br>
  * <br>
- * An {@link ElevationService} which uses the open elevation api to query altitude information for given location objects.<br>
- * See: https://open-elevation.com/
+ * An {@link ElevationService} which uses the racemap elevation api to query altitude information for given location objects.<br>
+ * See: https://github.com/racemap/elevation-service
  */
 @SuppressLint("NewApi")
 public class RaceMapElevationService implements ElevationService {
@@ -41,7 +41,7 @@ public class RaceMapElevationService implements ElevationService {
     @Override
     public Location[] getElevation(Location[] locs) {
 
-        // ?lat=42.7136654&lng=2.8493104
+        // ?lat=42.7lng=2.8
         StringBuilder query = new StringBuilder("lat=");
         for (int i = 0; i < locs.length; i++) {
             if (i != 0) query.append("|");

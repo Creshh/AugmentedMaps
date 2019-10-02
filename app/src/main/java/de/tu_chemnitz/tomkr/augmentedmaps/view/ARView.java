@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -69,7 +70,8 @@ public class ARView extends View {
 	 *
 	 * @param canvas The canvas to draw to.
 	 */
-    AtomicReference<Paint> paint = new AtomicReference<>();;
+	AtomicReference<Paint> paint = new AtomicReference<>();
+	;
 
 	@SuppressLint("NewApi")
 	@Override
@@ -90,23 +92,19 @@ public class ARView extends View {
 		}
 
 		if (debug && features != null) {
-			// use try or lambda
-			//          try {
-			//for (OptFlowFeature f : features) {
-			features.forEach(f -> {
-//				Paint paint = new Paint();
-				if (f.isReliable()) {
-					paint.set(Const.paintFill);
-				} else {
-					paint.set(Const.paintFillRed);
-				}
-				canvas.drawCircle((float) f.getX(), (float) (f.getY()), 10, paint.get());
-				canvas.drawLine((float) f.getOx(), (float) f.getOy(), (float) f.getX(), (float) f.getY(), paint.get());
-			});
+			try {
+				features.forEach(f -> {
+					if (f.isReliable()) {
+						paint.set(Const.paintFill);
+					} else {
+						paint.set(Const.paintFillRed);
+					}
+					canvas.drawCircle((float) f.getX(), (float) (f.getY()), 10, paint.get());
+					canvas.drawLine((float) f.getOx(), (float) f.getOy(), (float) f.getX(), (float) f.getY(), paint.get());
+				});
+			} catch (ConcurrentModificationException | NullPointerException ignored) {
 
-//            } catch (ConcurrentModificationException ignored) {
-			//e.printStackTrace();
-//            }
+			}
 		}
 	}
 
