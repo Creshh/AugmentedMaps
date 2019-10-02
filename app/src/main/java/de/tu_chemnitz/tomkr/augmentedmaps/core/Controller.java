@@ -194,7 +194,9 @@ public class Controller extends LooperThread implements OrientationListener, Loc
         mainHandler = new Handler(Looper.getMainLooper(), activityCallback);
         mapNodeService = MapNodeServiceProvider.getMapPointService(MapNodeServiceProvider.MapPointServiceType.OVERPASS);
         dataProcessor = DataProcessorProvider.getDataProcessor(DataProcessorProvider.DataProcessorType.A);
-        elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
+        //elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.OPEN_ELEVATION);
+        elevationService = ElevationServiceProvider.getElevationService(ElevationServiceProvider.ElevationServiceType.RACEMAP);
+
         locationService = new LocationService(context);
         orientationService = new OrientationService(context);
         orientationService.registerListener(this);
