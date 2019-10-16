@@ -113,7 +113,7 @@ public class Tester {
         loc[3] = new Location(50.821428f, 12.945283f);
 
         OpenElevationService elevationService = new OpenElevationService();
-        int[] elevations = elevationService.getElevation(loc);
+        Location[] elevations = elevationService.getElevation(loc);
 
         for(int i = 0; i<= loc.length; i++){
             System.out.println(loc[i] + " -> " + elevations[i]);

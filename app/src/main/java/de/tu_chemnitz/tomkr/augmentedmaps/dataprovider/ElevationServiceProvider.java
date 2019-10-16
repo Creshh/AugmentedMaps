@@ -13,7 +13,7 @@ public class ElevationServiceProvider {
     /**
      * Enum type to adress the different service implementations.
      */
-    public enum ElevationServiceType {OPEN_ELEVATION}
+    public enum ElevationServiceType {OPEN_ELEVATION,RACEMAP}
 
     /**
      * Map of currently available service instances.
@@ -33,6 +33,8 @@ public class ElevationServiceProvider {
         if(!registry.containsKey(type)){
             switch(type){
                 case OPEN_ELEVATION: registry.put(type, new OpenElevationService());
+                    break;
+                case RACEMAP: registry.put(type, new RaceMapElevationService());
                     break;
             }
         }

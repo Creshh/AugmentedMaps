@@ -1,8 +1,10 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.dataprovider;
 
+import android.annotation.SuppressLint;
 import android.util.JsonReader;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,23 +15,23 @@ import java.nio.charset.StandardCharsets;
 
 import de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes.Location;
 
-
 /**
  * Created by Tom Kretzschmar on 06.10.2017.<br>
  * <br>
- * An {@link ElevationService} which uses the open elevation api to query altitude information for given location objects.<br>
- * See: https://open-elevation.com/
+ * An {@link ElevationService} which uses the racemap elevation api to query altitude information for given location objects.<br>
+ * See: https://github.com/racemap/elevation-service
  */
-public class OpenElevationService implements ElevationService {
+@SuppressLint("NewApi")
+public class RaceMapElevationService implements ElevationService {
     /**
      * Tag for logging
      */
-    private static final String TAG = OpenElevationService.class.getName();
+    private static final String TAG = RaceMapElevationService.class.getName();
 
     /**
      * Target url for open elevation api
      */
-    private static final String OPEN_ELEVATION = "https://api.open-elevation.com/api/v1/lookup";
+    private static final String RACEMAP_COM_API = "https://elevation.racemap.com/api";
 
     /**
      * Acquires and sets the altitude to the given locations using the open-elevation api.
@@ -39,18 +41,18 @@ public class OpenElevationService implements ElevationService {
     @Override
     public Location[] getElevation(Location[] locs) {
 
-        StringBuilder query = new StringBuilder("locations=");
+        // ?lat=42.7lng=2.8
+        StringBuilder query = new StringBuilder("lat=");
         for (int i = 0; i < locs.length; i++) {
             if (i != 0) query.append("|");
-            query.append(locs[i].getLat()).append(",").append(locs[i].getLon());
+            query.append(locs[i].getLat()).append("&lng=").append(locs[i].getLon());
         }
-        Log.d(TAG, "Query:" + query.toString());
-
+        Log.w(TAG, "Query:" + query.toString());
 
         URL url = null;
         try {
-            url = new URL(OPEN_ELEVATION + "?" + query.toString());
-            Log.d(TAG, "URL:" + url.toString());
+            url = new URL(RACEMAP_COM_API + "?" + query.toString());
+            Log.w(TAG, "URL:" + url.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
             Log.e(TAG, e.getMessage());
@@ -69,34 +71,13 @@ public class OpenElevationService implements ElevationService {
             e.printStackTrace();
             return locs;
         }
-        try {
-            JsonReader reader = new JsonReader(new InputStreamReader(response, StandardCharsets.UTF_8));
-            reader.beginObject();
-            reader.skipValue();
-            reader.beginArray();
-            int i = 0;
-            while (reader.hasNext()) {
-                reader.beginObject();
-                Log.d(TAG, "---------------------------------");
-                while (reader.hasNext()) {
-                    String name = reader.nextName();
-                    String log = name;
-                    if (name.equals("elevation")) {
-                        locs[i].setAlt(reader.nextInt());
-                        log += " -> " + locs[i].getAlt();
-                    } else {
-                        reader.skipValue();
-                        log += " -> skipped";
-                    }
-                    Log.d(TAG, log);
-                }
-                reader.endObject();
-                i++;
-                Log.d(TAG, "---------------------------------");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            String elevation = new BufferedReader(new InputStreamReader(response, StandardCharsets.UTF_8)).
+                              lines().reduce(String::concat).get();
+            Log.w(TAG, "---------------------------------");
+            locs[0].setAlt(Double.valueOf(elevation).intValue());
+            Log.w(TAG, " -> " + locs[0].getAlt());
+            Log.w(TAG, "---------------------------------");
+
         return locs;
     }
 

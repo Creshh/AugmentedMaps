@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
@@ -130,30 +130,27 @@ public class ARActivity extends Activity implements View.OnClickListener {
 
         camera = new Camera2(textureView, this, getWindowManager().getDefaultDisplay());
 
-        Handler.Callback updateViewCallback = new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message message) {
-                if (message.what == MSG_UPDATE_VIEW) {
-                    arView.setMarkerList(controller.getMarkerList());
-                    arView.invalidate();
-                }
-                if (message.what == MSG_UPDATE_ORIENTATION_VIEW) {
-                    orientationView.setText((String) message.obj);
-                }
-                if (message.what == MSG_UPDATE_LOC_VIEW) {
-                    locationView.setText((String) message.obj);
-                }
-                if (message.what == MSG_UPDATE_STATE_VIEW) {
-                    stateView.setText((String) message.obj);
-                }
-                if (message.what == MSG_UPDATE_FPS_VIEW) {
-                    fpsView.setText((String) message.obj);
-                }
-                if (message.what == MSG_UPDATE_INFO_VIEW) {
-                    infoView.setText((String) message.obj);
-                }
-                return true;
+        Handler.Callback updateViewCallback = message -> {
+            if (message.what == MSG_UPDATE_VIEW) {
+                arView.setMarkerList(controller.getMarkerList());
+                arView.invalidate();
             }
+            if (message.what == MSG_UPDATE_ORIENTATION_VIEW) {
+                orientationView.setText((String) message.obj);
+            }
+            if (message.what == MSG_UPDATE_LOC_VIEW) {
+                locationView.setText((String) message.obj);
+            }
+            if (message.what == MSG_UPDATE_STATE_VIEW) {
+                stateView.setText((String) message.obj);
+            }
+            if (message.what == MSG_UPDATE_FPS_VIEW) {
+                fpsView.setText((String) message.obj);
+            }
+            if (message.what == MSG_UPDATE_INFO_VIEW) {
+                infoView.setText((String) message.obj);
+            }
+            return true;
         };
 
         controller = new Controller(updateViewCallback, this, camera);
@@ -196,7 +193,10 @@ public class ARActivity extends Activity implements View.OnClickListener {
      */
     private void hideSystemUI() {
         // Set the IMMERSIVE flag. Set the content to appear under the system bars so that the content doesn't resize when the system bars hide and show.
-        textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+        textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
                 | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
                 | View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
@@ -219,7 +219,6 @@ public class ARActivity extends Activity implements View.OnClickListener {
                 Log.d(TAG, "toggle Gyro");
                 controller.setOrientationFlag(OrientationService.Flag.GYRO);
                 break;
-
             case R.id.toggleOptFlow:
                 Log.d(TAG, "toogle OpticalFlow");
                 controller.setOrientationFlag(OrientationService.Flag.OPT_FLOW);

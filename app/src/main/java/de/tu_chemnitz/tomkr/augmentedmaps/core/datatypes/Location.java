@@ -1,5 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.core.datatypes;
 
+import androidx.annotation.NonNull;
+
 /**
  * Created by Tom Kretzschmar on 01.11.2017.<br>
  * <br>
@@ -167,6 +169,7 @@ public class Location {
      * @return A String representation of the Location in the format Location{lat=0, lon=0, alt=0}
      */
     @Override
+    @NonNull
     public String toString() {
         return "Location{" + "lat=" + lat + ", lon=" + lon + ", alt=" + alt + '}';
     }

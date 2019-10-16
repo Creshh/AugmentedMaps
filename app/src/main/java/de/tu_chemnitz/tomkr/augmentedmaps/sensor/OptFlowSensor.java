@@ -37,18 +37,20 @@ import static de.tu_chemnitz.tomkr.augmentedmaps.core.Const.debug;
  * The Rotation is gained through extracted motion vectors which are checked for reliability against gyroscope readings.
  */
 
-public class OptFlowSensor implements Sensor, ImageProcessor {
+public class OptFlowSensor implements iSensor, ImageProcessor {
     /**
      * Tag for logging
      */
     private static final String TAG = OptFlowSensor.class.getName();
 
+
     static {
         if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "OpenCV not loaded");
-            System.exit(1);
+            Log.i(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+//            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mLoaderCallback);
         } else {
-            Log.d(TAG, "OpenCV loaded");
+            Log.i(TAG, "OpenCV library found inside package. Using it!");
+//            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
     }
 
@@ -60,7 +62,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     /**
      * The gyroscope sensor instance for reliablity check
      */
-    private Sensor gyroSensor;
+    private iSensor gyroSensor;
 
     /**
      * The current gyro rotation
@@ -123,8 +125,10 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
      * Full constructor.
      * @param gyroSensor GyroSensor used for reliability check
      */
-    public OptFlowSensor(Sensor gyroSensor) {
+    public OptFlowSensor(iSensor gyroSensor) {
         this.gyroSensor = gyroSensor;
+
+        if(this.gyroSensor == null) Log.e(TAG, "NO GYRO SENSOR !");
     }
 
     @Override
@@ -158,7 +162,7 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
     public void onImageAvailable(ImageReader imageReader) {
         Image image = imageReader.acquireLatestImage();
         byte[] bytes = null;
-        if(!pause) {
+        if(!pause && image != null) {
             width = image.getWidth();
             height = image.getHeight();
             ByteBuffer buffer = image.getPlanes()[0].getBuffer(); // get luminance plane from YUV_420_888 image; only greyscale needed for calculations
@@ -167,9 +171,12 @@ public class OptFlowSensor implements Sensor, ImageProcessor {
                 buffer.get(bytes);
             }
         }
-        image.close();
 
-        if (rotation != null && !pause) {
+        if (image != null) {
+            image.close();
+        }
+
+        if (rotation != null && !pause && bytes != null) {
             currentImage = new Mat();
             Mat color = new Mat(height, width, CvType.CV_8UC1);
             color.put(0, 0, bytes);

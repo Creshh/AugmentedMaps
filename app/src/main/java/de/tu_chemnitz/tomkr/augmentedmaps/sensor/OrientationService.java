@@ -1,6 +1,7 @@
 package de.tu_chemnitz.tomkr.augmentedmaps.sensor;
 
 import android.content.Context;
+import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.util.Log;
 
@@ -52,17 +53,22 @@ public class OrientationService extends LooperThread {
     /**
      * {@link AccMagSensor} instance.
      */
-    private Sensor accMagSensor;
+    private iSensor accMagSensor;
 
     /**
      * {@link GyroSensor} instance.
      */
-    private Sensor gyroSensor;
+    private iSensor gyroSensor;
+
+    /**
+     * {@link GeoMagSensor} instance.
+     */
+    private iSensor geoMagSensor;
 
     /**
      * {@link OptFlowSensor} instance.
      */
-    private Sensor optFlowSensor;
+    private iSensor optFlowSensor;
 
     /**
      * Current device rotation.
@@ -76,8 +82,18 @@ public class OrientationService extends LooperThread {
     public OrientationService(Context context) {
         super(TARGET_FRAMETIME);
         SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+
+        //https://source.android.com/devices/sensors/sensor-types
+        List<Sensor> sensorsList = sensorManager.getSensorList(Sensor.TYPE_ALL);
+        for (Sensor s : sensorsList) {
+            System.out.println(s.toString());
+        }
+
         accMagSensor = new AccMagSensor(sensorManager);
         gyroSensor = new GyroSensor(sensorManager);
+
+        geoMagSensor = new GeoMagSensor(sensorManager);
+
         optFlowSensor = new OptFlowSensor(gyroSensor);
         listeners = new ArrayList<>();
         init = true;
@@ -92,6 +108,9 @@ public class OrientationService extends LooperThread {
     protected void loop() {
         float[] accMag;
         float[] gyro;
+
+        float[] geoMag;
+
         float[] optFlow;
 
         if (init) {
@@ -140,6 +159,9 @@ public class OrientationService extends LooperThread {
     protected void onPause() {
         accMagSensor.pause();
         gyroSensor.pause();
+
+        geoMagSensor.pause();
+
         optFlowSensor.pause();
     }
 
@@ -193,10 +215,6 @@ public class OrientationService extends LooperThread {
     private void toggleSensors(Flag flag) {
         switch (flag) {
             case RAW:
-                accMagSensor.start();
-                gyroSensor.pause();
-                optFlowSensor.pause();
-                break;
             case LOW_PASS:
                 accMagSensor.start();
                 gyroSensor.pause();
@@ -205,11 +223,17 @@ public class OrientationService extends LooperThread {
             case GYRO:
                 accMagSensor.start();
                 gyroSensor.start();
+
+                geoMagSensor.start();
+
                 optFlowSensor.pause();
                 break;
             case OPT_FLOW:
                 accMagSensor.start();
                 gyroSensor.start();
+
+                geoMagSensor.start();
+
                 optFlowSensor.start();
                 break;
         }

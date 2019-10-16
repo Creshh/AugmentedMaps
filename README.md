@@ -1,6 +1,23 @@
 # AugmentedMaps
-Masterarbeit - Visualisierung von punkthaften Geoobjekten für Augmented Reality Anwendungen auf mobilen Endgeräten
 
+### Master Thesis - Visualization of Pointed Geoobjects for Augmented Reality Applications on Mobile Devices In this thesis a review of the topic area Augmented Reality takes place
+mobile terminals based on the application visualization of punctual
+Geo objects and a comparative analysis of different approaches to use
+and fusion of integrated sensors. At the beginning, general aspects, respectively
+Basics of augmented reality and the selected development platform
+Android put in the foreground to provide clues for editing
+and gaining an idea of ​​the actual problem. The subsequent
+Detailed consideration of the application development deals with all points,
+which in the development of an augmented reality application on mobile devices
+must be considered. In addition, a requirement profile is created, based on
+of which the investigations as well as the concrete implementation of an example application
+respectively. In the following, different sensor configurations are examined
+and finally compared. The evaluation is done in quantitative terms
+and qualitative points of view, eventually leading to a final assessment
+the whole topic about.
+
+##### de 
+Masterarbeit - Visualisierung von punkthaften Geoobjekten für Augmented Reality Anwendungen auf mobilen Endgeräten
 
 In dieser Arbeit erfolgt eine Betrachtung des Themengebietes Augmented Reality auf
 mobilen Endgeräten anhand des Anwendungsfalles Visualisierung von punkthaften
